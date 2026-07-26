@@ -163,13 +163,13 @@ export default function InsumosLifeChart({ periodo }) {
     return (
         <div className="bg-surface2 p-6 rounded-xl shadow-card border border-edge h-[350px] flex flex-col">
             <h3 className="text-lg font-bold text-core mb-1">Rendimento de Consumíveis (Horas de Faísca)</h3>
-            <p className="text-sm text-muted mb-4">Média de horas que cada item suportou efetivamente **Em Corte** antes da troca.</p>
+            <p className="text-sm text-muted mb-4">Média de horas que cada item suportou efetivamente <strong className="text-core">Em Corte</strong> antes da troca.</p>
             <div className="flex-1 min-h-0">
                 {sortedData.length > 0 ? (
                     <Bar options={options} data={chartData} />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-muted text-sm text-center px-4">
-                        <p>Nenhum insumo finalizou seu clico de vida ainda.</p>
+                        <p>Nenhum insumo finalizou seu ciclo de vida ainda.</p>
                         <p className="mt-1">Troque/Finalize um insumo no painel ao lado para gerar o gráfico.</p>
                     </div>
                 )}

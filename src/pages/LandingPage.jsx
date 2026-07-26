@@ -405,7 +405,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <ShieldCheck size={40} className="text-emerald-500" />
                     <h3 className="text-lg font-bold text-white">Software Homologado e Registrado</h3>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-[500px]">
-                        O **EDM Lean** é uma marca devidamente registrada e resguardada no **INPI (Instituto Nacional da Propriedade Industrial)**, garantindo a originalidade e a segurança intelectual de nossos fluxos Lean aplicados à usinagem.
+                        O <strong className="text-white">EDM Lean</strong> é uma marca devidamente registrada e resguardada no <strong className="text-white">INPI (Instituto Nacional da Propriedade Industrial)</strong>, garantindo a originalidade e a segurança intelectual de nossos fluxos Lean aplicados à usinagem.
                     </p>
                 </div>
             </section>

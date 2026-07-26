@@ -128,7 +128,7 @@ function App() {
                     <h2 className="text-2xl font-bold text-white tracking-tight">Período de Testes Expirado</h2>
                     
                     <p className="text-slate-400 text-sm leading-relaxed">
-                        Seu período de avaliação gratuita de 30 dias do **EDM Lean** para a empresa <strong className="text-white">{nomeEmpresa}</strong> chegou ao fim. Esperamos que o painel Kanban e os relatórios OEE tenham ajudado a otimizar a sua produção!
+                        Seu período de avaliação gratuita de 30 dias do <strong className="text-white">EDM Lean</strong> para a empresa <strong className="text-white">{nomeEmpresa}</strong> chegou ao fim. Esperamos que o painel Kanban e os relatórios OEE tenham ajudado a otimizar a sua produção!
                     </p>
 
                     <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-5 text-left flex flex-col gap-3">

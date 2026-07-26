@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
 
+// Evita registrar vários listeners (React Strict Mode monta o App duas vezes no dev)
+let authStateSubscription = null;
+
 export const useAuthStore = create((set, get) => ({
     user: null, // Objeto de usuário do Supabase Auth
     role: null, // Papel ('admin' ou 'operador') vindo da tabela perfis
@@ -26,18 +29,21 @@ export const useAuthStore = create((set, get) => ({
         }, SAFETY_TIMEOUT_MS);
 
         // Registrar o listener ANTES de getSession, para não perder o evento ao voltar do link de confirmação
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            // No mobile, SIGNED_IN pode disparar no refresh de token anônimo.
-            // Só buscamos perfil se houver usuário e não estivermos já no meio de um cadastro.
-            if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress) {
-                await get().fetchUserProfile(session.user);
-            } else if (event === 'SIGNED_OUT') {
-                set({ user: null, role: null, empresaId: null, nomeEmpresa: null, codigoConvite: null, signUpInProgress: false });
-            } else if (event === 'PASSWORD_RECOVERY') {
-                set({ isResettingPassword: true });
-                window.location.hash = '#reset-password';
-            }
-        });
+        if (!authStateSubscription) {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                // No mobile, SIGNED_IN pode disparar no refresh de token anônimo.
+                // Só buscamos perfil se houver usuário e não estivermos já no meio de um cadastro.
+                if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress) {
+                    await get().fetchUserProfile(session.user);
+                } else if (event === 'SIGNED_OUT') {
+                    set({ user: null, role: null, empresaId: null, nomeEmpresa: null, codigoConvite: null, signUpInProgress: false });
+                } else if (event === 'PASSWORD_RECOVERY') {
+                    set({ isResettingPassword: true });
+                    window.location.hash = '#reset-password';
+                }
+            });
+            authStateSubscription = subscription;
+        }
 
         try {
             let { data: { session } } = await supabase.auth.getSession();

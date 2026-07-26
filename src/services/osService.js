@@ -89,7 +89,6 @@ export const osService = {
         };
 
         try {
-            console.log('--- PAYLOAD O.S PARA O SUPABASE ---', payload);
             const { data, error } = await supabase
                 .from('ordens_servico')
                 .insert(payload)
@@ -100,7 +99,6 @@ export const osService = {
                 console.error('ERRO RETORNADO PELO SUPABASE:', error);
                 throw error;
             }
-            console.log('--- O.S CRIADA COM SUCESSO ---', data);
             return data;
         } catch (err) {
             console.error('FALHA CRÍTICA NO OSSERVICE.CREATE:', err);

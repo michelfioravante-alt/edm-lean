@@ -37,10 +37,7 @@ export default function Registros() {
     // Carrega OS excluídas do Supabase ao abrir a aba
     useEffect(() => {
         osService.fetchExcluidos()
-            .then(data => {
-                console.log('[Registros] excluidos carregados:', data?.length, data);
-                setExcluidos(data);
-            })
+            .then(data => setExcluidos(data))
             .catch(e => console.error('[Registros] fetchExcluidos ERRO:', e.message))
             .finally(() => setLoadingExcluidos(false));
     }, []);
