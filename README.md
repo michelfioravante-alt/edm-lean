@@ -1,109 +1,108 @@
-# EDM Lean
+<div align="center">
 
-SaaS de gestão de produção para **eletroerosão a fio**, com quadro Kanban em tempo real, indicadores (OEE, lead time, refugo, consumo de insumos), estoque, clientes e multi-empresa (multi-tenant).
+# ⚙️ EDM Lean — SaaS de Produção para Eletroerosão a Fio
 
-Repositório **privado** — uso em portfólio. Credenciais e ambiente de produção **não** estão versionados.
+**Plataforma SaaS de gestão de produção industrial com Kanban e OEE automático.**
+Desenvolvida com metodologia Lean para ferramentarias e usinagens de precisão.
+
+![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=000)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000?style=flat-square&logo=vercel&logoColor=white)
+
+</div>
 
 ---
 
-## Stack
+## ✨ O que é
+
+O **EDM Lean** resolve um problema real: ferramentarias e usinagens de precisão que operam máquinas de eletroerosão a fio (Wire EDM) ainda controlam produção em papel, planilhas ou quadros brancos. Isso gera perda de visibilidade, tempos mortos não rastreados e zero métricas de eficiência.
+
+O EDM Lean digitaliza esse processo com:
+
+- **📋 Quadro Kanban** — ordens de serviço visuais (Fila → Preparação → Em Corte → Inspeção → Concluído)
+- **📊 OEE automático** — cálculo de Disponibilidade × Performance × Qualidade por máquina
+- **⏱️ Registro de paradas** — tracking de setups, paradas não planejadas e tempos mortos
+- **🏢 Multi-tenant** — organizações isoladas com convites por email/domínio
+- **🔒 Segurança** — Row Level Security garantindo isolamento total entre empresas
+
+---
+
+## 🏭 Por que OEE?
+
+O **OEE (Overall Equipment Effectiveness)** é o indicador padrão ouro da indústria para medir eficiência de máquinas. Ele combina três métricas:
+
+```
+OEE = Disponibilidade × Performance × Qualidade
+
+• Disponibilidade: tempo de máquina ligada vs. paradas
+• Performance: velocidade real vs. velocidade teórica
+• Qualidade: peças boas vs. peças produzidas
+```
+
+Sem medição, não há melhoria. O EDM Lean automatiza essa medição para que gestores tomem decisões baseadas em dados, não em intuicão.
+
+---
+
+## 🏗️ Arquitetura
+
+```mermaid
+flowchart LR
+    A["💻 Browser"] --> B["React SPA\nVite + TypeScript"]
+    B --> C["🛡️ Supabase\nPostgreSQL + Auth + RLS"]
+    C --> D["🔄 Realtime\nAtualizações ao vivo"]
+    B --> E["☁️ Vercel\nDeploy automático"]
+```
+
+---
+
+## 🛠️ Tech Stack
 
 | Camada | Tecnologia |
-|--------|------------|
-| Frontend | React 18, Vite, Tailwind CSS, Zustand |
-| Gráficos | Chart.js / react-chartjs-2 |
-| Backend / Auth / DB | Supabase (PostgreSQL, Auth, Realtime, RLS) |
-| Deploy | Vercel (SPA com rewrite para `index.html`) |
+|:-------|:-----------|
+| Frontend | React + TypeScript |
+| Build | Vite |
+| Estilização | Tailwind CSS |
+| Backend | Supabase (PostgreSQL + Auth + Realtime) |
+| Segurança | Row Level Security (RLS) |
+| Deploy | Vercel |
 
 ---
 
-## Funcionalidades principais
+## 🔒 Segurança Multi-tenant
 
-- **Kanban** — colunas (A fazer, Set-up, Em corte, Aferição, Concluído), drag-and-drop, pausas, split de O.S., devoluções e acompanhamento.
-- **Dashboard (admin)** — KPIs e gráficos de produção, máquinas, operadores, qualidade e insumos.
-- **Operadores** — acesso por código da empresa + PIN (validado no servidor via RPC).
-- **Estoque, clientes, registros** — cadastros e histórico ligados à empresa logada.
-- **Planos** — trial piloto (30 dias) com bloqueio de UI após expiração.
-- **Realtime** — atualização do quadro entre dispositivos via Supabase Realtime.
+- **RLS (Row Level Security)** em todas as tabelas
+- Cada organização acessa apenas seus próprios dados
+- Convites por email com validação de domínio
+- Isolação completa de dados entre empresas no nível do banco
 
 ---
 
-## Estrutura do repositório
+## 🚀 Como Rodar
 
-```
-src/              Código da aplicação (pages, components, services, store)
-public/           Assets estáticos e PWA manifest
-docs/             Documentação auxiliar (ex.: integrações)
-supabase_*.sql    Schema e migrations para o SQL Editor do Supabase
-.env.example      Variáveis necessárias (copiar para .env local)
-vercel.json       Configuração de deploy na Vercel
+```bash
+git clone https://github.com/michelfioravante-alt/edm-lean.git
+cd edm-lean
+npm install
+npm run dev
 ```
 
-Arquivos **ignorados pelo Git** (veja `.gitignore`): `.env`, `node_modules/`, `dist/`, `.vercel/`, exports locais de webhook n8n.
+Variáveis de ambiente em `.env.example`.
 
 ---
 
-## Rodar localmente
+## 🎓 Aprendizados Técnicos
 
-1. **Node.js** 18+ instalado.
-2. Clone o repositório e instale dependências:
-
-   ```bash
-   npm install
-   ```
-
-3. Copie o exemplo de ambiente e preencha com os dados do **Supabase → Project Settings → API**:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Variáveis:
-
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-
-4. Inicie o dev server:
-
-   ```bash
-   npm run dev
-   ```
-
-5. Build de produção:
-
-   ```bash
-   npm run build
-   ```
+- Aplicação de conceitos **Lean Manufacturing** em software (fluxo puxado, visão Kanban, eliminação de desperdícios)
+- Modelagem de **OEE em banco relacional** com cálculos automáticos por máquina e período
+- Arquitetura **multi-tenant com RLS** — isolamento no nível do PostgreSQL sem microserviços
+- **Supabase Realtime** para atualizações instantâneas entre operadores e gestores
+- Sistema de **convites e permissões** por organização
 
 ---
 
-## Supabase
+## 📄 Licença
 
-1. Crie um projeto no [Supabase](https://supabase.com).
-2. No **SQL Editor**, execute na ordem que fizer sentido para o seu banco:
-   - `supabase_schema.sql` (base)
-   - `supabase_migration_limite_maquinas.sql` e `supabase_realtime_fix.sql`, se ainda não aplicados
-3. Em **Authentication → Providers**, habilite **Anonymous Sign-Ins** (login de terminal operador).
-4. Configure **RLS** conforme os scripts — a anon key no frontend é pública por design; a segurança está nas policies.
-
----
-
-## Deploy (Vercel)
-
-1. Conecte o repositório à Vercel.
-2. Defina as mesmas variáveis `VITE_*` no painel do projeto.
-3. Após mudanças no código, faça **push** no Git ou **Redeploy** manual para publicar.
-
----
-
-## Segurança
-
-- **Nunca** commite `.env` ou chaves `service_role`.
-- Scripts auxiliares na raiz (`audit_db.js`, etc.) usam `dotenv` apenas na sua máquina.
-- A chave **anon** aparece no bundle do site em produção; proteja dados com **RLS** e RPCs no Supabase.
-
----
-
-## Licença
-
-Código proprietário — uso restrito ao titular do projeto. Entre em contato para licenciamento ou demonstração.
+Projeto privado — código disponível para avaliação de portfólio.
