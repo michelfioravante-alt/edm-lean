@@ -5,6 +5,8 @@
 **Plataforma SaaS de gestão de produção industrial com Kanban e OEE automático.**
 Desenvolvida com metodologia Lean para ferramentarias e usinagens de precisão.
 
+[![Demo](https://img.shields.io/badge/🔗_Demo-edmlean.com.br-2E7D32?style=for-the-badge)](https://www.edmlean.com.br/)
+
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=000)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
@@ -13,6 +15,15 @@ Desenvolvida com metodologia Lean para ferramentarias e usinagens de precisão.
 ![Vercel](https://img.shields.io/badge/Vercel-000?style=flat-square&logo=vercel&logoColor=white)
 
 </div>
+
+---
+
+## 🔗 Links
+
+| | Link |
+|--|--|
+| **Produção** | https://www.edmlean.com.br/ |
+| **Repositório** | https://github.com/michelfioravante-alt/edm-lean |
 
 ---
 
@@ -105,4 +116,4 @@ Variáveis de ambiente em `.env.example`.
 
 ## 📄 Licença
 
-Projeto privado — código disponível para avaliação de portfólio.
+Código aberto para **avaliação de portfólio**; produto em uso em https://www.edmlean.com.br/
