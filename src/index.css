@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-core font-sans antialiased min-h-screen overflow-x-hidden;
+  }
+
+  /* Override browser autofill background logic */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #020617 inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* Animations */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kanban-col-animate {
+  animation: fadeSlideIn 0.4s ease both;
+}
+
+.kanban-card-animate {
+  animation: fadeSlideIn 0.35s ease both;
+}
+
+/* scan line effect on card hover */
+.card-scanline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -100%;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.015), transparent);
+  transition: top 0.4s ease;
+  pointer-events: none;
+}
+
+.card-scanline:hover::after {
+  top: 150%;
+}
+
+/* App-like Hide Scrollbar */
+@media (max-width: 768px) {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Snap Scrolling */
+.snap-scroll-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-item {
+  scroll-snap-align: start;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  /* slate-800 */
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+  /* slate-700 */
+  background-clip: content-box;
+}
+
+/* Specific scrollbar for Kanban columns */
+.kanban-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+  /* slate-700 */
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+  /* slate-605 */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes mockProgress {
+  0% { width: 35%; }
+  100% { width: 88%; }
+}
+
+.animate-mock-progress {
+  animation: mockProgress 6s infinite alternate ease-in-out;
+}
