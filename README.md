@@ -1,9 +1,8 @@
 <div align="center">
 
-# ⚙️ EDM Lean — SaaS de Produção para Eletroerosão a Fio
+# ⚙️ EDM Lean — Plataforma SaaS de Gestão de Produção
 
-**Plataforma SaaS de gestão de produção industrial com Kanban e OEE automático.**
-Desenvolvida com metodologia Lean para ferramentarias e usinagens de precisão.
+**Solução SaaS para digitalização e controle de operações de usinagem de precisão com cálculo automático de OEE e metodologia Lean.**
 
 [![Demo](https://img.shields.io/badge/🔗_Demo-edmlean.com.br-2E7D32?style=for-the-badge)](https://www.edmlean.com.br/)
 
@@ -18,102 +17,70 @@ Desenvolvida com metodologia Lean para ferramentarias e usinagens de precisão.
 
 ---
 
-## 🔗 Links
+## 📌 Contexto e Problema
 
-| | Link |
-|--|--|
-| **Produção** | https://www.edmlean.com.br/ |
-| **Repositório** | https://github.com/michelfioravante-alt/edm-lean |
+Operações de usinagem de precisão — em especial as que utilizam máquinas de Eletroerosão a Fio (Wire EDM) — ainda controlam a produção por meio de registros em papel, quadros brancos ou planilhas. Esse modelo gera **opacidade operacional**: paradas não rastreadas, ausência de métricas de eficiência e perda de informação na troca de turnos.
 
----
-
-## ✨ O que é
-
-O **EDM Lean** resolve um problema real: ferramentarias e usinagens de precisão que operam máquinas de eletroerosão a fio (Wire EDM) ainda controlam produção em papel, planilhas ou quadros brancos. Isso gera perda de visibilidade, tempos mortos não rastreados e zero métricas de eficiência.
-
-O EDM Lean digitaliza esse processo com:
-
-- **📋 Quadro Kanban** — ordens de serviço visuais (Fila → Preparação → Em Corte → Inspeção → Concluído)
-- **📊 OEE automático** — cálculo de Disponibilidade × Performance × Qualidade por máquina
-- **⏱️ Registro de paradas** — tracking de setups, paradas não planejadas e tempos mortos
-- **🏢 Multi-tenant** — organizações isoladas com convites por email/domínio
-- **🔒 Segurança** — Row Level Security garantindo isolamento total entre empresas
+Com base em mapeamento de processos AS-IS/TO-BE via BPMN (Bizagi), este projeto digitalizou o fluxo operacional de uma ferramentaria real, consolidando as práticas de Lean Manufacturing em uma plataforma acessível via navegador.
 
 ---
 
-## 🏭 Por que OEE?
+## 💡 Solução Desenvolvida
 
-O **OEE (Overall Equipment Effectiveness)** é o indicador padrão ouro da indústria para medir eficiência de máquinas. Ele combina três métricas:
-
-```
-OEE = Disponibilidade × Performance × Qualidade
-
-• Disponibilidade: tempo de máquina ligada vs. paradas
-• Performance: velocidade real vs. velocidade teórica
-• Qualidade: peças boas vs. peças produzidas
-```
-
-Sem medição, não há melhoria. O EDM Lean automatiza essa medição para que gestores tomem decisões baseadas em dados, não em intuicão.
+| Funcionalidade | Descrição |
+|:---------------|:----------|
+| **Kanban de Ordens de Serviço** | Visão visual do fluxo produtivo: Fila → Preparação → Em Corte → Inspeção → Concluído |
+| **Cálculo de OEE** | Disponibilidade × Performance × Qualidade calculados automaticamente por máquina |
+| **Registro de Paradas (Sistema Andon)** | Rastreamento de setups, paradas não planejadas e tempos não produtivos com motivo obrigatório |
+| **Gestão Multi-tenant** | Organizações isoladas com controle de acesso por convite de e-mail ou domínio |
+| **Segurança de Dados** | Row Level Security (RLS) nativo do PostgreSQL garantindo isolamento total entre tenants |
+| **Dados em Tempo Real** | Atualizações via Supabase Realtime Websockets — sem necessidade de recarregamento de página |
 
 ---
 
-## 🏗️ Arquitetura
+## 📈 Resultados Operacionais Comprovados
 
-```mermaid
-flowchart LR
-    A["💻 Browser"] --> B["React SPA\nVite + TypeScript"]
-    B --> C["🛡️ Supabase\nPostgreSQL + Auth + RLS"]
-    C --> D["🔄 Realtime\nAtualizações ao vivo"]
-    B --> E["☁️ Vercel\nDeploy automático"]
-```
+Após implementação e validação em ciclo produtivo real de Eletroerosão a Fio (WEDM):
+
+| Indicador | Antes | Depois | Variação |
+|:----------|:------|:-------|:---------|
+| **OEE (Eficácia Geral do Equipamento)** | 48% | 61% | **↑ 27,1%** |
+| **Lead Time do Ciclo Produtivo** | Linha de base | -25% | **↓ 25%** |
+| **Índice de Atrasos na Entrega** | Linha de base | -77,1% | **↓ 77,1%** |
+| **Tempo de Parada por Falta de Insumos** | Linha de base | -87,5% | **↓ 87,5%** |
 
 ---
 
-## 🛠️ Tech Stack
+## 🏗️ Arquitetura Técnica
+
+**Frontend:** React 18 com Vite e TypeScript. Gestão de estado global com Zustand. Interface construída com Tailwind CSS.
+
+**Backend & Dados:** Supabase (PostgreSQL) com Row Level Security (RLS) para isolamento de dados entre organizações. Supabase Realtime Websockets para sincronização instantânea entre dispositivos.
+
+**Modelo de Negócio:** Arquitetura Multi-tenant, permitindo que múiltiplas empresas utilizem a plataforma com dados completamente isolados.
+
+**Infraestrutura:** Deploy via Vercel com domínio próprio (edmlean.com.br).
+
+---
+
+## 🛠️ Stack Completa
 
 | Camada | Tecnologia |
 |:-------|:-----------|
-| Frontend | React + TypeScript |
-| Build | Vite |
+| Framework | React 18 + Vite |
+| Linguagem | TypeScript |
+| Estado Global | Zustand |
 | Estilização | Tailwind CSS |
-| Backend | Supabase (PostgreSQL + Auth + Realtime) |
-| Segurança | Row Level Security (RLS) |
-| Deploy | Vercel |
+| Backend / Banco | Supabase (PostgreSQL + Auth + RLS + Realtime) |
+| Deploy | Vercel (domínio próprio) |
 
 ---
 
-## 🔒 Segurança Multi-tenant
+<div align="center">
 
-- **RLS (Row Level Security)** em todas as tabelas
-- Cada organização acessa apenas seus próprios dados
-- Convites por email com validação de domínio
-- Isolação completa de dados entre empresas no nível do banco
+**Michel Fioravante** — Especialista em Automação e Processos
 
----
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/michel-fioravante/)
+[![GitHub](https://img.shields.io/badge/Portfólio-GitHub-000?style=flat-square&logo=github&logoColor=white)](https://github.com/michelfioravante-alt)
 
-## 🚀 Como Rodar
-
-```bash
-git clone https://github.com/michelfioravante-alt/edm-lean.git
-cd edm-lean
-npm install
-npm run dev
-```
-
-Variáveis de ambiente em `.env.example`.
-
----
-
-## 🎓 Aprendizados Técnicos
-
-- Aplicação de conceitos **Lean Manufacturing** em software (fluxo puxado, visão Kanban, eliminação de desperdícios)
-- Modelagem de **OEE em banco relacional** com cálculos automáticos por máquina e período
-- Arquitetura **multi-tenant com RLS** — isolamento no nível do PostgreSQL sem microserviços
-- **Supabase Realtime** para atualizações instantâneas entre operadores e gestores
-- Sistema de **convites e permissões** por organização
-
----
-
-## 📄 Licença
-
-Código aberto para **avaliação de portfólio**; produto em uso em https://www.edmlean.com.br/
+</div>
