@@ -445,6 +445,64 @@ begin
 end;
 $$ language plpgsql security definer set search_path = public;
 
+-- Função segura para vincular o perfil do operador anônimo validando o PIN no SERVIDOR
+create or replace function public.vincular_perfil_operador(
+    p_invite_code text,
+    p_pin text,
+    p_nome text default 'Terminal de Produção'
+)
+returns table (
+    empresa_id uuid,
+    nome_fantasia text,
+    codigo_convite text,
+    plano text,
+    created_at timestamp with time zone
+) as $$
+declare
+    v_empresa_id uuid;
+    v_correct_pin text;
+    v_user_id uuid;
+    v_empresa public.empresas;
+begin
+    v_user_id := auth.uid();
+    if v_user_id is null then
+        raise exception 'Usuário não autenticado no Supabase Auth.';
+    end if;
+
+    select * into v_empresa
+    from public.empresas
+    where codigo_convite = upper(p_invite_code);
+
+    if v_empresa.id is null then
+        raise exception 'Código de convite inválido.';
+    end if;
+
+    v_empresa_id := v_empresa.id;
+
+    select pin_onboarding into v_correct_pin
+    from public.configuracoes_empresa
+    where empresa_id = v_empresa_id;
+
+    if v_correct_pin is null then
+        v_correct_pin := '1234';
+    end if;
+
+    if p_pin != v_correct_pin then
+        raise exception 'PIN de Segurança incorreto.';
+    end if;
+
+    insert into public.perfis (id, empresa_id, nome, funcao)
+    values (v_user_id, v_empresa_id, coalesce(nullif(trim(p_nome), ''), 'Terminal de Produção'), 'operador')
+    on conflict (id) do update
+    set empresa_id = EXCLUDED.empresa_id,
+        nome = EXCLUDED.nome,
+        funcao = 'operador';
+
+    return query
+    select v_empresa.id, v_empresa.nome_fantasia, v_empresa.codigo_convite, v_empresa.plano, v_empresa.created_at;
+end;
+$$ language plpgsql security definer set search_path = public;
+
 -- ==========================================
 -- FUNÇÃO RPC PARA CADASTRO INICIAL (SEGURANÇA BYPASS)
 -- ==========================================

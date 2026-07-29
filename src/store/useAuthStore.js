@@ -211,31 +211,9 @@ export const useAuthStore = create((set, get) => ({
 
     loginComoOperador: async (inviteCode, pin) => {
         try {
-            const normalizedCode = inviteCode.toUpperCase();
+            const normalizedCode = (inviteCode || '').trim().toUpperCase();
 
-            // 1. Verificar PIN via RPC (no servidor)
-            const { data: isValid, error: rpcError } = await supabase.rpc('verificar_pin_onboarding', {
-                p_invite_code: normalizedCode,
-                p_pin: pin
-            });
-
-            if (rpcError) throw rpcError;
-            if (!isValid) {
-                return { success: false, error: 'PIN de Segurança incorreto.' };
-            }
-
-            // 2. Localizar empresa pelo código de convite via RPC segura (bypassa RLS de empresas)
-            const { data: companies, error: compErr } = await supabase.rpc('buscar_empresa_por_codigo', {
-                p_codigo: normalizedCode
-            });
-
-            if (compErr || !companies || companies.length === 0) {
-                throw new Error('Empresa não identificada.');
-            }
-
-            const company = companies[0];
-
-            // 3. Criar / usar um usuário anônimo para este terminal (sem e-mail/senha)
+            // 1. Criar / obter sessão anônima do Supabase Auth para este terminal
             const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
             if (anonError) {
                 throw anonError;
@@ -246,36 +224,36 @@ export const useAuthStore = create((set, get) => ({
                 throw new Error('Falha ao criar sessão anônima do terminal.');
             }
 
-            // 4. Garantir que exista um perfil vinculado à empresa como operador
-            const { error: profileError } = await supabase
-                .from('perfis')
-                .upsert(
-                    {
-                        id: anonUser.id,
-                        empresa_id: company.id,
-                        nome: 'Terminal de Produção',
-                        funcao: 'operador'
-                    },
-                    { onConflict: 'id' }
-                );
+            // 2. Chamar RPC segura no servidor que valida o PIN e vincula o perfil à empresa sem expor RLS
+            const { data: companyRows, error: rpcError } = await supabase.rpc('vincular_perfil_operador', {
+                p_invite_code: normalizedCode,
+                p_pin: pin,
+                p_nome: 'Terminal de Produção'
+            });
 
-            if (profileError) {
-                throw profileError;
+            if (rpcError) {
+                throw new Error(rpcError.message || 'PIN de Segurança incorreto.');
             }
 
-            // 5. Define estado IMEDIATAMENTE com os dados da empresa (mesma que o admin)
+            if (!companyRows || companyRows.length === 0) {
+                throw new Error('Empresa não identificada.');
+            }
+
+            const company = companyRows[0];
+
+            // 3. Define estado IMEDIATAMENTE com os dados seguros retornados pelo servidor
             set({
                 user: anonUser,
                 role: 'operador',
-                empresaId: company.id,
+                empresaId: company.empresa_id || company.id,
                 nomeEmpresa: company.nome_fantasia || 'Fábrica',
-                codigoConvite: company.codigo_convite || (company.id?.slice(0, 8)?.toUpperCase() || ''),
+                codigoConvite: company.codigo_convite || normalizedCode,
                 plano: company.plano || 'piloto',
                 dataCriacao: company.created_at || null,
                 isInitialized: true
             });
 
-            // 6. Carrega lista de operadores/máquinas/etc. logo após login (mobile às vezes atrasa o useEffect do Layout)
+            // 4. Carrega dados iniciais da planta
             const app = (await import('./useAppStore')).useAppStore.getState();
             setTimeout(() => {
                 app.fetchOperadores?.();
@@ -284,8 +262,6 @@ export const useAuthStore = create((set, get) => ({
                 app.fetchEstoque?.();
                 app.fetchKanbanDadosInicial?.();
             }, 150);
-
-            get().fetchUserProfile(anonUser).catch(() => { });
 
             return { success: true };
         } catch (err) {
