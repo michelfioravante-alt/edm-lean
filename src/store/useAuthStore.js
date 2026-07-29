@@ -253,16 +253,6 @@ export const useAuthStore = create((set, get) => ({
                 isInitialized: true
             });
 
-            // 4. Carrega dados iniciais da planta
-            const app = (await import('./useAppStore')).useAppStore.getState();
-            setTimeout(() => {
-                app.fetchOperadores?.();
-                app.fetchProgramadores?.();
-                app.fetchMaquinas?.();
-                app.fetchEstoque?.();
-                app.fetchKanbanDadosInicial?.();
-            }, 150);
-
             return { success: true };
         } catch (err) {
             console.error('loginComoOperador error:', err);
