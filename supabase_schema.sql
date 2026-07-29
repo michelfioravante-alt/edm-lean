@@ -445,7 +445,17 @@ begin
 end;
 $$ language plpgsql security definer set search_path = public;
 
--- Função segura para vincular o perfil do operador anônimo validando o PIN no SERVIDOR
+-- Tabela para rastreamento de tentativas e bloqueio por força bruta
+create table if not exists public.tentativas_login_pin (
+    codigo_convite text primary key,
+    tentativas_falhas integer default 0,
+    bloqueado_ate timestamp with time zone,
+    atualizado_em timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table public.tentativas_login_pin enable row level security;
+
+-- Função segura para vincular o perfil do operador anônimo validando o PIN no SERVIDOR (com Proteção Anti Força Bruta)
 create or replace function public.vincular_perfil_operador(
     p_invite_code text,
     p_pin text,
@@ -463,15 +473,24 @@ declare
     v_correct_pin text;
     v_user_id uuid;
     v_empresa public.empresas;
+    v_code_upper text;
+    v_attempt public.tentativas_login_pin;
 begin
     v_user_id := auth.uid();
     if v_user_id is null then
         raise exception 'Usuário não autenticado no Supabase Auth.';
     end if;
 
+    v_code_upper := upper(trim(p_invite_code));
+
+    select * into v_attempt from public.tentativas_login_pin where codigo_convite = v_code_upper;
+    if v_attempt.bloqueado_ate is not null and now() < v_attempt.bloqueado_ate then
+        raise exception 'Muitas tentativas incorretas. Terminal bloqueado temporariamente por 5 minutos.';
+    end if;
+
     select * into v_empresa
     from public.empresas
-    where codigo_convite = upper(p_invite_code);
+    where codigo_convite = v_code_upper;
 
     if v_empresa.id is null then
         raise exception 'Código de convite inválido.';
@@ -488,8 +507,25 @@ begin
     end if;
 
     if p_pin != v_correct_pin then
+        perform pg_sleep(1.2);
+
+        insert into public.tentativas_login_pin (codigo_convite, tentativas_falhas, atualizado_em)
+        values (v_code_upper, 1, now())
+        on conflict (codigo_convite) do update
+        set tentativas_falhas = public.tentativas_login_pin.tentativas_falhas + 1,
+            bloqueado_ate = case 
+                when public.tentativas_login_pin.tentativas_falhas + 1 >= 5 then now() + interval '5 minutes'
+                else null
+            end,
+            atualizado_em = now();
+
         raise exception 'PIN de Segurança incorreto.';
     end if;
+
+    insert into public.tentativas_login_pin (codigo_convite, tentativas_falhas, bloqueado_ate, atualizado_em)
+    values (v_code_upper, 0, null, now())
+    on conflict (codigo_convite) do update
+    set tentativas_falhas = 0, bloqueado_ate = null, atualizado_em = now();
 
     insert into public.perfis (id, empresa_id, nome, funcao)
     values (v_user_id, v_empresa_id, coalesce(nullif(trim(p_nome), ''), 'Terminal de Produção'), 'operador')
@@ -502,6 +538,7 @@ begin
     select v_empresa.id, v_empresa.nome_fantasia, v_empresa.codigo_convite, v_empresa.plano, v_empresa.created_at;
 end;
 $$ language plpgsql security definer set search_path = public;
+
 
 -- ==========================================
 -- FUNÇÃO RPC PARA CADASTRO INICIAL (SEGURANÇA BYPASS)
