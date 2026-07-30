@@ -28,13 +28,17 @@ export const useAuthStore = create((set, get) => ({
             if (!get().isInitialized) set({ isInitialized: true });
         }, SAFETY_TIMEOUT_MS);
 
-        // Registrar o listener ANTES de getSession, para não perder o evento ao voltar do link de confirmação
+        // Registrar o listener ANTES de getSession, para não perder o evento ao voltar do link de confirmação.
+        // IMPORTANTE: não usar async/await direto no callback — isso causa deadlock com signInWithPassword
+        // (o Auth do Supabase segura um lock até o callback terminar).
         if (!authStateSubscription) {
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
                 // No mobile, SIGNED_IN pode disparar no refresh de token anônimo.
                 // Só buscamos perfil se houver usuário e não estivermos já no meio de um cadastro.
                 if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress) {
-                    await get().fetchUserProfile(session.user);
+                    setTimeout(() => {
+                        get().fetchUserProfile(session.user);
+                    }, 0);
                 } else if (event === 'SIGNED_OUT') {
                     set({ user: null, role: null, empresaId: null, nomeEmpresa: null, codigoConvite: null, signUpInProgress: false });
                 } else if (event === 'PASSWORD_RECOVERY') {
@@ -119,7 +123,10 @@ export const useAuthStore = create((set, get) => ({
                 return { success: false, error: error.message };
             }
 
-            // O onAuthStateChange vai assumir a partir daqui e chamar fetchUserProfile
+            // Garante perfil mesmo se o listener atrasar (evita tela de login eternamente)
+            if (data?.user) {
+                await get().fetchUserProfile(data.user);
+            }
             return { success: true };
 
         } catch (err) {
