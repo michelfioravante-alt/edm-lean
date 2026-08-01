@@ -184,6 +184,7 @@ create table public.ordens_servico (
     tempo_estimado_setup_minutos integer default 0,
     
     prazo_entrega timestamp with time zone,
+    programador text,
     
     -- Controle de Estado
     is_pausado boolean default false,
@@ -212,6 +213,14 @@ create table public.ordens_servico (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Garante que a coluna programador exista para migração
+do $$ 
+begin 
+    if not exists (select 1 from information_schema.columns where table_name='ordens_servico' and column_name='programador') then
+        alter table public.ordens_servico add column programador text;
+    end if;
+end $$;
+
 
 -- ==========================================
 -- 3. SEGURANÇA: ROW LEVEL SECURITY (RLS)
@@ -219,6 +228,9 @@ create table public.ordens_servico (
 
 -- Ativar RLS em todas as tabelas
 alter table public.empresas enable row level security;
+create policy "Usuários veem a própria empresa"
+    on public.empresas for select
+    using (id = get_user_empresa_id());
 alter table public.perfis enable row level security;
 alter table public.maquinas enable row level security;
 alter table public.estoque_itens enable row level security;
@@ -273,6 +285,19 @@ with check (id = (select auth.uid()));
 create policy "Usuários atualizam próprio perfil" 
 on public.perfis for update 
 using (id = (select auth.uid()));
+
+create policy "Admins atualizam perfis da mesma empresa"
+on public.perfis for update
+using (
+    empresa_id = get_user_empresa_id()
+    and exists (
+        select 1
+        from public.perfis p
+        where p.id = auth.uid()
+          and p.empresa_id = get_user_empresa_id()
+          and p.funcao = 'admin'
+    )
+);
 
 -- --- Políticas de Clientes ---
 create policy "Usuários veem apenas Clientes da sua empresa" 
@@ -338,6 +363,25 @@ returns setof public.estoque_itens as $$
     where empresa_id = get_user_empresa_id()
     order by nome asc;
 $$ language sql stable security definer set search_path = public;
+
+-- Decremento atômico de item no estoque
+create or replace function public.decrementar_estoque(
+    item_id uuid,
+    delta integer default 1,
+    emp_id uuid default null
+)
+returns setof public.estoque_itens as $$
+declare
+    v_empresa_id uuid;
+begin
+    v_empresa_id := coalesce(emp_id, get_user_empresa_id());
+    return query
+    update public.estoque_itens
+    set quantidade = greatest(quantidade - delta, 0)
+    where id = item_id and empresa_id = v_empresa_id
+    returning *;
+end;
+$$ language plpgsql security definer set search_path = public;
 
 -- Cria cliente na empresa do usuário logado (bypass RLS - funciona com operador anônimo no mobile)
 create or replace function public.criar_cliente_empresa(
@@ -634,6 +678,8 @@ alter publication supabase_realtime add table public.maquinas;
 alter publication supabase_realtime add table public.operadores;
 alter publication supabase_realtime add table public.programadores;
 alter publication supabase_realtime add table public.clientes;
+alter publication supabase_realtime add table public.estoque_itens;
+alter publication supabase_realtime add table public.historico_consumiveis;
 
 -- ==========================================
 -- 5. DADOS FALSOS INICIAIS (SEED) PARA SUA EMPRESA PILOTO

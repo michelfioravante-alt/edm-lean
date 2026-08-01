@@ -25,7 +25,7 @@ export const configService = {
             const { data, error } = await supabase.rpc('buscar_configuracoes_empresa');
             if (error && error.code === 'PGRST116') return null;
             if (error) throw error;
-            return data;
+            return Array.isArray(data) ? (data[0] || null) : data;
         }
     },
 

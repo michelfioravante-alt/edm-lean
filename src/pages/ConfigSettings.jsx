@@ -7,6 +7,7 @@ import { Plus, Trash2, Settings2, Zap, ShieldCheck, Users, Monitor, Bot, DollarS
 export default function ConfigSettings() {
     const {
         configuracoesGlobais, atualizarConfiguracoes, salvarConfiguracoes,
+        fetchConfiguracoes, fetchMaquinas, fetchOperadores, fetchProgramadores, fetchAutoKanbans, fetchUsuarios,
         maquinas, addMaquina, removeMaquina,
         operadores, addOperador, removeOperador,
         programadores, addProgramador, removeProgramador,
@@ -16,7 +17,17 @@ export default function ConfigSettings() {
 
     const { user, empresaId, codigoConvite } = useAuthStore();
 
-    // Estado Local das Configs Globais (Para não engasgar o Input c/ Supastore em cada tecla)
+    // Carrega dados ao montar a página
+    useEffect(() => {
+        fetchConfiguracoes();
+        fetchMaquinas();
+        fetchOperadores();
+        fetchProgramadores();
+        fetchAutoKanbans();
+        fetchUsuarios();
+    }, []);
+
+    // Estado Local das Configs Globais
     const [custoHoraLocal, setCustoHoraLocal] = useState(configuracoesGlobais?.custoHoraMaquina || 50);
     const [toastMsg, setToastMsg] = useState('');
     const [turnosLocal, setTurnosLocal] = useState(configuracoesGlobais?.turnos || [
@@ -26,12 +37,20 @@ export default function ConfigSettings() {
     ]);
     const [pinLocal, setPinLocal] = useState(configuracoesGlobais?.pinOnboarding ?? '1234');
 
-    // Mantém o pinLocal sincronizado com o valor vindo do Supabase
+    // Sincroniza o estado local sempre que configuracoesGlobais for carregado/atualizado
     useEffect(() => {
-        if (configuracoesGlobais?.pinOnboarding) {
-            setPinLocal(configuracoesGlobais.pinOnboarding);
+        if (configuracoesGlobais) {
+            if (configuracoesGlobais.custoHoraMaquina !== undefined) {
+                setCustoHoraLocal(configuracoesGlobais.custoHoraMaquina);
+            }
+            if (Array.isArray(configuracoesGlobais.turnos) && configuracoesGlobais.turnos.length > 0) {
+                setTurnosLocal(configuracoesGlobais.turnos);
+            }
+            if (configuracoesGlobais.pinOnboarding !== undefined) {
+                setPinLocal(configuracoesGlobais.pinOnboarding);
+            }
         }
-    }, [configuracoesGlobais?.pinOnboarding]);
+    }, [configuracoesGlobais]);
 
     const handleTurnoChange = (index, field, value) => {
         const novosTurnos = [...turnosLocal];
@@ -40,13 +59,16 @@ export default function ConfigSettings() {
     }
 
     const handleAddTurno = (e) => {
-        e.preventDefault();
-        if (novoTurnoNome.trim()) {
-            setTurnosLocal([
-                ...turnosLocal,
-                { id: `t${Date.now()}`, nome: novoTurnoNome.trim(), inicio: '08:00', fim: '18:00' }
+        if (e) e.preventDefault();
+        const nomeTrim = (novoTurnoNome || '').trim();
+        if (nomeTrim) {
+            setTurnosLocal(prev => [
+                ...prev,
+                { id: `t${Date.now()}`, nome: nomeTrim, inicio: '08:00', fim: '18:00' }
             ]);
             setNovoTurnoNome('');
+            setToastMsg('Turno adicionado à lista! Clique em "Salvar Turnos" abaixo para gravar no banco.');
+            setTimeout(() => setToastMsg(''), 3500);
         }
     };
 
@@ -234,6 +256,12 @@ export default function ConfigSettings() {
                                         type="text"
                                         value={novoTurnoNome}
                                         onChange={e => setNovoTurnoNome(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddTurno(e);
+                                            }
+                                        }}
                                         placeholder="Ex: Turno da Madrugada"
                                         className={inputClasses}
                                     />
@@ -243,7 +271,7 @@ export default function ConfigSettings() {
                                     onClick={handleAddTurno}
                                     variant="primary"
                                     size="lg"
-                                    className="px-5 shadow-sm h-[52px]"
+                                    className="px-5 shadow-sm h-[52px] shrink-0"
                                     disabled={!novoTurnoNome.trim()}
                                 >
                                     <Plus className="w-6 h-6" />
