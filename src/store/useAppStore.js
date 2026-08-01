@@ -645,8 +645,9 @@ export const useAppStore = create((set) => ({
 
             // --- CÁLCULO DE TEMPOS DA FASE ANTERIOR ---
             if (os) {
-                // Pega do banco ou do estado antigo
-                const timestampEntrada = os[`timestamp_entrada_${sourceCol}`] || os.created_at;
+                // Pega do banco ou do estado antigo (normalizado em minúsculas para coincidir com PostgreSQL, ex: timestamp_entrada_emcorte)
+                const colKeyLower = sourceCol.toLowerCase();
+                const timestampEntrada = os[`timestamp_entrada_${colKeyLower}`] || os[`timestamp_entrada_${sourceCol}`] || os.created_at;
                 const nowMs = updatedOsParams[`timestampEntrada_${destCol}`]
                     ? new Date(updatedOsParams[`timestampEntrada_${destCol}`]).getTime()
                     : Date.now();
@@ -1051,46 +1052,35 @@ export const useAppStore = create((set) => ({
     },
 
     // Motor de Agendamento (Cron Simulado)
-    processarKanbansAutomaticos: () => set((state) => {
-        let hasChanges = false;
+    processarKanbansAutomaticos: async () => {
+        const state = useAppStore.getState();
+        if (!state.kanbansAutomaticos || state.kanbansAutomaticos.length === 0) return;
         const now = new Date();
-        const novasOs = [];
 
-        const novosKanbansAutomaticos = state.kanbansAutomaticos.map((kb) => {
+        for (const kb of state.kanbansAutomaticos) {
             const dataBase = new Date(kb.ultimaExecucao || kb.criadoEm);
             const diferencaDias = Math.floor((now - dataBase) / (1000 * 60 * 60 * 24));
 
             if (diferencaDias >= kb.diasIntervalo) {
-                hasChanges = true;
-                // Criação da OS automática
-                novasOs.push({
-                    id: Date.now() + Math.random(), // Evita colisões
-                    codigoPeca: `AUTO-${kb.tipo.substring(0, 3).toUpperCase()}`,
-                    descricao: kb.descricao,
-                    maquina_nome: kb.maquinaNome,
-                    material: 'N/A',
-                    dimensoes: 'Manutenção/Rotina',
-                    quantidade: 1,
-                    dataCriacao: now.toISOString(),
-                    prazo: new Date(now.getTime() + (kb.diasIntervalo * 24 * 60 * 60 * 1000)).toISOString(), // Prazo é o próprio intervalo
-                    criadoPorAutomatico: true
-                });
-
-                return { ...kb, ultimaExecucao: now.toISOString() };
+                try {
+                    await state.addOrdemServico({
+                        codigoPeca: `AUTO-${(kb.tipo || 'ROT').substring(0, 3).toUpperCase()}`,
+                        cliente: kb.descricao || kb.tipo,
+                        maquina_nome: kb.maquinaNome,
+                        quantidade: 1,
+                        prazo_entrega: new Date(now.getTime() + (kb.diasIntervalo * 24 * 60 * 60 * 1000)).toISOString()
+                    });
+                    set((s) => ({
+                        kanbansAutomaticos: s.kanbansAutomaticos.map(k =>
+                            k.id === kb.id ? { ...k, ultimaExecucao: now.toISOString() } : k
+                        )
+                    }));
+                } catch (err) {
+                    console.error("Erro ao criar O.S. automática no Supabase:", err);
+                }
             }
-            return kb;
-        });
-
-        if (!hasChanges) return state;
-
-        return {
-            kanbansAutomaticos: novosKanbansAutomaticos,
-            kanban: {
-                ...state.kanban,
-                aFazer: [...novasOs, ...state.kanban.aFazer]
-            }
-        };
-    }),
+        }
+    },
 
     // Actions para Estoque (Supabase)
     fetchEstoque: async () => {
