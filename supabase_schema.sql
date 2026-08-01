@@ -263,14 +263,16 @@ on public.ordens_servico for delete
 using (empresa_id = get_user_empresa_id());
 
 -- --- Políticas de Máquinas ---
-create policy "Usuários veem apenas Máquinas da sua empresa" 
+create policy "Usuários gerenciam Máquinas da sua empresa" 
 on public.maquinas for all 
-using (empresa_id = get_user_empresa_id());
+using (empresa_id = get_user_empresa_id())
+with check (empresa_id = get_user_empresa_id());
 
 -- --- Políticas de Estoque ---
-create policy "Usuários veem apenas Estoque da sua empresa" 
+create policy "Usuários gerenciam Estoque da sua empresa" 
 on public.estoque_itens for all 
-using (empresa_id = get_user_empresa_id());
+using (empresa_id = get_user_empresa_id())
+with check (empresa_id = get_user_empresa_id());
 
 -- --- Políticas de Perfis ---
 create policy "Usuários veem perfis da mesma empresa" 
@@ -300,9 +302,10 @@ using (
 );
 
 -- --- Políticas de Clientes ---
-create policy "Usuários veem apenas Clientes da sua empresa" 
+create policy "Usuários gerenciam Clientes da sua empresa" 
 on public.clientes for all 
-using (empresa_id = get_user_empresa_id());
+using (empresa_id = get_user_empresa_id())
+with check (empresa_id = get_user_empresa_id());
 
 create policy "Usuários veem apenas Operadores da sua empresa" 
 on public.operadores for select 
@@ -645,19 +648,22 @@ begin
 end;
 $$ language plpgsql security definer set search_path = public;
 
-create policy "Usuários veem apenas Programadores da sua empresa" 
+create policy "Usuários gerenciam Programadores da sua empresa" 
 on public.programadores for all 
-using (empresa_id = get_user_empresa_id());
+using (empresa_id = get_user_empresa_id())
+with check (empresa_id = get_user_empresa_id());
 
 -- --- Políticas de Kanban Automático ---
-create policy "Usuários veem apenas Kanban Auto da sua empresa" 
+create policy "Usuários gerenciam Kanban Auto da sua empresa" 
 on public.kanbans_automaticos for all 
-using (empresa_id = get_user_empresa_id());
+using (empresa_id = get_user_empresa_id())
+with check (empresa_id = get_user_empresa_id());
 
 -- --- Políticas de Histórico Consumíveis ---
-create policy "Usuários veem apenas Histórico da sua empresa" 
+create policy "Usuários gerenciam Histórico da sua empresa" 
 on public.historico_consumiveis for all 
-using (empresa_id = get_user_empresa_id());
+using (empresa_id = get_user_empresa_id())
+with check (empresa_id = get_user_empresa_id());
 
 -- ==========================================
 -- 4. ATIVAR RLS NAS NOVAS TABELAS
