@@ -16,8 +16,8 @@ import ProducaoPorOperadorChart from '../components/dashboard/ProducaoPorOperado
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { 
-    Activity, Clock, Zap, Target, Filter, DollarSign, TrendingDown, 
-    AlertTriangle, Timer, LayoutDashboard, PauseCircle, Cpu, Cog, Factory, Lock 
+    Activity, Clock, Zap, Target, Filter, DollarSign, TrendingDown, TrendingUp,
+    AlertTriangle, Timer, LayoutDashboard, PauseCircle, Cpu, Cog, Factory, Lock, RotateCw 
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -261,6 +261,7 @@ export default function Dashboard() {
                                     <option value="TODOS" className="bg-slate-900 text-white font-bold">🏭 Toda a Fábrica</option>
                                     <option value="CNC" className="bg-slate-900 text-cyan-400 font-bold">🌀 Centro de Usinagem CNC</option>
                                     <option value="EDM_FIO" className="bg-slate-900 text-emerald-400 font-bold">⚡ Eletroerosão a Fio (EDM)</option>
+                                    <option value="TORNO" className="bg-slate-900 text-amber-400 font-bold">⚙️ Torno CNC</option>
                                 </select>
                             </div>
                         )}
@@ -408,6 +409,230 @@ export default function Dashboard() {
                                     tooltipContent={`Horas em pausas acumuladas × taxa horária do setor produtivo.`}
                                 />
                             </div>
+
+                            {/* COMPARATIVO EXECUTIVO POR SETOR (Aparece na Visão Geral Fábrica / Gerente) */}
+                            {setorFilter === 'TODOS' && (() => {
+                                const rawConcluidas = kanban.concluido || [];
+
+                                const calcularMetricasSetor = (setorId, rateDefault) => {
+                                    const rate = Number(
+                                        setorId === 'CNC' ? custoHoraCnc :
+                                        setorId === 'EDM_FIO' ? custoHoraEdm :
+                                        custoHoraPadrao
+                                    ) || rateDefault;
+
+                                    const osDoSetor = rawConcluidas.filter(o => {
+                                        const s = o.setor || o.tipo_processo || 'CNC';
+                                        return s === setorId;
+                                    });
+
+                                    let planH = 0;
+                                    let realH = 0;
+                                    let aprovadasCount = 0;
+                                    let aferidasCount = 0;
+                                    let valorFaturamento = 0;
+                                    let valorPausas = 0;
+
+                                    osDoSetor.forEach(os => {
+                                        const sH = parseInt(os.tempo_estimado_setup_horas || os.tempoEstimadoSetupHoras || 0, 10) || 0;
+                                        const sM = (parseInt(os.tempo_estimado_setup_minutos || os.tempoEstimadoSetupMinutos || 0, 10) || 0) / 60;
+                                        const cH = parseInt(os.tempo_estimado_corte_horas || os.tempoEstimadoCorteHoras || 0, 10) || 0;
+                                        const cM = (parseInt(os.tempo_estimado_corte_minutos || os.tempoEstimadoCorteMinutos || 0, 10) || 0) / 60;
+                                        planH += (sH + sM + cH + cM);
+
+                                        const rSetup = Number(os.tempos_fases?.setup ?? os.temposFases?.setup ?? 0) || 0;
+                                        const rCorte = Number(os.tempos_fases?.emCorte ?? os.temposFases?.emCorte ?? 0) || 0;
+                                        realH += (rSetup + rCorte);
+
+                                        const res = os.resultado_afericao || os.resultadoAfericao;
+                                        if (res) {
+                                            aferidasCount++;
+                                            if (res === 'Aprovada') {
+                                                aprovadasCount++;
+                                                valorFaturamento += ((rSetup + rCorte) * rate);
+                                            }
+                                        }
+
+                                        const pausas = os.historico_pausas || os.historicoPausas || [];
+                                        pausas.forEach(p => {
+                                            valorPausas += (Number(p.duracaoHoras || 0) * rate);
+                                        });
+                                    });
+
+                                    const oee = planH > 0 ? Math.min(100, Math.round((planH / (realH || planH)) * 100)) : 100;
+                                    const fpy = aferidasCount > 0 ? Math.round((aprovadasCount / aferidasCount) * 100) : 100;
+
+                                    return {
+                                        concluidasCount: osDoSetor.length,
+                                        planH: planH.toFixed(1),
+                                        realH: realH.toFixed(1),
+                                        oee,
+                                        fpy,
+                                        valorFaturamento: valorFaturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                                        valorPausas: valorPausas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                                    };
+                                };
+
+                                const cncStats = calcularMetricasSetor('CNC', 90);
+                                const edmStats = calcularMetricasSetor('EDM_FIO', 130);
+                                const tornoStats = calcularMetricasSetor('TORNO', 80);
+
+                                return (
+                                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                                    <TrendingUp className="w-5 h-5 text-amber-400" />
+                                                    Comparativo Executivo de Eficiência por Setor
+                                                </h3>
+                                                <p className="text-xs text-slate-400">
+                                                    Desempenho comparado entre Usinagem CNC, Eletroerosão a Fio e Torno CNC
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {/* CNC Card */}
+                                            <div className="bg-slate-950 border border-cyan-500/30 rounded-xl p-4 space-y-3 relative overflow-hidden">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                                        <Cpu className="w-4 h-4" /> Centro de Usinagem CNC
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/30">
+                                                        R$ {custoHoraCnc}/h
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-baseline justify-between pt-1">
+                                                    <div>
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência OEE</span>
+                                                        <span className="text-3xl font-black text-white">{cncStats.oee}%</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Faturamento</span>
+                                                        <span className="text-base font-extrabold text-cyan-400">{cncStats.valorFaturamento}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                                                    <div className="bg-cyan-500 h-full transition-all duration-500" style={{ width: `${cncStats.oee}%` }}></div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-900">
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Peças Concluídas:</span>
+                                                        <strong className="text-slate-200">{cncStats.concluidasCount} peças</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Aprovação FPY:</span>
+                                                        <strong className="text-emerald-400">{cncStats.fpy}%</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Horas Usinadas:</span>
+                                                        <strong className="text-slate-200">{cncStats.realH}h</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Custo Pausas:</span>
+                                                        <strong className="text-amber-400">{cncStats.valorPausas}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* EDM Card */}
+                                            <div className="bg-slate-950 border border-emerald-500/30 rounded-xl p-4 space-y-3 relative overflow-hidden">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                                                        <Zap className="w-4 h-4" /> Eletroerosão a Fio (EDM)
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                                                        R$ {custoHoraEdm}/h
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-baseline justify-between pt-1">
+                                                    <div>
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência OEE</span>
+                                                        <span className="text-3xl font-black text-white">{edmStats.oee}%</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Faturamento</span>
+                                                        <span className="text-base font-extrabold text-emerald-400">{edmStats.valorFaturamento}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                                                    <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${edmStats.oee}%` }}></div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-900">
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Peças Concluídas:</span>
+                                                        <strong className="text-slate-200">{edmStats.concluidasCount} peças</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Aprovação FPY:</span>
+                                                        <strong className="text-emerald-400">{edmStats.fpy}%</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Horas Cortadas:</span>
+                                                        <strong className="text-slate-200">{edmStats.realH}h</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Custo Pausas:</span>
+                                                        <strong className="text-amber-400">{edmStats.valorPausas}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* TORNO Card */}
+                                            <div className="bg-slate-950 border border-amber-500/30 rounded-xl p-4 space-y-3 relative overflow-hidden">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                                                        <RotateCw className="w-4 h-4" /> Torno CNC
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-500/30">
+                                                        R$ {custoHoraPadrao}/h
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-baseline justify-between pt-1">
+                                                    <div>
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência OEE</span>
+                                                        <span className="text-3xl font-black text-white">{tornoStats.oee}%</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Faturamento</span>
+                                                        <span className="text-base font-extrabold text-amber-400">{tornoStats.valorFaturamento}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                                                    <div className="bg-amber-500 h-full transition-all duration-500" style={{ width: `${tornoStats.oee}%` }}></div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-900">
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Peças Concluídas:</span>
+                                                        <strong className="text-slate-200">{tornoStats.concluidasCount} peças</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Aprovação FPY:</span>
+                                                        <strong className="text-emerald-400">{tornoStats.fpy}%</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Horas Torneadas:</span>
+                                                        <strong className="text-slate-200">{tornoStats.realH}h</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-slate-500 block text-[10px]">Custo Pausas:</span>
+                                                        <strong className="text-amber-400">{tornoStats.valorPausas}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                         </div>
                     );
