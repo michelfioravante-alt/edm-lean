@@ -1,60 +1,91 @@
-# CNC Lean — Módulo Centro de Usinagem
+# ⚡ EDM Lean — Sistema MES, OEE e Kanban para Ferramentarias & Usinagem
 
-Fork local do **EDM Lean**, adaptado para **máquinas de centro de usinagem (CNC)**. Mesma arquitetura, design e layout; fluxo e módulos ajustados para ferramental, usinagem e inspeção.
+> **Plataforma SaaS Integrada de Gestão Industrial (MES) para Eletroerosão a Fio (WEDM) e Centros de Usinagem CNC.**
 
-## Início rápido — modo estudo (sem Supabase)
+[![Vercel Deployment](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://edmlean.com.br)
+[![Supabase](https://img.shields.io/badge/Database-Supabase-emerald?logo=supabase)](https://supabase.com)
+[![React 18](https://img.shields.io/badge/Frontend-React%2018-cyan?logo=react)](https://react.dev)
+[![E2E Tests](https://img.shields.io/badge/E2E%20Tests-100%25%20PASS-brightgreen?logo=puppeteer)](scripts/testar-e2e.mjs)
 
-```powershell
-cd "C:\Users\Usuario\Desktop\Módulo CNC"
+---
+
+## 🌐 Produção & Demonstração Live
+
+- **Domínio Oficial**: [https://edmlean.com.br](https://edmlean.com.br)
+- **Repositório GitHub**: [michelfioravante-alt/edm-lean](https://github.com/michelfioravante-alt/edm-lean)
+
+---
+
+## 🔥 Principais Recursos da Aplicação
+
+### 🌀 1. Arquitetura Multi-Setor Produtivo
+- **`🌀 Centro de Usinagem CNC`**: Kanban, OEE e cálculo de horas direcionados a centros de usinagem de 3 e 5 eixos.
+- **`⚡ Eletroerosão a Fio (EDM)`**: Gestão especializada de WEDM, com controle de consumo de fio e acabamento.
+- **`🏭 Visão Geral da Fábrica (Diretoria)`**: Visão consolidada de todas as células de produção e ferramentaria.
+
+### 👑 2. Segurança Executiva & Proteção por PIN Master
+- Acesso à Visão de Gerente, Indicadores Financeiros da Planta e Parâmetros Globais protegido por **PIN Master de 4 dígitos** configurável em tempo real.
+- Bloqueio automático de programadores ao seu setor de atuação (`🔒 KPIs Exclusivos`).
+
+### 💰 3. Motor de Cálculo de Custos Hora por Setor
+- Avaliação financeira dinâmica por setor produtivo:
+  - `custoHoraCnc`: Custo hora específico para Usinagem CNC (Padrão: R$ 80/h).
+  - `custoHoraEdm`: Custo hora específico para Eletroerosão a Fio (Padrão: R$ 120/h).
+- Apuração do valor gerado em ciclo, valor total de setup + trabalho, perdas por refugo e custo de tempo morto / pausas.
+
+### 📄 4. Importador Automático de Folhas de Processo CAM (Siemens NX / ShopDocs)
+- Leitura automática de HTML de folhas de processo CAM com extração automatizada de tempos de setup, tempos de corte, ferramentas necessárias, códigos de programas G e descritivo da peça.
+
+### 📦 5. Controle de Estoque & Vida Útil de Ferramental
+- Registro e controle de vida útil em horas de ferramentas de corte (fresas, brocas, fios).
+- Alerta visual de consumo mínimo e registro de quebras/trocas de ferramentas vinculadas à máquina e ao operador.
+
+---
+
+## 🧪 Suíte de Testes End-to-End (E2E)
+
+A aplicação conta com uma suíte de testes E2E automatizados desenvolvida com **Puppeteer**:
+
+- **Testes Desktop (1440px)**: `npm run testar-e2e` (8/8 Passados — 100%)
+- **Testes Mobile (390px Touch)**: `npm run testar-e2e:mobile` (10/10 Passados — 100%)
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend**: React 18, Vite, TailwindCSS, Lucide Icons, Chart.js, React-ChartJS-2
+- **Gerenciamento de Estado**: Zustand
+- **Backend & Realtime**: Supabase (PostgreSQL 17, Row Level Security, Auth & Realtime Subscriptions)
+- **Hospedagem & CI/CD**: Vercel
+
+---
+
+## 🚀 Como Rodar Localmente
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/michelfioravante-alt/edm-lean.git
+cd edm-lean
+
+# 2. Instalar dependências
 npm install
+
+# 3. Iniciar servidor de desenvolvimento (Modo Estudo / Local)
 npm run dev
 ```
 
-Abra **http://localhost:5174** (porta diferente do EDM Lean, que usa 5173).
-
-Na landing page, clique em **Explorar modo estudo (sem cadastro)**. Os dados ficam salvos no navegador (localStorage).
-
-Para restaurar os exemplos: banner amarelo → **Restaurar exemplos**.
+Abra **http://localhost:5173** no seu navegador. O modo estudo armazena os dados localmente no `localStorage` do navegador para testes sem necessidade de Supabase.
 
 ---
 
-## Quando for conectar ao Supabase
+## 🗄️ Banco de Dados & Migrações Supabase
 
-1. Crie um projeto Supabase separado
-2. No `.env`: `VITE_LOCAL_MODE=false` + credenciais
-3. Execute, nesta ordem: `supabase_schema.sql`, `supabase_ferramental.sql`, `supabase_cnc_campos.sql` e `supabase_estoque_movimentacoes.sql`
+Para conectar a uma instância própria do Supabase, execute o script SQL unificado no **SQL Editor** do seu painel Supabase:
 
-O `supabase_cnc_campos.sql` é **obrigatório**: adiciona as colunas de multi-setup, molde, import CAM e tratamento térmico. Sem ele o Supabase rejeita a criação de O.S. com erro de coluna inexistente.
-
-O `supabase_estoque_movimentacoes.sql` também é **obrigatório**: cria a tabela de entradas/saídas de estoque e a função `movimentar_estoque`. Sem ele a tela de Estoque não consegue dar entrada de material.
-
-## Fluxo Kanban (proposta inicial)
-
-| Coluna | Status no banco | Descrição |
-|--------|-----------------|-----------|
-| A fazer | `A fazer` | Fila de OPs / peças aguardando |
-| Prep. Ferramental | `Prep. Ferramental` | Montagem de ferramentas, offsets, fixture |
-| Em Usinagem | `Em Usinagem` | Ciclo automático em execução |
-| Inspeção | `Inspeção` | Conferência dimensional / acabamento |
-| Concluído | `Concluído` | Peça liberada |
-
-Ajuste os labels em `src/constants/cncProcess.js` conforme mapear o processo real.
-
-## Módulo Ferramental (novo)
-
-- Cadastro de fresas, brocas, inserts, etc.
-- Vida útil em horas + alerta
-- Registro de **quebra de ferramenta** com máquina e operador
-- Histórico de eventos
-
-## Documentação
-
-- `docs/FLUXO_CNC.md` — rascunho do processo para você validar com a operação
-
-## Stack
-
-React 18 · Vite · Zustand · Tailwind · Supabase · Chart.js
+- [`supabase_unified_schema.sql`](supabase_unified_schema.sql) — Adiciona o suporte multi-setor (`CNC`, `EDM_FIO`), tabela de programadores, PIN Master e custos hora diferenciados.
 
 ---
 
-Baseado no [EDM Lean](https://github.com/michelfioravante-alt/edm-lean).
+## 📄 Licença & Créditos
+
+Desenvolvido para **EDM Lean / Módulo CNC** · Todos os direitos reservados © 2026.
