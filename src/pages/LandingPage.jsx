@@ -95,7 +95,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 onClick={() => enterLocalStudyMode('admin')}
                                 className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 cursor-pointer animate-bounce-subtle"
                             >
-                                <span>Entrar sem Senha (Modo Estudo)</span>
+                                <span>Explorar Modo Demonstração (Sem Cadastro)</span>
                                 <ArrowRight size={16} />
                             </button>
                         ) : (
@@ -135,9 +135,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                             className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.03] active:scale-95 transition-all shadow-[0_10px_35px_rgba(16,185,129,0.3)] text-base cursor-pointer"
                         >
                             <CheckCircle2 size={22} />
-                            <span>Entrar no Sistema Agora (Sem Cadastro)</span>
+                            <span>Abrir Modo Demonstração Interativo (1-Clique)</span>
                             <ArrowRight size={20} />
                         </button>
+
                         <button
                             onClick={onLogin}
                             className="px-8 py-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all text-base cursor-pointer"

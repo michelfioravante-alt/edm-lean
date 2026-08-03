@@ -17,7 +17,8 @@ export default function LocalModeBanner() {
         <div className="bg-kanban-amber/15 border-b border-kanban-amber/30 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-kanban-amber font-bold uppercase tracking-wider">
                 <FlaskConical className="w-4 h-4" />
-                Modo estudo — sem Supabase · dados salvos no navegador
+                Modo Demonstração Interativa — dados salvos no navegador
+
             </div>
             <button
                 onClick={handleReset}

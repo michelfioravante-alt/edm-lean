@@ -372,11 +372,13 @@ export default function Login({ initialMode = 'login', onBack }) {
                     <button
                         type="button"
                         onClick={() => enterLocalStudyMode('admin')}
-                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm transition-all"
+                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm transition-all shadow-md"
                     >
-                        Entrar em modo estudo (sem login)
+                        Entrar no Modo Demonstração Interativo (Sem Login)
                     </button>
                 )}
+
+
 
                 <div className="flex flex-col items-center gap-6 mt-2 opacity-50 hover:opacity-100 transition-opacity">
                     <div className="flex items-center gap-6">
