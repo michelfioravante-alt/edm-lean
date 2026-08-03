@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Currículo — Michel Fioravante</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 9.5pt;
+    line-height: 1.5;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: white;
+  }
+
+  /* HEADER */
+  .header {
+    background: #0d1117;
+    padding: 22px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-left: 5px solid #cc0000;
+  }
+
+  .header-left h1 {
+    color: #ffffff;
+    font-size: 22pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .header-left .title {
+    color: #8b949e;
+    font-size: 9pt;
+    font-weight: 400;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+
+  .header-right {
+    text-align: right;
+    color: #8b949e;
+    font-size: 8pt;
+    line-height: 1.8;
+  }
+
+  .header-right a {
+    color: #cc0000;
+    text-decoration: none;
+  }
+
+  /* BODY LAYOUT */
+  .body {
+    display: flex;
+    gap: 0;
+  }
+
+  /* LEFT COLUMN */
+  .col-left {
+    width: 62%;
+    padding: 20px 20px 20px 30px;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  /* RIGHT COLUMN */
+  .col-right {
+    width: 38%;
+    padding: 20px 25px 20px 18px;
+    background: #fafafa;
+  }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #0d1117;
+    border-bottom: 2px solid #cc0000;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    margin-top: 18px;
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  /* RESUMO */
+  .resumo p {
+    color: #444;
+    font-size: 9pt;
+    line-height: 1.6;
+  }
+
+  /* EXPERIÊNCIA */
+  .exp-item { margin-bottom: 14px; }
+
+  .exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2px;
+  }
+
+  .exp-title {
+    font-weight: 700;
+    font-size: 9.5pt;
+    color: #0d1117;
+  }
+
+  .exp-period {
+    font-size: 7.5pt;
+    color: #888;
+    white-space: nowrap;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  .exp-company {
+    font-size: 8.5pt;
+    color: #cc0000;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .exp-type {
+    font-size: 7.5pt;
+    color: #888;
+    font-weight: 400;
+  }
+
+  .exp-desc {
+    font-size: 8.5pt;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .exp-desc ul { padding-left: 14px; margin-top: 2px; }
+  .exp-desc li { margin-bottom: 2px; }
+
+  /* PROJETOS */
+  .proj-item {
+    margin-bottom: 12px;
+    padding-left: 10px;
+    border-left: 2px solid #cc0000;
+  }
+
+  .proj-title {
+    font-weight: 700;
+    font-size: 9pt;
+    color: #0d1117;
+  }
+
+  .proj-subtitle {
+    font-size: 7.5pt;
+    color: #888;
+    margin-bottom: 2px;
+  }
+
+  .proj-desc {
+    font-size: 8pt;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .proj-link {
+    font-size: 7.5pt;
+    color: #cc0000;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  /* TAGS */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .tag {
+    background: #f0f0f0;
+    color: #444;
+    font-size: 7pt;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* RIGHT COLUMN ITEMS */
+  .skill-group { margin-bottom: 14px; }
+
+  .skill-group-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #0d1117;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .skill {
+    background: #e8e8e8;
+    color: #333;
+    font-size: 7.5pt;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .skill.highlight {
+    background: #0d1117;
+    color: #fff;
+  }
+
+  /* FORMAÇÃO */
+  .edu-item { margin-bottom: 10px; }
+
+  .edu-title {
+    font-weight: 700;
+    font-size: 9pt;
+    color: #0d1117;
+    line-height: 1.3;
+  }
+
+  .edu-inst {
+    font-size: 8pt;
+    color: #cc0000;
+    font-weight: 600;
+  }
+
+  .edu-period {
+    font-size: 7.5pt;
+    color: #888;
+  }
+
+  /* IDIOMAS */
+  .lang-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5pt;
+    margin-bottom: 4px;
+    color: #444;
+  }
+
+  .lang-level {
+    color: #888;
+    font-size: 8pt;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: #0d1117;
+    padding: 8px 30px;
+    text-align: center;
+    color: #555;
+    font-size: 7pt;
+    letter-spacing: 0.5px;
+  }
+
+  @media print {
+    body { margin: 0; }
+    .page { width: 100%; margin: 0; }
+    @page { margin: 0; size: A4; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Michel Fioravante</h1>
+      <p class="title">Especialista em Automação de Processos &amp; Desenvolvimento de Soluções B2B</p>
+    </div>
+    <div class="header-right">
+      <div>michelfioravante@gmail.com</div>
+      <div>(51) 98271-0396</div>
+      <div>Sapucaia do Sul — RS, Brasil</div>
+      <div><a href="https://linkedin.com/in/michel-fioravante">linkedin.com/in/michel-fioravante</a></div>
+      <div><a href="https://github.com/michelfioravante-alt">github.com/michelfioravante-alt</a></div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-left">
+
+      <div class="section-title">Resumo Profissional</div>
+      <div class="resumo">
+        <p>Especialista em Automação de Processos e Desenvolvimento de Soluções Digitais com formação em Gestão da Produção Industrial e MBA em Engenharia de Processos. Atuo na intersecção entre análise de processos e tecnologia — mapeando fluxos AS-IS/TO-BE, identificando gargalos operacionais e desenvolvendo a solução do zero. Experiência em projetos Full-Stack (Next.js, React, Supabase) e automações com n8n, entregando resultados mensuráveis para operações industriais e comerciais B2B.</p>
+      </div>
+
+      <div class="section-title">Experiência Profissional</div>
+
+      <div class="exp-item">
+        <div class="exp-header">
+          <div class="exp-title">Analista de Processos</div>
+          <div class="exp-period">Set 2025 – Presente</div>
+        </div>
+        <div class="exp-company">Metalúrgica Corte Metal <span class="exp-type">· Freelance · Presencial</span></div>
+        <div class="exp-desc">
+          <ul>
+            <li>Levantamento e estruturação do setor de produção com mapeamento de processos e definição de fluxos operacionais.</li>
+            <li>Implementação de painel de controle em Excel conectado à base Access para monitoramento de indicadores de produção.</li>
+            <li>Desenvolvimento de POPs e padronização de atividades críticas do processo produtivo.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-header">
+          <div class="exp-title">Assistente de Processos</div>
+          <div class="exp-period">Mar 2025 – Set 2025</div>
+        </div>
+        <div class="exp-company">Index Tecnologia em Usinagem <span class="exp-type">· CLT · São Leopoldo, RS</span></div>
+        <div class="exp-desc">
+          <ul>
+            <li>Responsável pela programação e desenvolvimento de processos de eletroerosão seriada.</li>
+            <li>Mapeamento e controle de processos, implementação de POPs e KPIs de produção.</li>
+            <li>Auxílio no desenvolvimento de dispositivos e ferramental para usinagem de precisão.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-header">
+          <div class="exp-title">Analista de Processos &amp; Automação</div>
+          <div class="exp-period">Ago 2024 – Presente</div>
+        </div>
+        <div class="exp-company">Projetos Independentes <span class="exp-type">· PJ · Remoto</span></div>
+        <div class="exp-desc">
+          <ul>
+            <li>Desenvolvimento Full-Stack da plataforma SaaS EDM Lean para gestão de produção industrial com OEE automático (React, Supabase). Resultado: OEE de 48% → 61% em 3 meses.</li>
+            <li>Levantamento de requisitos e desenvolvimento do CRM MWK para distribuidora B2B, substituindo planilha de 30 usuários por plataforma integrada com IA (OCR de odômetro).</li>
+            <li>Arquitetura de automação cognitiva de atendimento (Nexlog AI) com roteamento por LLM, n8n e integração WhatsApp — redução de tempo de resposta de 4h para 45 segundos.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-title">Projetos de Portfólio</div>
+
+      <div class="proj-item">
+        <div class="proj-title">CRM MWK — Gestão Comercial B2B</div>
+        <div class="proj-subtitle">Next.js · React · TypeScript · Supabase · RLS · PWA · Google Cloud Vision</div>
+        <div class="proj-desc">CRM Full-Stack com dois perfis (Técnico de Campo / Gestor). OCR de odômetro via IA, workflow de aprovação de sell-out e painel executivo com exportação para Power BI. Substituiu planilha de 30 colaboradores.</div>
+        <div class="tags">
+          <a class="proj-link" href="https://crm-mwk.vercel.app">crm-mwk.vercel.app</a>
+        </div>
+      </div>
+
+      <div class="proj-item">
+        <div class="proj-title">EDM Lean — SaaS de Gestão de Produção</div>
+        <div class="proj-subtitle">React · Vite · Supabase · Tailwind · Multi-tenant · Realtime</div>
+        <div class="proj-desc">Plataforma SaaS para usinagem de precisão com Kanban de ordens de serviço, cálculo automático de OEE e sistema Andon. Arquitetura multi-tenant com RLS. <strong>OEE: 48% → 61% em 3 meses.</strong></div>
+        <div class="tags">
+          <a class="proj-link" href="https://edmlean.com.br">edmlean.com.br</a>
+        </div>
+      </div>
+
+      <div class="proj-item">
+        <div class="proj-title">Nexlog AI — Orquestrador Cognitivo de Atendimento</div>
+        <div class="proj-subtitle">n8n · Supabase · LLM · Evolution API · OpenAI Whisper · ClickUp</div>
+        <div class="proj-desc">Hiperautomação para triagem de chamados via WhatsApp com roteamento por LLM. Transcrição de áudios em &lt;2s via Whisper/Groq. Tempo de resposta: 4h → 45 segundos.</div>
+      </div>
+
+      <div class="proj-item">
+        <div class="proj-title">NovaPay — Dashboard de Performance Comercial</div>
+        <div class="proj-subtitle">React · Vite · n8n · Supabase · PostgreSQL Triggers · RLS</div>
+        <div class="proj-desc">Dashboard financeiro com controle granular Gestor/Vendedor. Triggers PL/pgSQL para lançamentos automáticos. Workflows n8n com alertas de meta via Cron e Webhooks.</div>
+        <div class="tags">
+          <a class="proj-link" href="https://novapay-dashboard.vercel.app">novapay-dashboard.vercel.app</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-right">
+
+      <div class="section-title">Competências Técnicas</div>
+
+      <div class="skill-group">
+        <div class="skill-group-title">Automação &amp; Integração</div>
+        <div class="skill-list">
+          <span class="skill highlight">n8n</span>
+          <span class="skill highlight">Webhooks</span>
+          <span class="skill">Evolution API</span>
+          <span class="skill">LLM Routing</span>
+          <span class="skill">IA Generativa</span>
+          <span class="skill">Google Cloud Vision</span>
+          <span class="skill">OpenAI Whisper</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-title">Desenvolvimento</div>
+        <div class="skill-list">
+          <span class="skill highlight">Next.js</span>
+          <span class="skill highlight">React</span>
+          <span class="skill">TypeScript</span>
+          <span class="skill">JavaScript</span>
+          <span class="skill">Tailwind CSS</span>
+          <span class="skill">Vite</span>
+          <span class="skill">PWA</span>
+          <span class="skill">Playwright</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-title">Banco de Dados &amp; Backend</div>
+        <div class="skill-list">
+          <span class="skill highlight">Supabase</span>
+          <span class="skill highlight">PostgreSQL</span>
+          <span class="skill">SQL Avançado</span>
+          <span class="skill">RLS</span>
+          <span class="skill">PL/pgSQL</span>
+          <span class="skill">Triggers</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-title">Processos &amp; Gestão</div>
+        <div class="skill-list">
+          <span class="skill highlight">BPMN</span>
+          <span class="skill highlight">Lean Manufacturing</span>
+          <span class="skill">Bizagi</span>
+          <span class="skill">Power BI</span>
+          <span class="skill">Excel Avançado</span>
+          <span class="skill">OEE</span>
+          <span class="skill">VSM</span>
+          <span class="skill">Mapeamento AS-IS/TO-BE</span>
+        </div>
+      </div>
+
+      <div class="section-title">Formação Acadêmica</div>
+
+      <div class="edu-item">
+        <div class="edu-title">MBA em Gestão da Qualidade e Engenharia de Processos</div>
+        <div class="edu-inst">PUCRS — Porto Alegre, RS</div>
+        <div class="edu-period">Ago 2024 – Ago 2025</div>
+      </div>
+
+      <div class="edu-item">
+        <div class="edu-title">Graduação em Gestão da Produção Industrial</div>
+        <div class="edu-inst">ULBRA — Canoas, RS</div>
+        <div class="edu-period">Jul 2020 – Jun 2024</div>
+      </div>
+
+      <div class="edu-item">
+        <div class="edu-title">Técnico em Qualidade</div>
+        <div class="edu-inst">Senac RS</div>
+        <div class="edu-period">Jan 2022 – Jun 2023</div>
+      </div>
+
+      <div class="section-title">Idiomas</div>
+
+      <div class="lang-item">
+        <span>Português</span>
+        <span class="lang-level">Nativo</span>
+      </div>
+      <div class="lang-item">
+        <span>Inglês</span>
+        <span class="lang-level">Leitura técnica</span>
+      </div>
+
+      <div class="section-title">Portfólio</div>
+      <div style="font-size: 8pt; color: #555; line-height: 1.8;">
+        <div><a href="https://github.com/michelfioravante-alt" style="color: #cc0000; text-decoration: none; font-weight: 600;">github.com/michelfioravante-alt</a></div>
+        <div style="color: #888; font-size: 7.5pt;">4 projetos com demos ao vivo e código aberto</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    MICHEL FIORAVANTE · michelfioravante@gmail.com · (51) 98271-0396 · Sapucaia do Sul — RS
+  </div>
+
+</div>
+</body>
+</html>

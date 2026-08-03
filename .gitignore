@@ -1,0 +1,38 @@
+# Dependências e build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Variáveis de ambiente (nunca versionar chaves)
+.env
+.env.*
+!.env.example
+
+# Vercel (IDs do projeto — não necessário no Git)
+.vercel/
+
+# Logs e cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+.vite/
+.cache/
+
+# SO / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Testes / automação local (Puppeteer etc.)
+.puppeteer/
+test-results/
+
+# Exports n8n locais (não fazem parte do app EDM Lean)
+webhook-test*.json
+webhook-gemini.json
