@@ -3,7 +3,7 @@ import Button from '../common/Button';
 import ImportNxSheet from './ImportNxSheet';
 import { useAppStore } from '../../store/useAppStore';
 import { minutosParaHorasMin } from '../../utils/nxShopDocParser';
-import { Cpu, Zap } from 'lucide-react';
+import { Cpu, Zap, Wrench, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 
 
 /**
@@ -17,12 +17,13 @@ function nomeCadastrado(cadastro, nome) {
 }
 
 export default function NovaOSForm({ onClose }) {
-    const { maquinas, operadores, programadores, clientes, addCliente } = useAppStore();
+    const { maquinas, operadores, programadores, clientes, addCliente, estoque = [] } = useAppStore();
     // maquinas e operadores são selecionados na etapa Set-up (TransitionModal)
 
     const activeSector = useAppStore(state => state.activeSector);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [nxImportMeta, setNxImportMeta] = useState(null);
+    const [ferramentasList, setFerramentasList] = useState([]);
     const [clienteWarning, setClienteWarning] = useState(false);
     const [quickEmail, setQuickEmail] = useState('');
     const [quickTelefone, setQuickTelefone] = useState('');
@@ -177,6 +178,9 @@ export default function NovaOSForm({ onClose }) {
 
     const handleNxImport = (data) => {
         setNxImportMeta(data);
+        if (Array.isArray(data.ferramentas) && data.ferramentas.length > 0) {
+            setFerramentasList(data.ferramentas);
+        }
         const usinagem = minutosParaHorasMin(data.tempoUsinagemMinutos || 0);
         const setup = minutosParaHorasMin(data.tempoSetupMinutos || 0);
         setFormData((prev) => ({
@@ -192,9 +196,28 @@ export default function NovaOSForm({ onClose }) {
         }));
     };
 
+    const handleAddFerramenta = () => {
+        setFerramentasList(prev => [
+            ...prev,
+            { codigoT: `T${String(prev.length + 1).padStart(2, '0')}`, nome: '' }
+        ]);
+    };
+
+    const handleRemoveFerramenta = (index) => {
+        setFerramentasList(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateFerramenta = (index, field, value) => {
+        setFerramentasList(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (isSubmitting) return;
+
+        const nxImportData = nxImportMeta
+            ? { arquivo: nxImportMeta.arquivo, ferramentas: ferramentasList, operacoes: nxImportMeta.operacoes }
+            : (ferramentasList.length > 0 ? { arquivo: 'Manual', ferramentas: ferramentasList, operacoes: [] } : null);
 
         const novaOS = {
             ...formData,
@@ -203,7 +226,7 @@ export default function NovaOSForm({ onClose }) {
             total_setups: parseInt(formData.totalSetups) || 1,
             nomes_setups: formData.setupsList?.map(s => s.nome) || ['OP10'],
             detalhes_setups: formData.setupsList || [],
-            nxImport: nxImportMeta ? { arquivo: nxImportMeta.arquivo, ferramentas: nxImportMeta.ferramentas, operacoes: nxImportMeta.operacoes } : null,
+            nxImport: nxImportData,
         };
         const { addOrdemServico } = useAppStore.getState();
 
@@ -259,7 +282,81 @@ export default function NovaOSForm({ onClose }) {
                 </div>
 
                 {formData.setor === 'CNC' && (
-                    <ImportNxSheet onImport={handleNxImport} disabled={isSubmitting} />
+                    <>
+                        <ImportNxSheet onImport={handleNxImport} disabled={isSubmitting} />
+
+                        {/* Cadastro Manual / Edição de Ferramentas */}
+                        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Wrench className="w-4 h-4 text-kanban-amber" />
+                                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+                                        Lista de Ferramentas / Magazine Previsto
+                                    </h4>
+                                    {ferramentasList.length > 0 && (
+                                        <span className="text-[10px] font-bold bg-kanban-amber/20 text-kanban-amber px-2 py-0.5 rounded-full border border-kanban-amber/30">
+                                            {ferramentasList.length} {ferramentasList.length === 1 ? 'ferramenta' : 'ferramentas'}
+                                        </span>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddFerramenta}
+                                    className="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-kanban-amber px-3 py-1.5 rounded-lg border border-slate-700 hover:border-kanban-amber/50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Adicionar Ferramenta</span>
+                                </button>
+                            </div>
+
+                            {ferramentasList.length === 0 ? (
+                                <p className="text-xs text-slate-500 italic py-1">
+                                    Nenhuma ferramenta adicionada. Importe a folha CAM acima ou clique em "Adicionar Ferramenta" para especificar o magazine manualmente.
+                                </p>
+                            ) : (
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                    {ferramentasList.map((f, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                                            <div className="w-20 shrink-0">
+                                                <input
+                                                    type="text"
+                                                    value={f.codigoT || ''}
+                                                    onChange={(e) => handleUpdateFerramenta(idx, 'codigoT', e.target.value)}
+                                                    placeholder="T01"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-center font-mono text-kanban-amber font-bold outline-none focus:border-kanban-amber"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    list={`estoque-lista-${idx}`}
+                                                    value={f.nome || ''}
+                                                    onChange={(e) => handleUpdateFerramenta(idx, 'nome', e.target.value)}
+                                                    placeholder="Nome ou especificação da ferramenta (ex: Fresa MD D10 4F)"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-1 text-xs text-slate-100 placeholder-slate-600 outline-none focus:border-kanban-amber"
+                                                />
+                                                {estoque.length > 0 && (
+                                                    <datalist id={`estoque-lista-${idx}`}>
+                                                        {estoque.map(item => (
+                                                            <option key={item.id} value={item.nome} />
+                                                        ))}
+                                                    </datalist>
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveFerramenta(idx)}
+                                                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-md transition-colors cursor-pointer"
+                                                title="Remover ferramenta"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
 
 
