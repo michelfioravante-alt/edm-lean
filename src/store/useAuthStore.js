@@ -132,6 +132,8 @@ export const useAuthStore = create((set, get) => ({
     enterLocalStudyMode: (role = 'admin', setor = null) => {
         const db = resetDb(); // Sempre recria dados frescos ao entrar no demo
         localStorage.setItem('cnc-lean-session', role);
+        // Garante que o Kanban abre no setor CNC (evita herdar setor anterior do localStorage)
+        localStorage.setItem('lean_active_sector', 'CNC');
         const savedSetor = setor || localStorage.getItem('cnc-lean-setor-padrao') || (role === 'admin' ? 'TODOS' : 'CNC');
         localStorage.setItem('cnc-lean-setor-padrao', savedSetor);
         set({

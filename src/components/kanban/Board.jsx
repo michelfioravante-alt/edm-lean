@@ -490,63 +490,67 @@ export default function Board() {
 
 
                 {/* STATS BAR */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 shrink-0">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                        <div className="w-1.5 h-12 rounded-full bg-kanban-steel shrink-0"></div>
-                        <div>
-                            <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Total OS Ativas</div>
-                            <div className="text-3xl font-black text-white leading-none">
-                                {(kanban.aFazer?.length || 0) + (kanban.setup?.length || 0) + (kanban.emCorte?.length || 0) + (kanban.afericao?.length || 0)}
+                {(() => {
+                    // Filtra pelo setor ativo para que os stats batam com o que aparece nas colunas
+                    const filteredAFazer = getFilteredCards('aFazer', kanban.aFazer || []);
+                    const filteredSetup = getFilteredCards('setup', kanban.setup || []);
+                    const filteredEmCorte = getFilteredCards('emCorte', kanban.emCorte || []);
+                    const filteredAfericao = getFilteredCards('afericao', kanban.afericao || []);
+                    const filteredConcluido = getFilteredCards('concluido', kanban.concluido || []);
+                    const totalAtivas = filteredAFazer.length + filteredSetup.length + filteredEmCorte.length + filteredAfericao.length;
+                    const totalEmAtraso = [...filteredAFazer, ...filteredSetup, ...filteredEmCorte, ...filteredAfericao].filter(os => {
+                        const prazo = os.prazo_entrega || os.prazoEntrega;
+                        if (!prazo) return false;
+                        const prazoDate = new Date(prazo.includes('T') ? prazo : `${prazo}T12:00:00`);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return prazoDate.getTime() < today.getTime() && !(os.is_pausado || os.isPausado);
+                    }).length;
+                    const totalConcluidas = filteredConcluido.filter(os => {
+                        const ts = os.timestamp_entrada_concluido || os.timestampEntrada_concluido;
+                        return ts && new Date(ts).toDateString() === new Date().toDateString();
+                    }).length;
+
+                    return (
+                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 shrink-0">
+                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
+                                <div className="w-1.5 h-12 rounded-full bg-kanban-steel shrink-0"></div>
+                                <div>
+                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Total OS Ativas</div>
+                                    <div className="text-3xl font-black text-white leading-none">{totalAtivas}</div>
+                                </div>
+                            </div>
+                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
+                                <div className="w-1.5 h-12 rounded-full bg-kanban-rust shrink-0"></div>
+                                <div>
+                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Em Atraso</div>
+                                    <div className={`text-3xl font-black leading-none ${totalEmAtraso > 0 ? 'text-kanban-rust' : 'text-slate-600'}`}>{totalEmAtraso}</div>
+                                </div>
+                            </div>
+                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
+                                <div className="w-1.5 h-12 rounded-full bg-kanban-teal shrink-0"></div>
+                                <div>
+                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Em Usinagem</div>
+                                    <div className="text-3xl font-black text-white leading-none">{filteredEmCorte.length}</div>
+                                </div>
+                            </div>
+                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
+                                <div className="w-1.5 h-12 rounded-full bg-kanban-green shrink-0"></div>
+                                <div>
+                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Concluídas Hoje</div>
+                                    <div className="text-3xl font-black text-white leading-none">{totalConcluidas}</div>
+                                </div>
+                            </div>
+                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
+                                <div className="w-1.5 h-12 rounded-full bg-red-500 shrink-0"></div>
+                                <div>
+                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Alerta Estoque</div>
+                                    <div className={`text-3xl font-black leading-none ${lowStockCount > 0 ? 'text-red-500' : 'text-slate-600'}`}>{lowStockCount}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                        <div className="w-1.5 h-12 rounded-full bg-kanban-rust shrink-0"></div>
-                        <div>
-                            <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Em Atraso</div>
-                            <div className="text-3xl font-black text-kanban-rust leading-none">
-                                {[...kanban.aFazer || [], ...kanban.setup || [], ...kanban.emCorte || [], ...kanban.afericao || []].filter(os => {
-                                    const prazo = os.prazo_entrega || os.prazoEntrega;
-                                    if (!prazo) return false;
-                                    const prazoDate = new Date(prazo.includes('T') ? prazo : `${prazo}T12:00:00`);
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
-                                    return prazoDate.getTime() < today.getTime() && !(os.is_pausado || os.isPausado);
-                                }).length}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                        <div className="w-1.5 h-12 rounded-full bg-kanban-teal shrink-0"></div>
-                        <div>
-                            <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Em Usinagem</div>
-                            <div className="text-3xl font-black text-white leading-none">
-                                {kanban.emCorte?.length || 0}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                        <div className="w-1.5 h-12 rounded-full bg-kanban-green shrink-0"></div>
-                        <div>
-                            <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Concluídas Hoje</div>
-                            <div className="text-3xl font-black text-white leading-none">
-                                {kanban.concluido?.filter(os => {
-                                    const ts = os.timestamp_entrada_concluido || os.timestampEntrada_concluido;
-                                    return ts && new Date(ts).toDateString() === new Date().toDateString();
-                                }).length || 0}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                        <div className="w-1.5 h-12 rounded-full bg-red-500 shrink-0"></div>
-                        <div>
-                            <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Alerta Estoque</div>
-                            <div className={`text-3xl font-black leading-none ${lowStockCount > 0 ? 'text-red-500' : 'text-slate-600'}`}>
-                                {lowStockCount}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    );
+                })()}
 
                 {/* KANBAN COLUMNS */}
                 <div className="flex flex-col md:flex-row gap-4 pb-12 items-center md:items-stretch flex-1 w-full md:w-max md:min-w-full md:px-6 md:snap-scroll-x justify-center">
