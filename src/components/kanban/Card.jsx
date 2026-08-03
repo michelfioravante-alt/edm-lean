@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { PlayCircle, PauseCircle, Clock, Link as LinkIcon, Copy, Check, Plus } from 'lucide-react';
+import { PlayCircle, PauseCircle, Clock, Link as LinkIcon, Copy, Check, Plus, Wrench } from 'lucide-react';
 import { calcularTempoFaseAtual } from '../../utils/manufacturingMath';
 import { formatarHoras } from '../../utils/formatters';
 import { useAppStore } from '../../store/useAppStore';
@@ -267,6 +267,35 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
                             </div>
                         </div>
                     )}
+
+                    {/* Resumo de Ferramentas da O.S. (CAM ou Manual) */}
+                    {(() => {
+                        const ferramentas = data.nx_import?.ferramentas || data.nxImport?.ferramentas || [];
+                        if (!ferramentas || ferramentas.length === 0) return null;
+
+                        return (
+                            <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-2 mt-2">
+                                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                    <span className="flex items-center gap-1 text-kanban-amber font-mono">
+                                        <Wrench className="w-3 h-3" />
+                                        Magazine ({ferramentas.length})
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                    {ferramentas.slice(0, 3).map((f, i) => (
+                                        <span key={i} className="text-[9px] bg-slate-950 text-slate-300 px-1.5 py-0.5 rounded border border-slate-800 font-mono truncate max-w-[130px]">
+                                            <strong className="text-kanban-amber">{f.codigoT || `T${i + 1}`}:</strong> {f.nome || 'Ferramenta'}
+                                        </span>
+                                    ))}
+                                    {ferramentas.length > 3 && (
+                                        <span className="text-[9px] bg-slate-950 text-slate-400 px-1 py-0.5 rounded border border-slate-800 font-bold">
+                                            +{ferramentas.length - 3} mais
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* ALERTA DE PAUSA (MOTIVO E OBS) */}
                     {isPausadoFinal && (
