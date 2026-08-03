@@ -110,6 +110,16 @@ export function createSeedDatabase() {
                 numero_programa: 'O2045A',
                 total_setups: 3, setup_atual: 1,
                 nomes_setups: ['OP10 – Desbaste Cavidade (H13)', 'OP20 – Semi-acabamento 5 Eixos', 'OP30 – Acabamento + Flancos'],
+                nx_import: {
+                    arquivo: 'MLD-2045-CAM-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Fresa Metal Duro Ø10 4F – Desbaste H13 (Sandvik)' },
+                        { codigoT: 'T02', nome: 'Fresa Toroidal Ø8 R1 – Semi-acabamento (Iscar)' },
+                        { codigoT: 'T03', nome: 'Fresa Esférica Ø6 R3 – Acabamento 3D (Mitsubishi)' },
+                        { codigoT: 'T04', nome: 'Fresa Esférica Ø3 R1.5 – Detalhamento Raios' },
+                    ],
+                    operacoes: ['OP10 Desbaste Cavidade H13', 'OP20 Semi-acabamento 5 Eixos', 'OP30 Acabamento 3D']
+                },
                 created_at: ago(48), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
             },
@@ -126,6 +136,15 @@ export function createSeedDatabase() {
                 numero_programa: 'O0803',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['OP10 – Torneamento + Furo Extrator'],
+                nx_import: {
+                    arquivo: 'EXT-P80-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Insert WNMG 080408 – Torneamento Desbaste' },
+                        { codigoT: 'T02', nome: 'Broca Metal Duro Ø12 (Dormer HSS Co5)' },
+                        { codigoT: 'T03', nome: 'Insert VNMG 160404 – Acabamento Fino' },
+                    ],
+                    operacoes: ['OP10 Torneamento Corpo', 'OP20 Furação Extrator']
+                },
                 created_at: ago(36), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
             },
@@ -145,6 +164,15 @@ export function createSeedDatabase() {
                 numero_programa: 'O1892B',
                 total_setups: 2, setup_atual: 1,
                 nomes_setups: ['OP10 – Desbaste + Semi-acabamento P20', 'OP20 – Acabamento Geom. + Raios'],
+                nx_import: {
+                    arquivo: 'MLD-1892-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Cabeçote Desbaste Ø50 R0.8 – Face Mill (Seco)' },
+                        { codigoT: 'T02', nome: 'Fresa Metal Duro Ø12 4F (Garrach)' },
+                        { codigoT: 'T03', nome: 'Fresa Esférica Ø6 R3 – Acabamento Raios' },
+                    ],
+                    operacoes: ['OP10 Desbaste P20', 'OP20 Acabamento Geométrico']
+                },
                 created_at: ago(24), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
             },
@@ -163,6 +191,15 @@ export function createSeedDatabase() {
                 programador: 'Marcos – CAM/UG NX (Usinagem)',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['OP10 – Usinagem Perfil Eletrodo Grafite'],
+                nx_import: {
+                    arquivo: 'ELT-CU-EDM-042-CAM.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Fresa Topo Ø6 Grafite (Diamond Coating)' },
+                        { codigoT: 'T02', nome: 'Fresa Toroidal Ø4 R0.5 – Nervura' },
+                        { codigoT: 'T03', nome: 'Fresa Esférica Ø2 R1 – Detalhamento' },
+                    ],
+                    operacoes: ['OP10 Usinagem Grafite', 'OP20 Acabamento Nervura']
+                },
                 created_at: ago(18), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0.8, emCorte: 0, afericao: 0 },
             },
@@ -179,6 +216,15 @@ export function createSeedDatabase() {
                 programador: 'Marcos – CAM/UG NX (Usinagem)',
                 total_setups: 2, setup_atual: 2,
                 nomes_setups: ['OP10 – Desbaste Corpo Punção', 'OP20 – Acabamento + Perfil Corte'],
+                nx_import: {
+                    arquivo: 'PNC-TROM-018-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Fresa Desbaste Ø16 – Remoção Volume' },
+                        { codigoT: 'T02', nome: 'Fresa Metal Duro Ø10 4F (TiSiN)' },
+                        { codigoT: 'T03', nome: 'Broca Ø6.8 – Furo Rebaixo' },
+                    ],
+                    operacoes: ['OP10 Desbaste Punção', 'OP20 Acabamento Perfil']
+                },
                 created_at: ago(14), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0.5, emCorte: 5.2, afericao: 0 },
             },
@@ -194,6 +240,16 @@ export function createSeedDatabase() {
                 programador: 'Marcos – CAM/UG NX (Usinagem)',
                 total_setups: 3, setup_atual: 3,
                 nomes_setups: ['OP10 – Desbaste', 'OP20 – Semi-acabamento', 'OP30 – Acabamento 5-Eixos'],
+                nx_import: {
+                    arquivo: 'MLD-0981-BLD-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Cabeçote Desbaste Ø50 R0.8' },
+                        { codigoT: 'T02', nome: 'Fresa Metal Duro Ø10 4F' },
+                        { codigoT: 'T03', nome: 'Fresa Esférica Ø8 R4' },
+                        { codigoT: 'T04', nome: 'Macho M10x1.5 HSS' },
+                    ],
+                    operacoes: ['OP10 Desbaste', 'OP20 Semi-acabamento', 'OP30 Acabamento 5E']
+                },
                 created_at: ago(72), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 1.2, emCorte: 18.6, afericao: 0.5 },
             },
@@ -213,6 +269,15 @@ export function createSeedDatabase() {
                 numero_programa: 'W0091',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Perfil Corte Completo 4 Passadas (Ra 0,4µm)'],
+                nx_import: {
+                    arquivo: 'MTZ-TROM-WEDM.html',
+                    ferramentas: [
+                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
+                        { codigoT: 'W02', nome: 'Resina Desionizadora Deionex' },
+                        { codigoT: 'W03', nome: 'Filtro Água 3µm (Fanuc)' },
+                    ],
+                    operacoes: ['WEDM 4 Passadas Ra 0.4µm']
+                },
                 created_at: ago(30), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
             },
@@ -229,6 +294,14 @@ export function createSeedDatabase() {
                 numero_programa: 'W0073',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Furo + Perfil Guia (M2)'],
+                nx_import: {
+                    arquivo: 'PNC-GER-EDM-07-WEDM.html',
+                    ferramentas: [
+                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
+                        { codigoT: 'W02', nome: 'Filtro Água 3µm (Fanuc)' },
+                    ],
+                    operacoes: ['WEDM Furo + Perfil M2']
+                },
                 created_at: ago(20), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
             },
@@ -248,6 +321,14 @@ export function createSeedDatabase() {
                 numero_programa: 'W0032',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Desbaste + 2 Acabamentos (ângulo cônico 3°)'],
+                nx_import: {
+                    arquivo: 'MTZ-SCH-PF-003-WEDM.html',
+                    ferramentas: [
+                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
+                        { codigoT: 'W02', nome: 'Resina Desionizadora Deionex' },
+                    ],
+                    operacoes: ['WEDM Desbaste + 2 Acabamentos']
+                },
                 created_at: ago(16), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
             },
@@ -266,6 +347,14 @@ export function createSeedDatabase() {
                 programador: 'Felipe – WEDM (Eletroerosão Fio)',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Perfil Eletrodo (Ra 0,8µm)'],
+                nx_import: {
+                    arquivo: 'MLD-STHL-ELT-14-WEDM.html',
+                    ferramentas: [
+                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
+                        { codigoT: 'W02', nome: 'Eletrodo Cobre Ø12mm' },
+                    ],
+                    operacoes: ['WEDM Perfil Eletrodo']
+                },
                 created_at: ago(12), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0.5, emCorte: 0, afericao: 0 },
             },
@@ -281,6 +370,15 @@ export function createSeedDatabase() {
                 programador: 'Felipe – WEDM (Eletroerosão Fio)',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – 4 Passadas (Ra 0,4µm) – Perfil Extrusão'],
+                nx_import: {
+                    arquivo: 'MTZ-MARCO-PF-12-WEDM.html',
+                    ferramentas: [
+                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
+                        { codigoT: 'W02', nome: 'Resina Desionizadora Deionex' },
+                        { codigoT: 'W03', nome: 'Filtro Água 3µm (Fanuc)' },
+                    ],
+                    operacoes: ['WEDM 4 Passadas Perfil Extrusão']
+                },
                 created_at: ago(96), is_pausado: false,
                 historico_pausas: [], tempos_fases: { setup: 0.7, emCorte: 9.2, afericao: 0.4 },
             },
