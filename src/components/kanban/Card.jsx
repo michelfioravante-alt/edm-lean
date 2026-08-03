@@ -109,7 +109,22 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
                 {/* Header (PC ID + G-Code + Molde/Componente + Alerts + Setups) */}
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold tracking-widest uppercase text-slate-500">
+                        {/* Badge de Setor Produtivo (EDM, Torno ou CNC) */}
+                        {(data.setor || data.tipo_processo || 'CNC') === 'EDM_FIO' ? (
+                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-950/90 text-emerald-400 border border-emerald-500/50 flex items-center gap-1">
+                                ⚡ EDM Fio
+                            </span>
+                        ) : (data.setor || data.tipo_processo) === 'TORNO' ? (
+                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-950/90 text-amber-400 border border-amber-500/50 flex items-center gap-1">
+                                ⚙️ Torno
+                            </span>
+                        ) : (
+                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-cyan-950/90 text-cyan-400 border border-cyan-500/50 flex items-center gap-1">
+                                🌀 CNC
+                            </span>
+                        )}
+
+                        <span className="text-xs font-bold tracking-widest uppercase text-slate-400 font-mono">
                             PC: {codigo_peca || codigoPeca || 'S/N'}
                         </span>
                         {(data.codigo_molde || data.codigoMolde) && (

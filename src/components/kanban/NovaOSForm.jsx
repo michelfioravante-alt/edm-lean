@@ -3,7 +3,7 @@ import Button from '../common/Button';
 import ImportNxSheet from './ImportNxSheet';
 import { useAppStore } from '../../store/useAppStore';
 import { minutosParaHorasMin } from '../../utils/nxShopDocParser';
-import { Cpu, Zap, Wrench, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Cpu, Zap, Wrench, Plus, Trash2, CheckCircle2, RotateCw } from 'lucide-react';
 
 
 /**
@@ -253,30 +253,42 @@ export default function NovaOSForm({ onClose }) {
                 {/* Seleção do Setor Produtivo */}
                 <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
                     <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Setor Produtivo da O.S.</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, setor: 'CNC' }))}
-                            className={`px-4 py-3 rounded-xl border font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`px-3 py-3 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
                                 formData.setor === 'CNC'
                                     ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-md ring-1 ring-cyan-500'
                                     : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                             }`}
                         >
-                            <Cpu className="w-5 h-5" />
-                            <span>Centro de Usinagem CNC</span>
+                            <Cpu className="w-4 h-4 shrink-0" />
+                            <span>Usinagem CNC</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, setor: 'EDM_FIO' }))}
-                            className={`px-4 py-3 rounded-xl border font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`px-3 py-3 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
                                 formData.setor === 'EDM_FIO'
                                     ? 'bg-emerald-950/80 border-emerald-500 text-emerald-400 shadow-md ring-1 ring-emerald-500'
                                     : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                             }`}
                         >
-                            <Zap className="w-5 h-5" />
-                            <span>Eletroerosão a Fio (EDM)</span>
+                            <Zap className="w-4 h-4 shrink-0" />
+                            <span>Eletroerosão Fio</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, setor: 'TORNO' }))}
+                            className={`px-3 py-3 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                                formData.setor === 'TORNO'
+                                    ? 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-md ring-1 ring-amber-500'
+                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                            }`}
+                        >
+                            <RotateCw className="w-4 h-4 shrink-0" />
+                            <span>Torno CNC</span>
                         </button>
                     </div>
                 </div>

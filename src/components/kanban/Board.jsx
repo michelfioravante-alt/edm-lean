@@ -20,7 +20,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { KANBAN_COLUMNS, COLUMN_LABELS } from '../../constants/cncProcess';
 import { SECTORS, SECTOR_OPTIONS } from '../../constants/sectorConstants';
-import { Cpu, Zap, Factory, Lock } from 'lucide-react';
+import { Cpu, Zap, Factory, Lock, RotateCw } from 'lucide-react';
 
 export default function Board() {
     // Seletores granulares
@@ -451,6 +451,17 @@ export default function Board() {
                         >
                             <Zap className="w-4 h-4" />
                             <span>Eletroerosão a Fio (EDM)</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveSector('TORNO')}
+                            className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+                                activeSector === 'TORNO'
+                                    ? 'bg-amber-500 text-slate-950 shadow-md scale-102 font-black'
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                            }`}
+                        >
+                            <RotateCw className="w-4 h-4" />
+                            <span>Torno CNC</span>
                         </button>
                         <button
                             onClick={() => setActiveSector('TODOS')}

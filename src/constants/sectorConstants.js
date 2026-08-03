@@ -61,6 +61,35 @@ export const SECTORS = {
             'Outros'
         ]
     },
+    TORNO: {
+        id: 'TORNO',
+        label: 'Torno CNC',
+        shortLabel: 'Torno CNC',
+        icon: 'RotateCw',
+        color: 'amber',
+        themeColor: '#f59e0b',
+        kanbanColumns: {
+            aFazer: { key: 'aFazer', label: 'A fazer', dbStatus: 'A fazer', theme: 'kanban-steel' },
+            setup: { key: 'setup', label: 'Prep. Ferramental', dbStatus: 'Set-up', theme: 'kanban-amber' },
+            emCorte: { key: 'emCorte', label: 'Em Torneamento', dbStatus: 'Em Usinagem', theme: 'kanban-teal' },
+            afericao: { key: 'afericao', label: 'Inspeção', dbStatus: 'Inspeção', theme: 'kanban-violet' },
+            concluido: { key: 'concluido', label: 'Concluído', dbStatus: 'Concluído', theme: 'kanban-green' },
+        },
+        motivosPausa: [
+            'Troca de Insert / Pastilha',
+            'Troca de Ferramenta',
+            'Ajuste de Corretor / Zero',
+            'Troca de Castanhas',
+            'Entrada de outra O.S.',
+            'Troca de Insumo',
+            'Intervalo',
+            'Falta de Energia',
+            'Manutenção Corretiva',
+            'Falta de Material',
+            'Falta de Operador',
+            'Outros'
+        ]
+    },
     TODOS: {
         id: 'TODOS',
         label: 'Visão Geral (Toda a Fábrica)',
@@ -98,5 +127,6 @@ export const SECTORS = {
 export const SECTOR_OPTIONS = [
     { value: SECTORS.CNC.id, label: SECTORS.CNC.label, shortLabel: SECTORS.CNC.shortLabel },
     { value: SECTORS.EDM_FIO.id, label: SECTORS.EDM_FIO.label, shortLabel: SECTORS.EDM_FIO.shortLabel },
+    { value: SECTORS.TORNO.id, label: SECTORS.TORNO.label, shortLabel: SECTORS.TORNO.shortLabel },
     { value: SECTORS.TODOS.id, label: SECTORS.TODOS.label, shortLabel: SECTORS.TODOS.shortLabel },
 ];
