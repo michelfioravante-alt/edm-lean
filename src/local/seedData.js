@@ -174,7 +174,10 @@ export function createSeedDatabase() {
                     operacoes: ['OP10 Desbaste P20', 'OP20 Acabamento Geométrico']
                 },
                 created_at: ago(24), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
+                historico_pausas: [
+                    { fase: 'setup', motivo: 'Ajuste de Offset / Zero', observacao: 'Ajuste de compensação de altura na ferramenta T02', inicio: ago(2), duracaoHoras: 0.4 }
+                ],
+                tempos_fases: { setup: 1.5, emCorte: 0, afericao: 0 },
             },
             // Em Usinagem: Máquina rodando
             {
@@ -201,7 +204,8 @@ export function createSeedDatabase() {
                     operacoes: ['OP10 Usinagem Grafite', 'OP20 Acabamento Nervura']
                 },
                 created_at: ago(18), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 0.8, emCorte: 0, afericao: 0 },
+                historico_pausas: [],
+                tempos_fases: { setup: 0.8, emCorte: 2.2, afericao: 0 },
             },
             // Inspeção: Aferição dimensional
             {
@@ -226,7 +230,10 @@ export function createSeedDatabase() {
                     operacoes: ['OP10 Desbaste Punção', 'OP20 Acabamento Perfil']
                 },
                 created_at: ago(14), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 0.5, emCorte: 5.2, afericao: 0 },
+                historico_pausas: [
+                    { fase: 'emCorte', motivo: 'Troca de Insert', observacao: 'Troca de pastilhas gastas no desbaste', inicio: ago(4), duracaoHoras: 0.3 }
+                ],
+                tempos_fases: { setup: 0.5, emCorte: 5.2, afericao: 0.5 },
             },
             // Concluído: Aprovado e entregue
             {
@@ -251,7 +258,58 @@ export function createSeedDatabase() {
                     operacoes: ['OP10 Desbaste', 'OP20 Semi-acabamento', 'OP30 Acabamento 5E']
                 },
                 created_at: ago(72), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 1.2, emCorte: 18.6, afericao: 0.5 },
+                historico_pausas: [
+                    { fase: 'setup', motivo: 'Ajuste de Offset / Zero', observacao: 'Alinhamento 5 eixos apalpador Renishaw', inicio: ago(40), duracaoHoras: 0.6 }
+                ],
+                tempos_fases: { setup: 1.2, emCorte: 18.6, afericao: 0.5 },
+            },
+            {
+                id: id(812), empresa_id: EMPRESA_ID,
+                codigo_peca: 'MLD-3090-PL-B',
+                cliente: 'Stihl do Brasil – Matriz e Moldes',
+                setor: 'CNC', status: colKeyToStatus('concluido'), maquina_nome: 'Romi D600 (3 Eixos)', operador_atual: 'Ana Paula Costa',
+                quantidade: 2, quantidade_concluida: 2, resultado_afericao: 'Aprovada',
+                timestamp_entrada_concluido: ago(12),
+                codigo_molde: 'MLD-STIHL-0220', componente_molde: 'Placa Extratora Inferior – Aço P20',
+                programador: 'Marcos – CAM/UG NX (Usinagem)',
+                total_setups: 2, setup_atual: 2,
+                nomes_setups: ['OP10 – Esquadrejamento + Furos', 'OP20 – Alojamentos Extratores'],
+                nx_import: {
+                    arquivo: 'MLD-3090-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Cabeçote Facear Ø63' },
+                        { codigoT: 'T02', nome: 'Broca Metal Duro Ø14' },
+                    ],
+                    operacoes: ['OP10 Faceamento', 'OP20 Furação']
+                },
+                created_at: ago(96), is_pausado: false,
+                historico_pausas: [],
+                tempos_fases: { setup: 0.9, emCorte: 8.4, afericao: 0.4 },
+            },
+            {
+                id: id(813), empresa_id: EMPRESA_ID,
+                codigo_peca: 'STMP-SCH-DI-05',
+                cliente: 'Schulz Compressores – Estamparia',
+                setor: 'CNC', status: colKeyToStatus('concluido'), maquina_nome: 'Haas VF-2 (3 Eixos)', operador_atual: 'Carlos Mendes',
+                quantidade: 1, quantidade_concluida: 1, resultado_afericao: 'Refugo', motivo_refugo: 'Sobremetal insuficiente no alojamento após desvio no raio da ferramenta T03',
+                timestamp_entrada_concluido: ago(18),
+                codigo_molde: 'STMP-SCH-007', componente_molde: 'Matriz de Corte Inferior – Aço D2',
+                programador: 'Marcos – CAM/UG NX (Usinagem)',
+                total_setups: 1, setup_atual: 1,
+                nomes_setups: ['OP10 – Usinagem Matriz D2'],
+                nx_import: {
+                    arquivo: 'STMP-SCH-DI-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'T01', nome: 'Fresa Desbaste Ø20' },
+                        { codigoT: 'T02', nome: 'Fresa Metal Duro Ø10' },
+                    ],
+                    operacoes: ['OP10 Usinagem Matriz']
+                },
+                created_at: ago(110), is_pausado: false,
+                historico_pausas: [
+                    { fase: 'emCorte', motivo: 'Quebra de Ferramenta', observacao: 'Fresa estourou no raio R2', inicio: ago(25), duracaoHoras: 0.8 }
+                ],
+                tempos_fases: { setup: 1.0, emCorte: 6.5, afericao: 0.6 },
             },
 
             // ─── CÉLULA EDM FIO – Eletroerosão a Fio (WEDM) ───────────────────────
@@ -330,7 +388,10 @@ export function createSeedDatabase() {
                     operacoes: ['WEDM Desbaste + 2 Acabamentos']
                 },
                 created_at: ago(16), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
+                historico_pausas: [
+                    { fase: 'setup', motivo: 'Passagem de Fio (Threading)', observacao: 'Ajuste de alinhamento vertical de guias superior/inferior', inicio: ago(1), duracaoHoras: 0.5 }
+                ],
+                tempos_fases: { setup: 0.8, emCorte: 0, afericao: 0 },
             },
             // Em Corte WEDM
             {
@@ -356,7 +417,10 @@ export function createSeedDatabase() {
                     operacoes: ['WEDM Perfil Eletrodo']
                 },
                 created_at: ago(12), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 0.5, emCorte: 0, afericao: 0 },
+                historico_pausas: [
+                    { fase: 'emCorte', motivo: 'Quebra de Fio', observacao: 'Rompimento por descarga no canto vivo – auto-enfiamento OK', inicio: ago(3), duracaoHoras: 0.3 }
+                ],
+                tempos_fases: { setup: 0.5, emCorte: 3.8, afericao: 0 },
             },
             // Concluído WEDM
             {
@@ -380,7 +444,32 @@ export function createSeedDatabase() {
                     operacoes: ['WEDM 4 Passadas Perfil Extrusão']
                 },
                 created_at: ago(96), is_pausado: false,
-                historico_pausas: [], tempos_fases: { setup: 0.7, emCorte: 9.2, afericao: 0.4 },
+                historico_pausas: [
+                    { fase: 'emCorte', motivo: 'Troca de Resina / Filtro', observacao: 'Substituição de filtro de água entupido', inicio: ago(20), duracaoHoras: 0.7 }
+                ],
+                tempos_fases: { setup: 0.7, emCorte: 9.2, afericao: 0.4 },
+            },
+            {
+                id: id(814), empresa_id: EMPRESA_ID,
+                codigo_peca: 'PNC-GER-WEDM-09',
+                cliente: 'Gerdau Açominas – Ferramentaria',
+                setor: 'EDM_FIO', status: colKeyToStatus('concluido'), maquina_nome: 'Sodick ALN400G', operador_atual: 'Juliana Pereira',
+                quantidade: 5, quantidade_concluida: 5, resultado_afericao: 'Aprovada',
+                timestamp_entrada_concluido: ago(15),
+                codigo_molde: 'ELT-GER-042', componente_molde: 'Punção Especial WEDM (5x) – Passo Matriz',
+                programador: 'Felipe – WEDM (Eletroerosão Fio)',
+                total_setups: 1, setup_atual: 1,
+                nomes_setups: ['WEDM Perfil Punção 3 Passadas'],
+                nx_import: {
+                    arquivo: 'PNC-GER-WEDM-ProcessSheet.html',
+                    ferramentas: [
+                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
+                    ],
+                    operacoes: ['WEDM Perfil Punção']
+                },
+                created_at: ago(120), is_pausado: false,
+                historico_pausas: [],
+                tempos_fases: { setup: 0.6, emCorte: 11.5, afericao: 0.5 },
             },
         ],
     };
