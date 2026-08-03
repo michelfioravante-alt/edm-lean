@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Activity, Menu, Package, Briefcase, LogOut } from 'lucide-react';
+import { Briefcase, LogOut, Home } from 'lucide-react';
+import { isLocalMode } from '../../local/mode';
 import { useAuthStore } from '../../store/useAuthStore';
 import ManagerPinModal from '../common/ManagerPinModal';
 
 export default function Header({ onMenuToggle }) {
     const { nomeEmpresa, logout, role, setorPadrao, enterLocalStudyMode } = useAuthStore();
+    const demoMode = isLocalMode();
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
 
     const handleGerenteClick = () => {
@@ -62,33 +64,35 @@ export default function Header({ onMenuToggle }) {
                         </div>
                     )}
 
-                    {/* Seletor rápido de Perfil / Setor em Modo Local/Estudo */}
-                    <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-bold">
-                        <button
-                            type="button"
-                            onClick={handleGerenteClick}
-                            className={`px-2 py-1 rounded transition-colors ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                            title="Visão completa de Gerente / Diretor (Requer PIN Master)"
-                        >
-                            👑 Gerente
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => enterLocalStudyMode('programador', 'CNC')}
-                            className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                            title="Programador do Centro de Usinagem CNC"
-                        >
-                            🌀 Prog. CNC
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => enterLocalStudyMode('programador', 'EDM_FIO')}
-                            className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                            title="Programador de Eletroerosão a Fio"
-                        >
-                            ⚡ Prog. EDM
-                        </button>
-                    </div>
+                    {/* Seletor rápido de Perfil / Setor — APENAS no Modo Demonstração */}
+                    {demoMode && (
+                        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-bold">
+                            <button
+                                type="button"
+                                onClick={handleGerenteClick}
+                                className={`px-2 py-1 rounded transition-colors ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                title="Visão completa de Gerente / Diretor (Requer PIN Master)"
+                            >
+                                👑 Gerente
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => enterLocalStudyMode('programador', 'CNC')}
+                                className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                title="Programador do Centro de Usinagem CNC"
+                            >
+                                🌀 Prog. CNC
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => enterLocalStudyMode('programador', 'EDM_FIO')}
+                                className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                title="Programador de Eletroerosão a Fio"
+                            >
+                                ⚡ Prog. EDM
+                            </button>
+                        </div>
+                    )}
 
                     <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-muted tracking-[0.05em] uppercase">
                         <span className="w-1.5 h-1.5 rounded-full bg-kanban-teal animate-pulse"></span>

@@ -1,9 +1,11 @@
 import React from 'react';
-import { LayoutDashboard, ListTodo, Settings, ChevronLeft, Package, History, LogOut, Briefcase, Wrench } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Settings, ChevronLeft, Package, History, LogOut, Briefcase, Wrench, Home } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { isLocalMode } from '../../local/mode';
 
 export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
     const { role, logout } = useAuthStore();
+    const demoMode = isLocalMode();
     return (
         <>
             {/* Overlay for mobile and desktop */}
@@ -126,10 +128,14 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                     <button
                         type="button"
                         onClick={() => logout()}
-                        className="w-full flex items-center gap-3 justify-center bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white p-4 min-h-[48px] rounded-lg transition-colors font-bold uppercase tracking-wider text-sm border border-red-500/20 hover:border-red-500 touch-manipulation active:scale-[0.98]"
+                        className={`w-full flex items-center gap-3 justify-center p-4 min-h-[48px] rounded-lg transition-colors font-bold uppercase tracking-wider text-sm border touch-manipulation active:scale-[0.98] ${
+                            demoMode
+                                ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 border-amber-500/20 hover:border-amber-500'
+                                : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border-red-500/20 hover:border-red-500'
+                        }`}
                     >
-                        <LogOut className="w-5 h-5" />
-                        Sair do Sistema
+                        {demoMode ? <Home className="w-5 h-5" /> : <LogOut className="w-5 h-5" />}
+                        {demoMode ? 'Sair do Demo' : 'Sair do Sistema'}
                     </button>
                     <div className="text-xs text-center text-slate-600 mt-4 uppercase tracking-[0.2em] font-bold flex flex-col items-center gap-2">
                         <div className="w-8 h-8 bg-kanban-amber/20 rounded-lg flex items-center justify-center mb-1">

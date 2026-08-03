@@ -77,7 +77,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         </div>
                         <div>
                             <span className="text-xl font-black tracking-wider text-white">
-                                LEAN <span className="text-amber-400">SHOPFLOOR</span>
+                                EDM <span className="text-amber-400">Lean</span>
                             </span>
                             <span className="block text-[9px] font-extrabold uppercase tracking-widest text-slate-400">EDM & CNC Machining MES</span>
                         </div>
