@@ -3,7 +3,7 @@
  * Ajuste os labels aqui conforme você mapear o processo real no chão de fábrica.
  */
 
-export const APP_BRAND = 'Lean Shopfloor';
+export const APP_BRAND = 'EDM Lean';
 
 
 export const KANBAN_COLUMNS = {

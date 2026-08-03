@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
 import { isLocalMode } from '../local/mode';
-import { loadDb } from '../local/localDatabase';
+import { loadDb, resetDb } from '../local/localDatabase';
 import { LOCAL_EMPRESA_ID, LOCAL_USER_ID } from '../local/seedData';
 
 // Evita registrar vários listeners (React Strict Mode monta o App duas vezes no dev)
@@ -130,13 +130,12 @@ export const useAuthStore = create((set, get) => ({
     },
 
     enterLocalStudyMode: (role = 'admin', setor = null) => {
-        loadDb();
-        const db = loadDb();
+        const db = resetDb(); // Sempre recria dados frescos ao entrar no demo
         localStorage.setItem('cnc-lean-session', role);
         const savedSetor = setor || localStorage.getItem('cnc-lean-setor-padrao') || (role === 'admin' ? 'TODOS' : 'CNC');
         localStorage.setItem('cnc-lean-setor-padrao', savedSetor);
         set({
-            user: { id: LOCAL_USER_ID, email: 'demo@cnclean.local' },
+            user: { id: LOCAL_USER_ID, email: 'demo@edmlean.local' },
             role,
             setorPadrao: savedSetor,
             empresaId: LOCAL_EMPRESA_ID,
