@@ -155,6 +155,19 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                         </div>
                                     </li>
                                 )}
+                                {(activeData.nx_import?.ferramentas || activeData.nxImport?.ferramentas || []).length > 0 && (
+                                    <li className="pt-2 mt-2 border-t border-slate-800">
+                                        <span className="text-slate-500 block mb-1">Ferramentas / Magazine Previsto:</span>
+                                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                                            {(activeData.nx_import?.ferramentas || activeData.nxImport?.ferramentas).map((f, idx) => (
+                                                <span key={idx} className="inline-flex items-center gap-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs">
+                                                    <span className="font-mono text-kanban-amber font-bold">{f.codigoT || `T${String(idx + 1).padStart(2, '0')}`}</span>
+                                                    <span className="text-slate-300 font-medium">{f.nome || 'Ferramenta'}</span>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </li>
+                                )}
                             </ul>
                         </div>
 
