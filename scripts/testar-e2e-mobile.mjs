@@ -178,7 +178,21 @@ async function runMobileE2ETests() {
             }
         });
 
-        // 10. Teste de Navegação para Configurações no Mobile
+        // 10. Teste de Navegação para Registros & Histórico no Mobile
+        await testStep('Navegação para Tela de Registros & Histórico no Mobile', async () => {
+            await openMobileDrawer();
+            
+            const ok = await clickMobileNav('registros');
+            if (!ok) throw new Error('Botão Registros não encontrado no menu Mobile');
+            await sleep(1000);
+
+            const pageText = await page.evaluate(() => document.body.textContent);
+            if (!pageText.includes('Histórico') && !pageText.includes('Registros')) {
+                throw new Error('Tela de Registros não carregou no Mobile');
+            }
+        });
+
+        // 11. Teste de Navegação para Configurações no Mobile
         await testStep('Navegação para Tela de Configurações no Mobile', async () => {
             await unlockGerente();
             await openMobileDrawer();
@@ -192,6 +206,7 @@ async function runMobileE2ETests() {
                 throw new Error('Tela de Configurações não carregou no Mobile');
             }
         });
+
 
     } finally {
         await browser.close();

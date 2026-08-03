@@ -5,6 +5,8 @@ import { ptBR } from 'date-fns/locale';
 import { Search, Filter, PlayCircle, PauseCircle, CheckCircle2, ChevronLeft, ChevronRight, Loader2, History, Calendar, Clock, Download, FileText, X, AlertOctagon, TrendingUp, Activity, Layers, Settings } from 'lucide-react';
 import AcompanhamentoModal from '../components/kanban/AcompanhamentoModal';
 import { COLUMN_LABELS } from '../constants/cncProcess';
+import { osService } from '../services/osService';
+
 
 const PAGE_SIZE = 50;
 
