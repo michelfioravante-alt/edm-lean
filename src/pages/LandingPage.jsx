@@ -293,7 +293,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                             className="w-full py-5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-2xl text-base transition-all shadow-[0_8px_30px_rgba(245,158,11,0.25)] flex items-center justify-center gap-3 cursor-pointer"
                         >
                             <Zap className="w-6 h-6 fill-slate-950" />
-                            <span>Abrir Sistema em Modo Estudo (1-Clique)</span>
+                            <span>Explorar Modo Demonstração (1-Clique)</span>
                         </button>
                     </div>
                 </div>
@@ -301,7 +301,7 @@ export default function LandingPage({ onLogin, onRegister }) {
 
             {/* FOOTER */}
             <footer className="relative z-10 border-t border-slate-900 py-8 px-6 text-center text-xs font-bold text-slate-600 uppercase tracking-widest">
-                <p>&copy; 2026 Lean Shopfloor • Plataforma MES para Centros de Usinagem, Fio e Tornos CNC</p>
+                <p>&copy; 2026 EDM Lean &bull; Plataforma MES para Centros de Usinagem, Eletroerosão a Fio e Tornos CNC</p>
             </footer>
         </div>
     );

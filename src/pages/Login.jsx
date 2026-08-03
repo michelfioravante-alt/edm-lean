@@ -224,7 +224,7 @@ export default function Login({ initialMode = 'login', onBack }) {
                                     onClick={() => enterLocalStudyMode('admin')}
                                     className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                                 >
-                                    <span>⚡ Entrar no Sistema sem Senha (Modo Estudo)</span>
+                                    <span>⚡ Explorar Modo Demonstração (Sem Senha)</span>
                                 </button>
                             </div>
                         )}
