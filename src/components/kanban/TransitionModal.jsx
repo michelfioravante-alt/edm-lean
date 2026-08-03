@@ -193,7 +193,7 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                             </div>
                         </div>
 
-                        {isSetup && (
+                        {isSetup && osData?.setor !== 'EDM_FIO' && (
                             <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4 mt-4">
                                 <h4 className="font-extrabold text-white text-sm uppercase tracking-wider">Estratégia de ferramentas</h4>
                                 <p className="text-xs text-slate-500">Escolha por O.S. — ex.: peça longa noturna = magazine completo.</p>

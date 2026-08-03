@@ -268,8 +268,10 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
                         </div>
                     )}
 
-                    {/* Resumo de Ferramentas da O.S. (CAM ou Manual) */}
+                    {/* Resumo de Ferramentas da O.S. (Apenas para Usinagem/Torno, Omitido para EDM) */}
                     {(() => {
+                        const isEdm = (data.setor || data.tipo_processo) === 'EDM_FIO';
+                        if (isEdm) return null;
                         const ferramentas = data.nx_import?.ferramentas || data.nxImport?.ferramentas || [];
                         if (!ferramentas || ferramentas.length === 0) return null;
 

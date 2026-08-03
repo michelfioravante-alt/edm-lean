@@ -155,7 +155,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                         </div>
                                     </li>
                                 )}
-                                {(activeData.nx_import?.ferramentas || activeData.nxImport?.ferramentas || []).length > 0 && (
+                                {activeData.setor !== 'EDM_FIO' && (activeData.nx_import?.ferramentas || activeData.nxImport?.ferramentas || []).length > 0 && (
                                     <li className="pt-2 mt-2 border-t border-slate-800">
                                         <span className="text-slate-500 block mb-1">Ferramentas / Magazine Previsto:</span>
                                         <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">

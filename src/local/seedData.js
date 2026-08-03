@@ -329,11 +329,7 @@ export function createSeedDatabase() {
                 nomes_setups: ['WEDM – Perfil Corte Completo 4 Passadas (Ra 0,4µm)'],
                 nx_import: {
                     arquivo: 'MTZ-TROM-WEDM.html',
-                    ferramentas: [
-                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
-                        { codigoT: 'W02', nome: 'Resina Desionizadora Deionex' },
-                        { codigoT: 'W03', nome: 'Filtro Água 3µm (Fanuc)' },
-                    ],
+                    ferramentas: [],
                     operacoes: ['WEDM 4 Passadas Ra 0.4µm']
                 },
                 created_at: ago(30), is_pausado: false,
@@ -354,10 +350,7 @@ export function createSeedDatabase() {
                 nomes_setups: ['WEDM – Furo + Perfil Guia (M2)'],
                 nx_import: {
                     arquivo: 'PNC-GER-EDM-07-WEDM.html',
-                    ferramentas: [
-                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
-                        { codigoT: 'W02', nome: 'Filtro Água 3µm (Fanuc)' },
-                    ],
+                    ferramentas: [],
                     operacoes: ['WEDM Furo + Perfil M2']
                 },
                 created_at: ago(20), is_pausado: false,
@@ -381,10 +374,7 @@ export function createSeedDatabase() {
                 nomes_setups: ['WEDM – Desbaste + 2 Acabamentos (ângulo cônico 3°)'],
                 nx_import: {
                     arquivo: 'MTZ-SCH-PF-003-WEDM.html',
-                    ferramentas: [
-                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
-                        { codigoT: 'W02', nome: 'Resina Desionizadora Deionex' },
-                    ],
+                    ferramentas: [],
                     operacoes: ['WEDM Desbaste + 2 Acabamentos']
                 },
                 created_at: ago(16), is_pausado: false,
@@ -410,10 +400,7 @@ export function createSeedDatabase() {
                 nomes_setups: ['WEDM – Perfil Eletrodo (Ra 0,8µm)'],
                 nx_import: {
                     arquivo: 'MLD-STHL-ELT-14-WEDM.html',
-                    ferramentas: [
-                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
-                        { codigoT: 'W02', nome: 'Eletrodo Cobre Ø12mm' },
-                    ],
+                    ferramentas: [],
                     operacoes: ['WEDM Perfil Eletrodo']
                 },
                 created_at: ago(12), is_pausado: false,
@@ -436,11 +423,7 @@ export function createSeedDatabase() {
                 nomes_setups: ['WEDM – 4 Passadas (Ra 0,4µm) – Perfil Extrusão'],
                 nx_import: {
                     arquivo: 'MTZ-MARCO-PF-12-WEDM.html',
-                    ferramentas: [
-                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
-                        { codigoT: 'W02', nome: 'Resina Desionizadora Deionex' },
-                        { codigoT: 'W03', nome: 'Filtro Água 3µm (Fanuc)' },
-                    ],
+                    ferramentas: [],
                     operacoes: ['WEDM 4 Passadas Perfil Extrusão']
                 },
                 created_at: ago(96), is_pausado: false,
@@ -462,9 +445,7 @@ export function createSeedDatabase() {
                 nomes_setups: ['WEDM Perfil Punção 3 Passadas'],
                 nx_import: {
                     arquivo: 'PNC-GER-WEDM-ProcessSheet.html',
-                    ferramentas: [
-                        { codigoT: 'W01', nome: 'Fio Latão Ø0.25mm (Bedra)' },
-                    ],
+                    ferramentas: [],
                     operacoes: ['WEDM Perfil Punção']
                 },
                 created_at: ago(120), is_pausado: false,
