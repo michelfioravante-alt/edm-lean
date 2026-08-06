@@ -352,9 +352,11 @@ export default function NovaOSForm({ onClose }) {
                                                 />
                                                 {estoque.length > 0 && (
                                                     <datalist id={`estoque-lista-${idx}`}>
-                                                        {estoque.map(item => (
-                                                            <option key={item.id} value={item.nome} />
-                                                        ))}
+                                                        {estoque
+                                                            .filter(item => !item.setor || item.setor === 'TODOS' || item.setor === formData.setor)
+                                                            .map(item => (
+                                                                <option key={item.id} value={item.nome} />
+                                                            ))}
                                                     </datalist>
                                                 )}
                                             </div>

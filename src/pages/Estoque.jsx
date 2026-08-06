@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
 import Button from '../components/common/Button';
-import { Plus, Package, Archive, AlertTriangle, PenTool, Clock, Trash2, Wrench, Monitor, ArrowDownCircle, ArrowUpCircle, History } from 'lucide-react';
+import { Plus, Package, Archive, AlertTriangle, PenTool, Clock, Trash2, Wrench, Monitor, ArrowDownCircle, ArrowUpCircle, History, Lock } from 'lucide-react';
 import { formatarDataBR, formatarHoras } from '../utils/formatters';
 import InsumosLifeChart from '../components/dashboard/InsumosLifeChart';
 import MachineConsumptionChart from '../components/dashboard/MachineConsumptionChart';
@@ -24,6 +25,11 @@ export default function Estoque() {
         fetchMovimentacoesEstoque
     } = useAppStore();
 
+    const role = useAuthStore(state => state.role);
+    const setorPadrao = useAuthStore(state => state.setorPadrao);
+    const isProgrammerLocked = role !== 'admin';
+    const effectiveSector = (setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC';
+
     useEffect(() => {
         fetchMovimentacoesEstoque();
     }, [fetchMovimentacoesEstoque]);
@@ -32,8 +38,8 @@ export default function Estoque() {
     const [novoNome, setNovoNome] = useState('');
     const [novaQtd, setNovaQtd] = useState('');
     const [novoAlerta, setNovoAlerta] = useState('');
-    const [novoSetor, setNovoSetor] = useState('TODOS');
-    const [setorFiltro, setSetorFiltro] = useState('TODOS');
+    const [novoSetor, setNovoSetor] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
+    const [setorFiltro, setSetorFiltro] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
 
     // Estado Deleção de Estoque
     const [itemParaDeletar, setItemParaDeletar] = useState(null);
@@ -196,40 +202,50 @@ export default function Estoque() {
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                                 <h4 className="font-extrabold text-lg text-white uppercase tracking-wider">Insumos Disponíveis</h4>
-                                <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-bold gap-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSetorFiltro('TODOS')}
-                                        className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'TODOS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    >
-                                        🏢 Todos
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSetorFiltro('CNC')}
-                                        className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'CNC' ? 'bg-cyan-950 border border-cyan-500/40 text-cyan-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    >
-                                        🌀 CNC
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSetorFiltro('EDM_FIO')}
-                                        className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'EDM_FIO' ? 'bg-emerald-950 border border-emerald-500/40 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    >
-                                        ⚡ EDM Fio
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSetorFiltro('TORNO')}
-                                        className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'TORNO' ? 'bg-amber-950 border border-amber-500/40 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    >
-                                        ⚙️ Torno
-                                    </button>
-                                </div>
+                                {isProgrammerLocked ? (
+                                    <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-bold text-slate-200">
+                                        <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                        <span>Estoque: {effectiveSector === 'EDM_FIO' ? '⚡ EDM Fio' : effectiveSector === 'TORNO' ? '⚙️ Torno CNC' : '🌀 Usinagem CNC'} + 🏢 Geral</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-bold gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSetorFiltro('TODOS')}
+                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'TODOS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                        >
+                                            🏢 Todos
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSetorFiltro('CNC')}
+                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'CNC' ? 'bg-cyan-950 border border-cyan-500/40 text-cyan-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                        >
+                                            🌀 CNC
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSetorFiltro('EDM_FIO')}
+                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'EDM_FIO' ? 'bg-emerald-950 border border-emerald-500/40 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                        >
+                                            ⚡ EDM Fio
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSetorFiltro('TORNO')}
+                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'TORNO' ? 'bg-amber-950 border border-amber-500/40 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                        >
+                                            ⚙️ Torno
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {(() => {
                                 const estoqueFiltrado = estoque.filter(i => {
+                                    if (isProgrammerLocked) {
+                                        return !i.setor || i.setor === 'TODOS' || i.setor === effectiveSector;
+                                    }
                                     if (setorFiltro === 'TODOS') return true;
                                     if (!i.setor || i.setor === 'TODOS') return true;
                                     return i.setor === setorFiltro;
