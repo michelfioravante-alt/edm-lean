@@ -22,29 +22,32 @@ export const clientesService = {
         return data || [];
     },
 
-    async create({ nome, email, telefone }) {
-        if (isLocalMode()) return localApi.clientes.create({ nome, email, telefone });
-        getEmpresaId(); // Valida que está autenticado
-        const TIMEOUT_MS = 20000;
-        const rpcPromise = supabase.rpc('criar_cliente_empresa', {
-            p_nome: nome,
-            p_email: email || null,
-            p_telefone: telefone || null
-        });
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Tempo limite excedido. Verifique sua conexão.')), TIMEOUT_MS)
-        );
-        const { data, error } = await Promise.race([rpcPromise, timeoutPromise]);
+    async create({ nome, email, telefone, contatos = [] }) {
+        if (isLocalMode()) return localApi.clientes.create({ nome, email, telefone, contatos });
+        const empresaId = getEmpresaId();
+        const { data, error } = await supabase
+            .from('clientes')
+            .insert({
+                empresa_id: empresaId,
+                nome,
+                email: email || null,
+                telefone: telefone || null,
+                contatos: contatos || []
+            })
+            .select()
+            .single();
         if (error) throw error;
         return data;
     },
 
-    async update(id, { nome, email, telefone }) {
-        if (isLocalMode()) return localApi.clientes.update(id, { nome, email, telefone });
+    async update(id, { nome, email, telefone, contatos }) {
+        if (isLocalMode()) return localApi.clientes.update(id, { nome, email, telefone, contatos });
         const empresaId = getEmpresaId();
+        const payload = { nome, email: email || null, telefone: telefone || null };
+        if (contatos !== undefined) payload.contatos = contatos;
         const { data, error } = await supabase
             .from('clientes')
-            .update({ nome, email: email || null, telefone: telefone || null })
+            .update(payload)
             .eq('id', id)
             .eq('empresa_id', empresaId)
             .select()

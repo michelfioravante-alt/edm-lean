@@ -313,9 +313,10 @@ export const osService = {
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ordens_servico')
-            .select('id, created_at, status')
+            .select('id, created_at, status, codigo_peca, setor, maquina_nome, resultado_afericao, quantidade, quantidade_concluida, prazo_entrega, tempos_fases, tempo_estimado_corte_horas, tempo_estimado_setup_horas, is_pausado')
             .eq('empresa_id', empresaId)
-            .eq('cliente', clienteNome);
+            .eq('cliente', clienteNome)
+            .order('created_at', { ascending: false });
         if (error) throw error;
         return data || [];
     }

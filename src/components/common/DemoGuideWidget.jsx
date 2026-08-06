@@ -42,6 +42,25 @@ const RECURSOS_POR_VISAO = {
             '💥 Registro de Histórico de Quebras e substituição no magazine da máquina.',
             '🎯 Otimização de Setup: Evita avarias na peça por ferramenta gasta.'
         ]
+    },
+    clientes: {
+        titulo: '👥 Gestão de Clientes & Histórico de Kanbans',
+        descricao: 'Cadastre clientes com múltiplos contatos e consulte todo o histórico de ordens de serviço.',
+        destaques: [
+            '📱 Múltiplos Contatos: Cadastre contatos por departamento (PCP, Compras, Engenharia).',
+            '📜 Histórico de Kanbans: Clique no cliente para levantar todas as O.S. ativas e concluídas.',
+            '📊 Métricas Exclusivas: Total de O.S., volume nos últimos 30 dias e taxa de entrega.',
+            '💬 Contatos no Mobile: Visualização completa de telefone e e-mail no celular.'
+        ]
+    },
+    registros: {
+        titulo: '📜 Histórico & Rastreabilidade de Registros',
+        descricao: 'Consulta detalhada e auditoria de todas as ordens de serviço finalizadas.',
+        destaques: [
+            '🔍 Busca e Filtros Avançados: Localize O.S. por cliente, código de peça ou setor.',
+            '📊 Relatório de Desempenho: Compare tempos de setup, corte e tempo morto.',
+            '🔄 Restauração de O.S.: Possibilidade de reativar ordens finalizadas.'
+        ]
     }
 };
 

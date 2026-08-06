@@ -472,7 +472,7 @@ export const localApi = {
             return updated;
         },
         async fetchStatsByCliente(clienteNome) {
-            return loadDb().ordens_servico.filter((o) => o.cliente === clienteNome).map(({ id, created_at, status }) => ({ id, created_at, status }));
+            return loadDb().ordens_servico.filter((o) => o.cliente === clienteNome);
         },
     },
 };
