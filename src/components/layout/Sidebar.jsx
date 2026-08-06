@@ -40,7 +40,7 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                         <span className="text-lg ml-1">Kanban</span>
                     </button>
 
-                    {role === 'admin' && (
+                    {(role === 'admin' || role === 'programmer') && (
                         <button
                             onClick={() => { onViewChange('dashboard'); onClose(); }}
                             className={`w-full flex items-center p-4 rounded-xl transition-all border-l-4 ${activeView === 'dashboard'

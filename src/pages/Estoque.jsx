@@ -168,7 +168,7 @@ export default function Estoque() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Nome do Item</label>
-                                    <input type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className={inputClasses} placeholder="Ex: Fio 0.25mm Latão" required />
+                                    <input type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className={inputClasses} placeholder={novoSetor === 'EDM_FIO' ? 'Ex: Fio Latão Ø0.25mm, Filtro Resina' : novoSetor === 'TORNO' ? 'Ex: Pastilha CCMT 09T3, Bedame' : novoSetor === 'CNC' ? 'Ex: Fresa Ø6mm, Insert APMT' : 'Ex: Óleo Solúvel, Graxa Lubrificante'} required />
                                 </div>
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Setor do Insumo</label>

@@ -25,7 +25,7 @@ export default function MobileNav({ activeView, onViewChange, role }) {
 
     const pagesItems = [
         { id: 'kanban', label: 'Kanban', icon: ListTodo },
-        ...(role === 'admin' ? [{ id: 'dashboard', label: 'Dash', icon: LayoutDashboard }] : []),
+        ...(role === 'admin' || role === 'programmer' ? [{ id: 'dashboard', label: 'Dash', icon: LayoutDashboard }] : []),
         { id: 'registros', label: 'Registros', icon: History },
         { id: 'estoque', label: 'Estoque', icon: Package },
         { id: 'ferramental', label: 'Ferramentas', icon: Wrench },
