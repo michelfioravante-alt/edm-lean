@@ -27,7 +27,7 @@ export default function Modal({
                 onClick={onClose}
             />
 
-            <div className={`relative bg-slate-950 border border-slate-800 rounded-t-3xl sm:rounded-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.9)] sm:shadow-[0_10px_40px_rgba(0,0,0,0.9)] w-full ${maxWidth} flex flex-col max-h-[85dvh] sm:max-h-[88vh] overflow-hidden my-0 sm:my-auto border-b-0 sm:border-b`}>
+            <div className={`relative bg-slate-950 border border-slate-800 rounded-t-3xl sm:rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] w-full ${maxWidth} flex flex-col max-h-[85dvh] sm:max-h-[88vh] overflow-hidden shrink-0 border-b-0 sm:border-b`}>
                 {title && (
                     <div className="flex justify-between items-center px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0">
                         <h3 className="text-base sm:text-xl font-extrabold text-white pr-2 leading-tight truncate">{title}</h3>
