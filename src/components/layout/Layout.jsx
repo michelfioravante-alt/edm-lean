@@ -3,6 +3,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import LocalModeBanner from '../common/LocalModeBanner';
+import DemoGuideWidget from '../common/DemoGuideWidget';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -104,6 +105,8 @@ export default function Layout({ children, activeView, onViewChange }) {
                 onViewChange={onViewChange}
                 role={role}
             />
+
+            <DemoGuideWidget activeView={activeView} />
         </div>
     );
 }
