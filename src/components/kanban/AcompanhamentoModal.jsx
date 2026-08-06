@@ -46,11 +46,11 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} title="Detalhes" maxWidth="max-w-3xl">
+            <Modal isOpen={isOpen} onClose={onClose} title={`O.S. ${activeData.codigo_peca || activeData.codigoPeca || ''} — Detalhes da Ordem`} maxWidth="max-w-3xl">
                 <div className="space-y-6">
 
                     {/* Header Profile */}
-                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl p-5 items-center justify-between">
+                    <div className="flex flex-col sm:flex-row bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 items-start sm:items-center justify-between gap-3">
                         <div className="flex gap-4 items-center">
                             <div className="p-3 bg-slate-950 rounded-lg shadow-sm border border-slate-800">
                                 {getStatusIcon()}

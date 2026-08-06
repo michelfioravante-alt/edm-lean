@@ -92,8 +92,8 @@ export default function Layout({ children, activeView, onViewChange }) {
                     activeView={activeView}
                     onViewChange={onViewChange}
                 />
-                <main className="flex-1 overflow-x-auto overflow-y-visible relative z-10 w-full no-scrollbar">
-                    <div className="p-2 sm:p-4 lg:p-7 w-full max-w-[1800px] mx-auto min-h-full flex flex-col">
+                <main className="flex-1 overflow-x-hidden overflow-y-visible relative z-10 w-full max-w-full no-scrollbar">
+                    <div className="p-2.5 sm:p-4 lg:p-7 w-full max-w-[1800px] mx-auto min-h-full flex flex-col">
                         {children}
                     </div>
                 </main>

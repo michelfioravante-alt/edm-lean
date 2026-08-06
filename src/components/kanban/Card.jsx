@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { PlayCircle, PauseCircle, Clock, Link as LinkIcon, Copy, Check, Plus, Wrench } from 'lucide-react';
+import { PlayCircle, PauseCircle, Clock, Link as LinkIcon, Copy, Check, Plus, Wrench, Eye } from 'lucide-react';
 import { calcularTempoFaseAtual } from '../../utils/manufacturingMath';
 import { formatarHoras } from '../../utils/formatters';
 import { useAppStore } from '../../store/useAppStore';
@@ -15,8 +15,30 @@ function observacaoLegivel(obs, maquinas) {
     });
 }
 
-const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, columnId }) => {
-    const { programador: pgLocal, programador_nome, codigoPeca, codigo_peca, cliente, maquina: maqLocal, maquina_nome, operador: opLocal, operador_atual, status, prazoEntrega, prazo_entrega, isPausado, is_pausado, linkDesenho, link_desenho, isPrioridade, is_prioridade, quantidade, quantidade_concluida } = data;
+const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseRequest }) => {
+    const {
+        status,
+        codigo_peca,
+        codigoPeca,
+        maquina_nome,
+        maquina: maqLocal,
+        operador_atual,
+        operador: opLocal,
+        programador_nome,
+        programador: pgLocal,
+        link_desenho,
+        linkDesenho,
+        quantidade_concluida,
+        quantidade,
+        is_prioridade,
+        isPrioridade,
+        is_pausado,
+        isPausado,
+        prazo_entrega,
+        prazoEntrega,
+        cliente
+    } = data;
+
     const updateOrdemServico = useAppStore(state => state.updateOrdemServico);
     const maquinas = useAppStore(state => state.maquinas);
 
@@ -24,7 +46,6 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
     const maquina = maquina_nome || maqLocal;
     const operador = operador_atual || opLocal;
     const programador = programador_nome || pgLocal;
-    // Guard against debug JSON blobs accidentally written to link_desenho
     const _rawLink = link_desenho || linkDesenho;
     const linkFinal = (_rawLink && !String(_rawLink).startsWith('{') && !String(_rawLink).startsWith('[')) ? _rawLink : null;
     const resultadoFinal = data.resultado_afericao || data.resultadoAfericao;
@@ -36,8 +57,7 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
         e.stopPropagation();
         const max = quantidade || 1;
         const current = quantidade_concluida || 0;
-        if (current >= max) return; // Não permitir passar do total
-
+        if (current >= max) return;
         const next = current + 1;
         updateOrdemServico(data.id, { quantidade_concluida: next });
     };
@@ -46,36 +66,37 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        // Apenas atualizar o relógio se não estiver concluído ou a fazer
         if (status === 'Concluído' || status === 'A fazer') return;
-
-        // Atualiza a cada minuto para poupar performance, exibe "tempo real" sutil.
         const interval = setInterval(() => {
             setNowMs(Date.now());
         }, 60000);
-
         return () => clearInterval(interval);
     }, [status]);
 
     const safePrazo = prazoFinal ? (prazoFinal.includes('T') ? prazoFinal : `${prazoFinal}T12:00:00`) : null;
-    const isDueToday = safePrazo ? new Date(safePrazo).setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0) : false;
-    const isOverdue = safePrazo ? new Date(safePrazo).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) : false;
+    const isOverdue = safePrazo ? new Date(safePrazo).getTime() < new Date().setHours(0,0,0,0) && status !== 'Concluído' : false;
+    const isDueToday = safePrazo ? new Date(safePrazo).toDateString() === new Date().toDateString() && status !== 'Concluído' : false;
 
-    const isDueTomorrow = safePrazo ? (() => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        return new Date(safePrazo).setHours(0, 0, 0, 0) === tomorrow.getTime();
-    })() : false;
+    const getAccentColor = () => {
+        if (isPausadoFinal) return 'bg-amber-500';
+        if (isPrioridadeFinal) return 'bg-red-500';
+        switch (status) {
+            case 'A fazer': return 'bg-kanban-steel';
+            case 'Set-up': return 'bg-kanban-amber';
+            case 'Em Corte': return 'bg-kanban-teal';
+            case 'Aferição': return 'bg-kanban-violet';
+            case 'Concluído': return 'bg-kanban-green';
+            default: return 'bg-slate-700';
+        }
+    };
 
-    const accentColor = isPausadoFinal ? 'bg-kanban-amber'
-        : isOverdue ? 'bg-kanban-rust'
-            : (isDueToday || isDueTomorrow) ? 'bg-kanban-amber'
-                : 'bg-kanban-steel';
+    const accentColor = getAccentColor();
 
     const getBadgeStyles = () => {
-        if (isPausadoFinal) return 'bg-kanban-amber-dim text-kanban-amber border border-kanban-amber/30';
-        if (isOverdue) return 'bg-kanban-rust-dim text-kanban-rust border border-kanban-rust/20';
+        if (isPausadoFinal) return 'bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse';
+        if (isOverdue) return 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse';
+        if (isDueToday) return 'bg-amber-500/20 text-amber-400 border border-amber-500/40';
+
         switch (status) {
             case 'A fazer': return 'bg-kanban-steel-dim text-kanban-steel border border-kanban-steel/20';
             case 'Set-up': return 'bg-kanban-amber-dim text-kanban-amber border border-kanban-amber/30';
@@ -86,17 +107,18 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
         }
     };
 
-    const badgeLabel = isPausadoFinal ? 'Pausado' : isOverdue ? 'Atrasado' : isDueToday ? 'Hoje' : status;
-    const badgeClass = getBadgeStyles();
-
     const isOptimistic = !!data._optimistic;
 
     return (
         <div
             className={`bg-slate-950 border border-slate-800 rounded-lg relative overflow-hidden transition-all duration-150 hover:border-slate-600 hover:-translate-y-[1px] shadow-sm hover:shadow-lg hover:shadow-black/40 group p-0 kanban-card-wrapper ${isOptimistic ? 'kanban-no-drag opacity-90 cursor-wait' : 'cursor-grab active:cursor-grabbing'}`}
             onDoubleClick={() => !isOptimistic && onViewRequest?.(data)}
+            onClick={(e) => {
+                if (window.innerWidth < 768 && !isOptimistic && !e.target.closest('button') && !e.target.closest('a')) {
+                    onViewRequest?.(data);
+                }
+            }}
         >
-            {/* Left Accent Line */}
             <div className={`w-1 absolute left-0 top-0 bottom-0 rounded-l-lg ${accentColor}`}></div>
 
             {isOptimistic && (
@@ -359,9 +381,9 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
                     </div>
                 </div>
 
-                {/* Mobile Quick Move Actions - oculto enquanto a O.S. está sendo salva (otimista) */}
+                {/* Mobile Quick Actions (Voltar | Detalhes | Mover) */}
                 {!isOptimistic && (
-                <div className="kanban-no-drag md:hidden grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-800 touch-manipulation"
+                <div className="kanban-no-drag md:hidden grid grid-cols-3 gap-1.5 mt-3 pt-3 border-t border-slate-800 touch-manipulation"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {(() => {
@@ -385,24 +407,34 @@ const Card = ({ data, onPauseRequest, onViewRequest, onTransitionRequest, column
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); handleMove(prevStage); }}
                                         onPointerDown={(e) => e.stopPropagation()}
-                                        className="flex items-center justify-center gap-1.5 py-3 px-2 min-h-[48px] bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-black uppercase tracking-tighter text-slate-400 active:bg-slate-800 active:scale-95 transition-all touch-manipulation"
+                                        className="flex items-center justify-center gap-1 py-2.5 px-1 min-h-[44px] bg-slate-900 border border-slate-800 rounded-lg text-[9px] font-black uppercase tracking-tighter text-slate-400 active:bg-slate-800 active:scale-95 transition-all touch-manipulation cursor-pointer"
                                     >
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                             <path d="m15 18-6-6 6-6" />
                                         </svg>
-                                        <span>Voltar p/ {LABELS[prevStage]}</span>
+                                        <span className="truncate">Voltar</span>
                                     </button>
                                 ) : <div />}
+
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); onViewRequest?.(data); }}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    className="flex items-center justify-center gap-1 py-2.5 px-1 min-h-[44px] bg-slate-900 border border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tighter text-kanban-amber active:bg-slate-800 active:scale-95 transition-all touch-manipulation cursor-pointer"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>Detalhes</span>
+                                </button>
 
                                 {nextStage ? (
                                     <button
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); handleMove(nextStage); }}
                                         onPointerDown={(e) => e.stopPropagation()}
-                                        className="flex items-center justify-center gap-1.5 py-3 px-2 min-h-[48px] bg-kanban-blue/10 border border-kanban-blue/30 rounded-lg text-[10px] font-black uppercase tracking-tighter text-kanban-blue active:bg-kanban-blue/20 active:scale-95 transition-all shadow-[0_0_10px_rgba(59,130,246,0.1)] touch-manipulation"
+                                        className="flex items-center justify-center gap-1 py-2.5 px-1 min-h-[44px] bg-kanban-blue/10 border border-kanban-blue/30 rounded-lg text-[9px] font-black uppercase tracking-tighter text-kanban-blue active:bg-kanban-blue/20 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer"
                                     >
-                                        <span>Mover p/ {LABELS[nextStage]}</span>
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <span className="truncate">Mover</span>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                             <path d="m9 18 6-6-6-6" />
                                         </svg>
                                     </button>

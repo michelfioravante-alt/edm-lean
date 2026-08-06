@@ -807,9 +807,9 @@ export default function NovaOSForm({ onClose }) {
                     </div>
                 )}
 
-                <div className="pt-4 flex justify-end gap-3 mt-4 border-t border-slate-800">
-                    <Button type="button" variant="outline" size="md" onClick={onClose} className="w-1/3">Cancelar</Button>
-                    <Button type="submit" variant="primary" size="md" className="w-2/3 shadow-md" disabled={isSubmitting}>
+                <div className="pt-4 flex items-center justify-end gap-3 mt-4 border-t border-slate-800">
+                    <Button type="button" variant="outline" size="lg" onClick={onClose} className="w-1/3 min-h-[48px] cursor-pointer">Cancelar</Button>
+                    <Button type="submit" variant="primary" size="lg" className="w-2/3 min-h-[48px] shadow-md cursor-pointer" disabled={isSubmitting}>
                         {isSubmitting ? 'Criando...' : 'Criar Ordem'}
                     </Button>
                 </div>

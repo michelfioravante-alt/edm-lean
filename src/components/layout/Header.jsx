@@ -66,40 +66,61 @@ export default function Header({ onMenuToggle }) {
 
                     {/* Seletor rápido de Perfil / Setor — APENAS no Modo Demonstração */}
                     {demoMode && (
-                        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-bold">
-                            <button
-                                type="button"
-                                onClick={handleGerenteClick}
-                                className={`px-2 py-1 rounded transition-colors ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                title="Visão completa de Gerente / Diretor (Requer PIN Master)"
-                            >
-                                👑 Gerente
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => enterLocalStudyMode('programador', 'CNC')}
-                                className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                title="Programador do Centro de Usinagem CNC"
-                            >
-                                🌀 Prog. CNC
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => enterLocalStudyMode('programador', 'EDM_FIO')}
-                                className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                title="Programador de Eletroerosão a Fio"
-                            >
-                                ⚡ Prog. EDM
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => enterLocalStudyMode('programador', 'TORNO')}
-                                className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'TORNO' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                title="Programador de Torno CNC"
-                            >
-                                ⚙️ Prog. Torno
-                            </button>
-                        </div>
+                        <>
+                            {/* Desktop Button Set */}
+                            <div className="hidden md:flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-bold">
+                                <button
+                                    type="button"
+                                    onClick={handleGerenteClick}
+                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                    title="Visão completa de Gerente / Diretor (Requer PIN Master)"
+                                >
+                                    👑 Gerente
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => enterLocalStudyMode('programador', 'CNC')}
+                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                    title="Programador do Centro de Usinagem CNC"
+                                >
+                                    🌀 Prog. CNC
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => enterLocalStudyMode('programador', 'EDM_FIO')}
+                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                    title="Programador de Eletroerosão a Fio"
+                                >
+                                    ⚡ Prog. EDM
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => enterLocalStudyMode('programador', 'TORNO')}
+                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role !== 'admin' && setorPadrao === 'TORNO' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                    title="Programador de Torno CNC"
+                                >
+                                    ⚙️ Prog. Torno
+                                </button>
+                            </div>
+
+                            {/* Mobile Dropdown Select */}
+                            <div className="flex md:hidden items-center bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-xs font-extrabold text-amber-400">
+                                <select
+                                    value={role === 'admin' ? 'gerente' : (setorPadrao || 'CNC')}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === 'gerente') handleGerenteClick();
+                                        else enterLocalStudyMode('programador', val);
+                                    }}
+                                    className="bg-transparent text-amber-400 text-[11px] font-black outline-none border-none cursor-pointer"
+                                >
+                                    <option value="gerente" className="bg-slate-900 text-amber-400 font-bold">👑 Gerente</option>
+                                    <option value="CNC" className="bg-slate-900 text-cyan-400 font-bold">🌀 Prog. CNC</option>
+                                    <option value="EDM_FIO" className="bg-slate-900 text-emerald-400 font-bold">⚡ Prog. EDM</option>
+                                    <option value="TORNO" className="bg-slate-900 text-amber-400 font-bold">⚙️ Prog. Torno</option>
+                                </select>
+                            </div>
+                        </>
                     )}
 
                     <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-muted tracking-[0.05em] uppercase">
