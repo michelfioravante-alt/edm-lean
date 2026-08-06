@@ -125,7 +125,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                     </h1>
 
                     <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed max-w-3xl">
-                        Gerencie a produção por setor produtivo com controle de OEE, vida útil de ferramentas de corte, importação automática de folhas CAM e rastreamento de insumos.
+                        Gerencie a produção por setor produtivo com controle de Eficiência Operacional, aderência aos tempos de CAM, vida útil de ferramentas de corte e rastreamento de insumos.
                     </p>
 
                     {/* HERO ACTION BUTTONS */}
@@ -261,9 +261,9 @@ export default function LandingPage({ onLogin, onRegister }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     <div>
                         <span className="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Metodologia Industrial</span>
-                        <h3 className="text-3xl font-black text-white mt-2 mb-6">OEE Automático & Sistema Andon Integrado</h3>
+                        <h3 className="text-3xl font-black text-white mt-2 mb-6">Eficiência Operacional & Aderência ao Planejado</h3>
                         <p className="text-slate-400 text-base font-medium leading-relaxed mb-6">
-                            Elimine planilhas e quadros de papel. O sistema calcula a Disponibilidade, Performance e Qualidade da sua ferramentaria automaticamente por máquina e por setor.
+                            Elimine planilhas e quadros de papel. O sistema compara automaticamente o tempo estimado (CAM / Perímetros) com o tempo real usinado, calculando a eficiência e o retorno financeiro de cada O.S.
                         </p>
                         <div className="space-y-4">
                             <div className="flex items-start gap-4 p-4 bg-slate-900 rounded-2xl border border-slate-800">

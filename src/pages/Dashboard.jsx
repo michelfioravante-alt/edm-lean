@@ -240,7 +240,7 @@ export default function Dashboard() {
                             <LayoutDashboard className="w-7 h-7" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black text-white">Indicadores de Produção (MES & OEE)</h2>
+                            <h2 className="text-3xl font-black text-white">Indicadores de Produção (MES & Eficiência Operacional)</h2>
                             <p className="text-slate-400 mt-0.5 text-sm font-medium">
                                 Análise de performance por setor produtivo (CNC, Eletroerosão a Fio e Tornos).
                             </p>
@@ -331,14 +331,14 @@ export default function Dashboard() {
                                     {!isGerente && !isCncProg && !isEdmProg && <span className="text-slate-300">📊 Indicadores Gerais da Fábrica</span>}
                                 </h3>
                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-950 px-3 py-1 rounded-md border border-slate-800">
-                                    {isGerente ? 'Foco: Retorno Financeiro & OEE Global' : 'Foco: OEE, FPY & Tempos de Ciclo'}
+                                    {isGerente ? 'Foco: Retorno Financeiro & Eficiência Global' : 'Foco: Eficiência Operacional, FPY & Tempos de Ciclo'}
                                 </span>
                             </div>
 
                             {/* Linha 1: Métricas Principais (Adaptadas ao perfil) */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                 <KpiCard
-                                    title={isEdmProg ? "OEE Eletroerosão Fio" : isCncProg ? "OEE Usinagem CNC" : "Eficiência OEE Global"}
+                                    title={isEdmProg ? "Eficiência Eletroerosão Fio" : isCncProg ? "Eficiência Usinagem CNC" : "Eficiência Operacional Global"}
                                     value={`${oeeEfficiency}%`}
                                     icon={Zap}
                                     trend={parseFloat(oeeEfficiency) > 85 ? "up" : "down"}
@@ -511,7 +511,7 @@ export default function Dashboard() {
 
                                                 <div className="flex items-baseline justify-between pt-1">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência OEE</span>
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência Operacional</span>
                                                         <span className="text-3xl font-black text-white">{cncStats.oee}%</span>
                                                     </div>
                                                     <div className="text-right">
@@ -557,7 +557,7 @@ export default function Dashboard() {
 
                                                 <div className="flex items-baseline justify-between pt-1">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência OEE</span>
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência Operacional</span>
                                                         <span className="text-3xl font-black text-white">{edmStats.oee}%</span>
                                                     </div>
                                                     <div className="text-right">
@@ -603,7 +603,7 @@ export default function Dashboard() {
 
                                                 <div className="flex items-baseline justify-between pt-1">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência OEE</span>
+                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência Operacional</span>
                                                         <span className="text-3xl font-black text-white">{tornoStats.oee}%</span>
                                                     </div>
                                                     <div className="text-right">
