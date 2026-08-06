@@ -296,7 +296,7 @@ export default function NovaOSForm({ onClose }) {
                     </div>
                 </div>
 
-                {formData.setor === 'CNC' && (
+                {(formData.setor === 'CNC' || formData.setor === 'TORNO') && (
                     <>
                         <ImportNxSheet onImport={handleNxImport} disabled={isSubmitting} />
 

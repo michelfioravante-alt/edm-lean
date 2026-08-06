@@ -174,6 +174,7 @@ export default function Estoque() {
                                         <option value="TODOS">🏢 Geral / Toda Fábrica (Fluídos, Graxas)</option>
                                         <option value="CNC">🌀 Usinagem CNC (Fresas, Inserts, Fixação)</option>
                                         <option value="EDM_FIO">⚡ Eletroerosão a Fio (Fios, Resinas, Filtros)</option>
+                                        <option value="TORNO">⚙️ Torno CNC (Castanhas, Pastilhas, Bedames)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -217,6 +218,13 @@ export default function Estoque() {
                                     >
                                         ⚡ EDM Fio
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSetorFiltro('TORNO')}
+                                        className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'TORNO' ? 'bg-amber-950 border border-amber-500/40 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                        ⚙️ Torno
+                                    </button>
                                 </div>
                             </div>
 
@@ -245,11 +253,13 @@ export default function Estoque() {
                                                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
                                                         item.setor === 'EDM_FIO' 
                                                             ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
+                                                            : item.setor === 'TORNO'
+                                                            ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
                                                             : item.setor === 'CNC'
                                                             ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
                                                             : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
                                                     }`}>
-                                                        {item.setor === 'EDM_FIO' ? '⚡ EDM Fio' : item.setor === 'CNC' ? '🌀 CNC' : '🏢 Geral'}
+                                                        {item.setor === 'EDM_FIO' ? '⚡ EDM Fio' : item.setor === 'TORNO' ? '⚙️ Torno' : item.setor === 'CNC' ? '🌀 CNC' : '🏢 Geral'}
                                                     </span>
                                                     {baixoEstoque && <AlertTriangle className="w-5 h-5 text-red-500" />}
                                                 </div>

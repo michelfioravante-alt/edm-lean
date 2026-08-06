@@ -91,6 +91,14 @@ export default function Header({ onMenuToggle }) {
                             >
                                 ⚡ Prog. EDM
                             </button>
+                            <button
+                                type="button"
+                                onClick={() => enterLocalStudyMode('programador', 'TORNO')}
+                                className={`px-2 py-1 rounded transition-colors ${role !== 'admin' && setorPadrao === 'TORNO' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                title="Programador de Torno CNC"
+                            >
+                                ⚙️ Prog. Torno
+                            </button>
                         </div>
                     )}
 

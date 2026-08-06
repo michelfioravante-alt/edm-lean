@@ -32,13 +32,14 @@ export default function Board() {
 
     const role = useAuthStore(state => state.role);
     const setorPadrao = useAuthStore(state => state.setorPadrao);
-    const isProgrammerLocked = Boolean(setorPadrao && setorPadrao !== 'TODOS' && role !== 'admin');
+    const isProgrammerLocked = role !== 'admin';
+    const effectiveSector = (setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC';
 
     useEffect(() => {
-        if (isProgrammerLocked && activeSector !== setorPadrao) {
-            setActiveSector(setorPadrao);
+        if (isProgrammerLocked && activeSector !== effectiveSector) {
+            setActiveSector(effectiveSector);
         }
-    }, [isProgrammerLocked, setorPadrao, activeSector, setActiveSector]);
+    }, [isProgrammerLocked, effectiveSector, activeSector, setActiveSector]);
 
     const moveOrdemServico = useAppStore(state => state.moveOrdemServico);
     const togglePausaOrdemServico = useAppStore(state => state.togglePausaOrdemServico);
@@ -426,7 +427,7 @@ export default function Board() {
                 {isProgrammerLocked ? (
                     <div className="flex items-center gap-2 p-3 px-4 bg-slate-900 border border-slate-800 rounded-xl mb-6 w-full sm:w-fit text-xs font-bold text-slate-200 shadow-inner">
                         <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Kanban Exclusivo do Setor: {activeSector === 'EDM_FIO' ? '⚡ Eletroerosão a Fio (EDM)' : '🌀 Centro de Usinagem CNC'}</span>
+                        <span>Kanban Exclusivo do Setor: {activeSector === 'EDM_FIO' ? '⚡ Eletroerosão a Fio (EDM)' : activeSector === 'TORNO' ? '⚙️ Torno CNC' : '🌀 Centro de Usinagem CNC'}</span>
                     </div>
                 ) : (
                     <div className="flex items-center gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-xl mb-6 w-full sm:w-fit overflow-x-auto shadow-sm">

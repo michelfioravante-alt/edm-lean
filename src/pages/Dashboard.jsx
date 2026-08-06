@@ -33,8 +33,8 @@ export default function Dashboard() {
         return custoHoraPadrao;
     };
 
-    const isProgrammerLocked = Boolean(setorPadrao && setorPadrao !== 'TODOS' && role !== 'admin');
-    const initialSector = isProgrammerLocked ? setorPadrao : (activeSector || 'TODOS');
+    const isProgrammerLocked = role !== 'admin';
+    const initialSector = isProgrammerLocked ? ((setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC') : (activeSector || 'TODOS');
 
     // Estados dos Filtros
     const [periodo, setPeriodo] = useState('mes'); // 'mes', 'semana', 'hoje'
@@ -247,7 +247,7 @@ export default function Dashboard() {
                         {isProgrammerLocked ? (
                             <div className="flex items-center gap-2 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800 text-xs font-bold text-slate-200 shadow-inner">
                                 <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                                <span>KPIs Exclusivos: {setorFilter === 'EDM_FIO' ? '⚡ Eletroerosão a Fio' : '🌀 Centro de Usinagem CNC'}</span>
+                                <span>KPIs Exclusivos: {setorFilter === 'EDM_FIO' ? '⚡ Eletroerosão a Fio' : setorFilter === 'TORNO' ? '⚙️ Torno CNC' : '🌀 Centro de Usinagem CNC'}</span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800 min-w-[200px]">

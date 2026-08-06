@@ -546,6 +546,7 @@ export default function ConfigSettings() {
                                 >
                                     <option value="CNC">🌀 CNC</option>
                                     <option value="EDM_FIO">⚡ EDM Fio</option>
+                                    <option value="TORNO">⚙️ Torno CNC</option>
                                 </select>
                             </div>
                             <Button
@@ -569,9 +570,11 @@ export default function ConfigSettings() {
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
                                                 m.setor === 'EDM_FIO' 
                                                     ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
+                                                    : m.setor === 'TORNO'
+                                                    ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
                                                     : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
                                             }`}>
-                                                {m.setor === 'EDM_FIO' ? '⚡ EDM Fio' : '🌀 CNC'}
+                                                {m.setor === 'EDM_FIO' ? '⚡ EDM Fio' : m.setor === 'TORNO' ? '⚙️ Torno' : '🌀 CNC'}
                                             </span>
                                         </div>
                                         <button
@@ -621,7 +624,8 @@ export default function ConfigSettings() {
                                     >
                                         <option value="CNC">🌀 CNC</option>
                                         <option value="EDM_FIO">⚡ EDM Fio</option>
-                                        <option value="TODOS">🏢 Ambos (Fábrica)</option>
+                                        <option value="TORNO">⚙️ Torno CNC</option>
+                                        <option value="TODOS">🏢 Todos (Toda Fábrica)</option>
                                     </select>
                                 </div>
                                 <Button type="submit" variant="primary" size="lg" className="px-5 shadow-sm h-[52px] w-full sm:w-auto" disabled={!novoProgramador.trim()}>
@@ -637,11 +641,13 @@ export default function ConfigSettings() {
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
                                                 prog.setor === 'EDM_FIO' 
                                                     ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
+                                                    : prog.setor === 'TORNO'
+                                                    ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
                                                     : prog.setor === 'CNC'
                                                     ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
                                                     : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
                                             }`}>
-                                                {prog.setor === 'EDM_FIO' ? '⚡ EDM Fio' : prog.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
+                                                {prog.setor === 'EDM_FIO' ? '⚡ EDM Fio' : prog.setor === 'TORNO' ? '⚙️ Torno' : prog.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
                                             </span>
                                         </div>
                                         <button
@@ -817,9 +823,10 @@ export default function ConfigSettings() {
                                             onChange={e => setNovoOperadorSetor(e.target.value)}
                                             className="bg-slate-950 border border-slate-800 rounded-xl py-3 px-3 text-white font-bold text-xs focus:border-kanban-blue outline-none cursor-pointer"
                                         >
-                                            <option value="TODOS">🏢 Ambos (Toda Fábrica)</option>
+                                            <option value="TODOS">🏢 Todos (Toda Fábrica)</option>
                                             <option value="CNC">🌀 Centro de Usinagem CNC</option>
                                             <option value="EDM_FIO">⚡ Eletroerosão a Fio (EDM)</option>
+                                            <option value="TORNO">⚙️ Torno CNC</option>
                                         </select>
                                         <Button
                                             type="submit"
@@ -846,11 +853,13 @@ export default function ConfigSettings() {
                                                 <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
                                                     op.setor === 'EDM_FIO' 
                                                         ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
+                                                        : op.setor === 'TORNO'
+                                                        ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
                                                         : op.setor === 'CNC'
                                                         ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
                                                         : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
                                                 }`}>
-                                                    {op.setor === 'EDM_FIO' ? '⚡ EDM Fio' : op.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
+                                                    {op.setor === 'EDM_FIO' ? '⚡ EDM Fio' : op.setor === 'TORNO' ? '⚙️ Torno' : op.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
                                                 </span>
                                             </div>
                                             <button
