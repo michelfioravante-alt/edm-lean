@@ -107,6 +107,9 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
         }
     };
 
+    const badgeLabel = isPausadoFinal ? 'Pausado' : isOverdue ? 'Atrasado' : isDueToday ? 'Hoje' : status;
+    const badgeClass = getBadgeStyles();
+
     const isOptimistic = !!data._optimistic;
 
     return (
