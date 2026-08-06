@@ -131,6 +131,8 @@ export const useAppStore = create((set) => ({
                 set({
                     configuracoesGlobais: {
                         custoHoraMaquina: data.custo_hora_maquina || 50,
+                        custoHoraCnc: data.custo_hora_cnc || 80,
+                        custoHoraEdm: data.custo_hora_edm || 120,
                         turnos: data.turnos || [{ id: 't1', nome: 'Turno 1', inicio: '07:30', fim: '15:30' }],
                         pinOnboarding: data.pin_onboarding || '1234',
                         limiteMaquinas: data.limite_maquinas ?? 999,
@@ -351,12 +353,14 @@ export const useAppStore = create((set) => ({
         }
     },
 
-    salvarConfiguracoes: async ({ custoHoraMaquina, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) => {
-        await configService.upsert({ custoHoraMaquina, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup });
+    salvarConfiguracoes: async ({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) => {
+        await configService.upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup });
         set((state) => ({
             configuracoesGlobais: {
                 ...state.configuracoesGlobais,
                 custoHoraMaquina,
+                ...(custoHoraCnc !== undefined && { custoHoraCnc }),
+                ...(custoHoraEdm !== undefined && { custoHoraEdm }),
                 turnos,
                 pinOnboarding,
                 ...(modoMagazineDefault !== undefined && { modoMagazineDefault }),

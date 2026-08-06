@@ -32,19 +32,22 @@ export const configService = {
         }
     },
 
-    async upsert({ custoHoraMaquina, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) {
-        if (isLocalMode()) return localApi.config.upsert({ custoHoraMaquina, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup });
+    async upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) {
+        if (isLocalMode()) return localApi.config.upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup });
         const empresaId = getEmpresaId();
+        const payload = {
+            empresa_id: empresaId,
+            custo_hora_maquina: custoHoraMaquina,
+            turnos: turnos,
+            pin_onboarding: pinOnboarding,
+            ...(custoHoraCnc !== undefined && { custo_hora_cnc: custoHoraCnc }),
+            ...(custoHoraEdm !== undefined && { custo_hora_edm: custoHoraEdm }),
+            ...(modoMagazineDefault !== undefined && { modo_magazine_default: modoMagazineDefault }),
+            ...(baixaEstoqueNoSetup !== undefined && { baixa_estoque_setup: baixaEstoqueNoSetup }),
+        };
         const { data, error } = await supabase
             .from('configuracoes_empresa')
-            .upsert({
-                empresa_id: empresaId,
-                custo_hora_maquina: custoHoraMaquina,
-                turnos: turnos,
-                pin_onboarding: pinOnboarding,
-                ...(modoMagazineDefault !== undefined && { modo_magazine_default: modoMagazineDefault }),
-                ...(baixaEstoqueNoSetup !== undefined && { baixa_estoque_setup: baixaEstoqueNoSetup }),
-            }, { onConflict: 'empresa_id' })
+            .upsert(payload, { onConflict: 'empresa_id' })
             .select()
             .single();
         if (error) throw error;
