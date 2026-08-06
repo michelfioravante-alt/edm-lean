@@ -167,6 +167,10 @@ export default function Dashboard() {
             totalValorTrabalho += (horasTotais * osRate);
         } else if (resultAfericao === 'Refugo') {
             totalValorPerdidoRefugo += (horasTotais * osRate);
+        } else {
+            // OS concluída sem resultado de aferição: conta no trabalho realizado
+            // (operador pode ter concluído sem passar pela etapa de aferição)
+            totalValorTrabalho += (horasTotais * osRate);
         }
 
         const pausas = os.historico_pausas || os.historicoPausas || [];
@@ -192,8 +196,10 @@ export default function Dashboard() {
         }
     });
 
-    const oeeEfficiency = totalPlanH > 0 ?
-        ((totalPlanH / (totalRealH || totalPlanH)) * 100).toFixed(1) : '100';
+    // OEE = Tempo Real Produtivo / Tempo Planejado × 100
+    // Valor > 100% significa que a OS foi executada mais rápido que o estimado (positivo)
+    const oeeRaw = totalPlanH > 0 ? ((totalRealH / totalPlanH) * 100) : 100;
+    const oeeEfficiency = Math.min(oeeRaw, 999).toFixed(1); // sem teto artificial — pode ser >100% se mais eficiente que estimado
 
     const valorGeradoCorte = totalValorCorte.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const valorGeradoTotais = totalValorTrabalho.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

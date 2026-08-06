@@ -81,6 +81,8 @@ export const osService = {
             cliente: osData.cliente,
             link_desenho: osData.link_desenho || osData.linkDesenho || null,
             is_prioridade: osData.is_prioridade !== undefined ? osData.is_prioridade : (osData.isPrioridade || false),
+            is_retrabalho: osData.is_retrabalho !== undefined ? osData.is_retrabalho : (osData.isRetrabalho || false),
+            setor: osData.setor || null,  // Setor produtivo: 'CNC' | 'EDM_FIO' | 'TORNO'
             status: osData.status || 'A fazer',
             tempo_estimado_corte_horas: parseInt(osData.tempo_estimado_corte_horas || osData.tempoEstimadoCorteHoras) || 0,
             tempo_estimado_corte_minutos: parseInt(osData.tempo_estimado_corte_minutos || osData.tempoEstimadoCorteMinutos) || 0,
