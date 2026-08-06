@@ -480,9 +480,11 @@ export default function Estoque() {
                 </div>
             </div>
 
-            {/* ---------- RELATÓRIOS OEE ANALÍTICOS DE INSUMOS ---------- */}
+            {/* ---------- RELATÓRIOS ANALÍTICOS DE INSUMOS ---------- */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-6 border-t border-slate-800">
-                <InsumosLifeChart />
+                {(setorFiltro === 'TODOS' || setorFiltro === 'EDM_FIO') && (
+                    <InsumosLifeChart />
+                )}
                 <MachineConsumptionChart />
             </div>
 

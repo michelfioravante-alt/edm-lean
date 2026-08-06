@@ -649,7 +649,9 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <LeadTimeChart concluidas={concluidas} />
                     <QualityPieChart concluidas={concluidas} />
-                    <InsumosLifeChart periodo={periodo} />
+                    {(setorFilter === 'TODOS' || setorFilter === 'EDM_FIO') && (
+                        <InsumosLifeChart periodo={periodo} />
+                    )}
                     <MachineHoursChart concluidas={concluidas} />
                     <ClientPiecesChart concluidas={concluidas} />
                     <MachineConsumptionChart periodo={periodo} />
