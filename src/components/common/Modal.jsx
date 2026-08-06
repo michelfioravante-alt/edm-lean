@@ -21,24 +21,19 @@ export default function Modal({
     if (!isOpen) return null;
 
     return (
-        <div
-            className="fixed inset-0 z-[100] flex items-start justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
-            style={{ paddingTop: 'max(12px, env(safe-area-inset-top))', paddingBottom: 'max(80px, env(safe-area-inset-bottom))', paddingLeft: '12px', paddingRight: '12px' }}
-        >
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 sm:p-4 md:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
             <div
                 className="fixed inset-0 -z-10"
                 onClick={onClose}
             />
 
-            <div className={`relative bg-slate-950 border border-slate-800 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] w-full ${maxWidth} flex flex-col overflow-hidden my-auto`}
-                style={{ maxHeight: 'calc(100dvh - 100px)' }}
-            >
+            <div className={`relative bg-slate-950 border border-slate-800 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] w-full ${maxWidth} flex flex-col max-h-[85vh] sm:max-h-[90vh] overflow-hidden my-auto`}>
                 {title && (
-                    <div className="flex justify-between items-center px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md rounded-t-2xl shrink-0">
+                    <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md rounded-t-2xl shrink-0">
                         <h3 className="text-base sm:text-xl font-extrabold text-white pr-2 leading-tight">{title}</h3>
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors active:scale-95 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer ml-2"
+                            className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors active:scale-95 shrink-0 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer ml-2"
                             aria-label="Fechar"
                         >
                             <X className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -46,7 +41,7 @@ export default function Modal({
                     </div>
                 )}
 
-                <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain flex-1 min-h-0 custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {children}
                 </div>
             </div>

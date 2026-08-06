@@ -262,11 +262,11 @@ export default function Estoque() {
                                 return estoqueFiltrado.map((item) => {
                                     const baixoEstoque = item.quantidade <= item.alerta_minimo;
                                     return (
-                                        <div key={item.id} className={`flex items-center justify-between p-4 border rounded-xl bg-slate-950/50 shadow-sm transition-colors hover:border-slate-700 ${baixoEstoque ? 'border-red-500/50' : 'border-slate-800'}`}>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-extrabold text-lg text-white">{item.nome}</p>
-                                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                                        <div key={item.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 border rounded-xl bg-slate-950/50 shadow-sm transition-colors hover:border-slate-700 gap-3 ${baixoEstoque ? 'border-red-500/50' : 'border-slate-800'}`}>
+                                            <div className="min-w-0 flex-1 w-full sm:w-auto">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="font-extrabold text-base sm:text-lg text-white leading-snug">{item.nome}</p>
+                                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border shrink-0 ${
                                                         item.setor === 'EDM_FIO' 
                                                             ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
                                                             : item.setor === 'TORNO'
@@ -277,27 +277,28 @@ export default function Estoque() {
                                                     }`}>
                                                         {item.setor === 'EDM_FIO' ? '⚡ EDM Fio' : item.setor === 'TORNO' ? '⚙️ Torno' : item.setor === 'CNC' ? '🌀 CNC' : '🏢 Geral'}
                                                     </span>
-                                                    {baixoEstoque && <AlertTriangle className="w-5 h-5 text-red-500" />}
+                                                    {baixoEstoque && <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />}
                                                 </div>
                                                 <p className="text-xs text-slate-500 font-bold mt-1">Alerta: {item.alerta_minimo} unid.</p>
                                             </div>
-                                            <div className="text-right flex items-center gap-4">
-                                                <div className="flex flex-col items-center">
-                                                    <span className={`text-3xl font-black ${baixoEstoque ? 'text-red-500' : 'text-white'}`}>{item.quantidade}</span>
-                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">unid</span>
+
+                                            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-900">
+                                                <div className="flex items-center gap-2 sm:flex-col sm:items-center">
+                                                    <span className={`text-2xl sm:text-3xl font-black ${baixoEstoque ? 'text-red-500' : 'text-white'}`}>{item.quantidade}</span>
+                                                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">unid</span>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => setMovimentacao({ item, tipo: 'entrada' })} className="bg-slate-900 hover:bg-kanban-green/10 text-slate-400 hover:text-kanban-green p-3 rounded-lg border border-slate-700 hover:border-kanban-green/30 transition-colors shadow-sm" title="Dar entrada (compra, devolução, ajuste)">
-                                                        <ArrowDownCircle className="w-5 h-5" />
+                                                <div className="flex gap-1.5 sm:gap-2 shrink-0">
+                                                    <button onClick={() => setMovimentacao({ item, tipo: 'entrada' })} className="bg-slate-900 hover:bg-kanban-green/10 text-slate-400 hover:text-kanban-green p-2 sm:p-3 rounded-lg border border-slate-700 hover:border-kanban-green/30 transition-colors shadow-sm active:scale-95" title="Dar entrada (compra, devolução, ajuste)">
+                                                        <ArrowDownCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                                                     </button>
-                                                    <button onClick={() => setMovimentacao({ item, tipo: 'saida' })} className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white p-3 rounded-lg border border-slate-700 transition-colors shadow-sm" title="Dar saída (consumo, perda, ajuste)">
-                                                        <ArrowUpCircle className="w-5 h-5" />
+                                                    <button onClick={() => setMovimentacao({ item, tipo: 'saida' })} className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white p-2 sm:p-3 rounded-lg border border-slate-700 transition-colors shadow-sm active:scale-95" title="Dar saída (consumo, perda, ajuste)">
+                                                        <ArrowUpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                                                     </button>
-                                                    <button onClick={() => consumirEstoqueItem(item.id, 1)} className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white p-3 rounded-lg border border-slate-700 font-bold transition-colors shadow-sm" title="Retirar 1 unid. sem vincular a máquina">
-                                                        <span className="text-lg leading-none">-1</span>
+                                                    <button onClick={() => consumirEstoqueItem(item.id, 1)} className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white p-2 sm:p-3 rounded-lg border border-slate-700 font-bold transition-colors shadow-sm active:scale-95 flex items-center justify-center min-w-[36px] sm:min-w-[44px]" title="Retirar 1 unid. sem vincular a máquina">
+                                                        <span className="text-base sm:text-lg leading-none font-extrabold">-1</span>
                                                     </button>
-                                                    <button onClick={() => setItemParaDeletar(item.id)} className="bg-slate-900 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 p-3 rounded-lg border border-slate-800 hover:border-red-500/30 transition-colors shadow-sm" title="Excluir item do inventário">
-                                                        <Trash2 className="w-5 h-5" />
+                                                    <button onClick={() => setItemParaDeletar(item.id)} className="bg-slate-900 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 p-2 sm:p-3 rounded-lg border border-slate-800 hover:border-red-500/30 transition-colors shadow-sm active:scale-95" title="Excluir item do inventário">
+                                                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                                     </button>
                                                 </div>
                                             </div>
