@@ -378,54 +378,54 @@ export default function NovaOSForm({ onClose }) {
 
                 {/* Calculadora de Tempo WEDM — exclusiva para Eletroerosão a Fio */}
                 {formData.setor === 'EDM_FIO' && (
-                    <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-xl space-y-3">
-                        <div className="flex items-center justify-between">
+                    <div className="bg-emerald-950/30 border border-emerald-500/40 p-3.5 sm:p-4 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                                <Calculator className="w-4 h-4 text-emerald-400" />
+                                <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
                                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-emerald-300">
                                     Calculadora de Tempo de Corte WEDM
                                 </h4>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setShowEdmCalculator(true)}
-                                className="text-xs font-extrabold bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-600 hover:border-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer"
+                                onClick={() => setShowEdmCalculator(prev => !prev)}
+                                className="text-xs font-extrabold bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-600 hover:border-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
                             >
                                 <Calculator className="w-3.5 h-3.5" />
-                                <span>Abrir Calculadora</span>
+                                <span>{showEdmCalculator ? 'Ocultar Calculadora' : 'Abrir Calculadora'}</span>
                             </button>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            Informe o <strong className="text-emerald-300">perímetro de corte (mm)</strong>, a <strong className="text-emerald-300">velocidade de cada passada (mm/min)</strong> e a quantidade de peças.
-                            O assistente calcula o tempo total estimado e aplica direto nos campos de tempo da O.S.
-                        </p>
+
+                        {!showEdmCalculator && (
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                                Informe o <strong className="text-emerald-300">perímetro de corte (mm)</strong>, a <strong className="text-emerald-300">velocidade de cada passada (mm/min)</strong> e a quantidade de peças para calcular o tempo total estimado.
+                            </p>
+                        )}
+
                         {(formData.tempoEstimadoCorteHoras || formData.tempoEstimadoCorteMinutos) && (
-                            <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Tempo de corte estimado: {formData.tempoEstimadoCorteHoras || 0}h {formData.tempoEstimadoCorteMinutos || '00'}m</span>
+                            <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-950/60 p-2 rounded-lg border border-emerald-500/30">
+                                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                                <span>Tempo de corte aplicado: {formData.tempoEstimadoCorteHoras || 0}h {formData.tempoEstimadoCorteMinutos || '00'}m</span>
                             </div>
                         )}
 
-                        <Modal
-                            isOpen={showEdmCalculator}
-                            onClose={() => setShowEdmCalculator(false)}
-                            title="⚡ Calculadora WEDM — Tempo de Corte por Perímetro"
-                            maxWidth="max-w-md"
-                        >
-                            <CalculadoraTempoModal
-                                onCalculate={(h, m, qtd) => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        tempoEstimadoCorteHoras: String(h),
-                                        tempoEstimadoCorteMinutos: String(m),
-                                        quantidade: qtd || prev.quantidade,
-                                    }));
-                                    setShowEdmCalculator(false);
-                                }}
-                                onClose={() => setShowEdmCalculator(false)}
-                                initialQuantidade={formData.quantidade || 1}
-                            />
-                        </Modal>
+                        {showEdmCalculator && (
+                            <div className="pt-2 border-t border-emerald-500/30 animate-in fade-in duration-150">
+                                <CalculadoraTempoModal
+                                    onCalculate={(h, m, qtd) => {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            tempoEstimadoCorteHoras: String(h),
+                                            tempoEstimadoCorteMinutos: String(m),
+                                            quantidade: qtd || prev.quantidade,
+                                        }));
+                                        setShowEdmCalculator(false);
+                                    }}
+                                    onClose={() => setShowEdmCalculator(false)}
+                                    initialQuantidade={formData.quantidade || 1}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
 
