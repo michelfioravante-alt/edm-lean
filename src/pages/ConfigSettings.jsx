@@ -2,21 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import Button from '../components/common/Button';
-import { Plus, Trash2, Settings2, Zap, ShieldCheck, Users, Monitor, Bot, DollarSign, Copy, Wrench } from 'lucide-react';
+import { 
+    Plus, Trash2, Settings2, Zap, ShieldCheck, Users, Monitor, 
+    Bot, DollarSign, Copy, Wrench, Clock, RefreshCw, Cpu, Layers 
+} from 'lucide-react';
 import { ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../constants/cncProcess';
 
 export default function ConfigSettings() {
     const {
-        configuracoesGlobais, atualizarConfiguracoes, salvarConfiguracoes,
+        configuracoesGlobais, salvarConfiguracoes,
         fetchConfiguracoes, fetchMaquinas, fetchOperadores, fetchProgramadores, fetchAutoKanbans, fetchUsuarios,
         maquinas, addMaquina, removeMaquina,
         operadores, addOperador, removeOperador,
         programadores, addProgramador, removeProgramador,
         kanbansAutomaticos, addKanbanAutomatico, removeKanbanAutomatico,
-        usuarios, updateUserRole
+        usuarios
     } = useAppStore();
 
-    const { user, empresaId, codigoConvite } = useAuthStore();
+    const { user, codigoConvite } = useAuthStore();
+
+    const [activeTab, setActiveTab] = useState('geral'); // 'geral' | 'recursos' | 'equipe' | 'automacao'
 
     // Carrega dados ao montar a página
     useEffect(() => {
@@ -75,11 +80,10 @@ export default function ConfigSettings() {
         custoHoraEdm: parseFloat(custoHoraEdmLocal) || configuracoesGlobais?.custoHoraEdm || 120,
         turnos: turnosLocal,
         pinOnboarding: pinLocal || configuracoesGlobais?.pinOnboarding || '1234',
+        modoMagazineDefault: modoMagazineLocal,
+        baixaEstoqueNoSetup: baixaEstoqueSetupLocal,
     });
 
-
-    // As remoções são disparadas direto do onClick; sem isso uma falha do service
-    // vira promise rejeitada no console e a tela não muda nem avisa nada.
     const removerComAviso = async (acao, rotulo) => {
         try {
             await acao();
@@ -108,7 +112,7 @@ export default function ConfigSettings() {
         const novosTurnos = [...turnosLocal];
         novosTurnos[index] = { ...novosTurnos[index], [field]: value };
         setTurnosLocal(novosTurnos);
-    }
+    };
 
     const handleAddTurno = (e) => {
         if (e) e.preventDefault();
@@ -119,7 +123,7 @@ export default function ConfigSettings() {
                 { id: `t${Date.now()}`, nome: nomeTrim, inicio: '08:00', fim: '18:00' }
             ]);
             setNovoTurnoNome('');
-            setToastMsg('Turno adicionado à lista! Clique em "Salvar Turnos" abaixo para gravar no banco.');
+            setToastMsg('Turno adicionado! Clique em "Salvar Turnos" para gravar.');
             setTimeout(() => setToastMsg(''), 3500);
         }
     };
@@ -132,7 +136,7 @@ export default function ConfigSettings() {
         e.preventDefault();
         try {
             await salvarConfiguracoes(configuracaoDaTela());
-            setToastMsg('Custo Hora Atualizado com Sucesso!');
+            setToastMsg('Custos Hora Atualizados com Sucesso!');
         } catch (err) {
             setToastMsg('Erro ao salvar: ' + err.message);
         }
@@ -143,7 +147,7 @@ export default function ConfigSettings() {
         e.preventDefault();
         try {
             await salvarConfiguracoes(configuracaoDaTela());
-            setToastMsg('Janelas de Turnos Salvas com Sucesso!');
+            setToastMsg('Turnos Salvos com Sucesso!');
         } catch (err) {
             setToastMsg('Erro ao salvar: ' + err.message);
         }
@@ -158,8 +162,6 @@ export default function ConfigSettings() {
     const [novoProgramadorSetor, setNovoProgramadorSetor] = useState('CNC');
     const [novoTurnoNome, setNovoTurnoNome] = useState('');
 
-
-
     // Kanban Automático State
     const [kbTipo, setKbTipo] = useState('');
     const [kbOutros, setKbOutros] = useState('');
@@ -170,7 +172,7 @@ export default function ConfigSettings() {
         e.preventDefault();
         const limite = configuracoesGlobais?.limiteMaquinas ?? 999;
         if (maquinas.length >= limite) {
-            setToastMsg('Erro: Limite do plano atingido. Entre em contato para adicionar mais máquinas.');
+            setToastMsg('Erro: Limite do plano atingido.');
             setTimeout(() => setToastMsg(''), 4000);
             return;
         }
@@ -211,7 +213,6 @@ export default function ConfigSettings() {
             setToastMsg('Operador adicionado com sucesso!');
             setTimeout(() => setToastMsg(''), 2500);
         } catch (err) {
-
             setToastMsg('Erro: ' + (err?.message || 'Falha ao adicionar operador'));
             setTimeout(() => setToastMsg(''), 3500);
         }
@@ -238,7 +239,6 @@ export default function ConfigSettings() {
             setTimeout(() => setToastMsg(''), 3500);
         }
     };
-
 
     const handleAddKanbanAuto = async (e) => {
         e.preventDefault();
@@ -273,338 +273,374 @@ export default function ConfigSettings() {
         }
     };
 
-    const inputClasses = "w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 text-base font-bold bg-slate-950 placeholder-slate-600 transition-colors";
-    const titleClasses = "block text-sm font-bold text-slate-300 mb-2 tracking-wide";
-    const cardClasses = "bg-slate-900 rounded-xl shadow-md border border-slate-800 overflow-hidden";
-    const headerClasses = "bg-slate-950/50 px-5 py-4 border-b border-slate-800 flex items-center gap-3";
+    const inputClasses = "w-full p-3 border border-slate-800 rounded-xl focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 text-sm font-bold bg-slate-950 placeholder-slate-600 transition-colors";
+    const titleClasses = "block text-xs font-black uppercase tracking-wider text-slate-400 mb-2";
+    const cardClasses = "bg-slate-900/90 rounded-2xl shadow-lg border border-slate-800/80 overflow-hidden";
+    const headerClasses = "bg-slate-950/60 px-6 py-4 border-b border-slate-800/80 flex items-center justify-between";
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 pb-10">
-            <div>
-                <h2 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                    <Settings2 className="w-8 h-8 text-kanban-amber" />
-                    Configurações do Sistema
-                </h2>
-                <p className="text-slate-400 mt-2 text-base font-medium">
-                    Gerencie recursos e rotinas automáticas de manutenção no chão de fábrica.
-                </p>
+        <div className="max-w-7xl mx-auto space-y-6 pb-12">
+            {/* Header da Página */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80">
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
+                        <Settings2 className="w-8 h-8 text-kanban-amber" />
+                        Configurações da Fábrica
+                    </h2>
+                    <p className="text-slate-400 mt-1 text-sm font-medium">
+                        Gerencie parâmetros de custos, máquinas CNC/EDM/Torno, equipe e rotinas de manutenção.
+                    </p>
+                </div>
+
+                {/* Seletor de Abas Estilo Pills */}
+                <div className="flex items-center gap-1.5 p-1 bg-slate-950 border border-slate-800 rounded-xl overflow-x-auto">
+                    {[
+                        { id: 'geral', label: 'Geral & Custos', icon: DollarSign },
+                        { id: 'recursos', label: 'Máquinas & CAM', icon: Cpu },
+                        { id: 'equipe', label: 'Equipe & Acessos', icon: Users },
+                        { id: 'automacao', label: 'Rotinas / Automação', icon: Bot },
+                    ].map(tab => {
+                        const Icon = tab.icon;
+                        const active = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                                    active
+                                        ? 'bg-kanban-amber text-slate-950 shadow-md font-black'
+                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                                }`}
+                            >
+                                <Icon className="w-3.5 h-3.5" />
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
-            {/* ---------- PARÂMETROS FINANCEIROS (DASHBOARD) ---------- */}
-            <div className={cardClasses}>
-                <div className={headerClasses}>
-                    <DollarSign className="text-emerald-600 w-6 h-6" />
-                    <h3 className="text-xl font-bold text-white">Parâmetros Financeiros e OEE</h3>
-                </div>
-                <div className="p-5 flex flex-col gap-6">
-                    <form onSubmit={handleSalvarCustoHora} className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-sm space-y-6">
-                        <div>
-                            <h4 className="text-sm font-black text-white uppercase tracking-wider mb-1">Custos Hora Diferenciados por Setor (R$/h)</h4>
-                            <p className="text-xs font-medium text-slate-400">Defina a taxa horária de cada tecnologia para obter relatórios de rentabilidade fabril 100% realistas.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div>
-                                <label className={titleClasses}>
-                                    🌀 Usinagem CNC (R$/h)
-                                </label>
-                                <div className="relative mt-2">
-                                    <span className="absolute left-4 top-3.5 text-cyan-400 font-extrabold text-sm">R$</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        step="0.01"
-                                        value={custoHoraCncLocal}
-                                        onChange={e => setCustoHoraCncLocal(e.target.value)}
-                                        className={`${inputClasses} pl-10 border-cyan-500/30 focus:border-cyan-400`}
-                                    />
-                                </div>
-                                <span className="block text-[10px] text-slate-500 mt-1">Usinagem 3, 4 e 5 eixos.</span>
+            {/* ========== ABA 1: GERAL & CUSTOS ========== */}
+            {activeTab === 'geral' && (
+                <div className="space-y-6 animate-modal-in">
+                    {/* Custos Hora */}
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <DollarSign className="text-emerald-500 w-5 h-5" />
+                                <h3 className="text-lg font-bold text-white">Taxas Horárias por Setor (R$/h)</h3>
                             </div>
-
-                            <div>
-                                <label className={titleClasses}>
-                                    ⚡ Eletroerosão a Fio (R$/h)
-                                </label>
-                                <div className="relative mt-2">
-                                    <span className="absolute left-4 top-3.5 text-emerald-400 font-extrabold text-sm">R$</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        step="0.01"
-                                        value={custoHoraEdmLocal}
-                                        onChange={e => setCustoHoraEdmLocal(e.target.value)}
-                                        className={`${inputClasses} pl-10 border-emerald-500/30 focus:border-emerald-400`}
-                                    />
-                                </div>
-                                <span className="block text-[10px] text-slate-500 mt-1">Inclui fio de latão + desionizador.</span>
-                            </div>
-
-                            <div>
-                                <label className={titleClasses}>
-                                    🏭 Custo Padrão / Geral (R$/h)
-                                </label>
-                                <div className="relative mt-2">
-                                    <span className="absolute left-4 top-3.5 text-indigo-400 font-extrabold text-sm">R$</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        step="0.01"
-                                        value={custoHoraLocal}
-                                        onChange={e => setCustoHoraLocal(e.target.value)}
-                                        className={`${inputClasses} pl-10`}
-                                    />
-                                </div>
-                                <span className="block text-[10px] text-slate-500 mt-1">Bancada, ajuste e outros.</span>
-                            </div>
+                            <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 font-black">
+                                BASE FINANCEIRA
+                            </span>
                         </div>
-
-                        <div className="flex justify-end pt-2">
-                            <Button type="submit" variant="primary" size="lg" className="px-8 h-[48px] shadow-sm whitespace-nowrap">
-                                Salvar Custos por Setor
-                            </Button>
-                        </div>
-                    </form>
-
-
-                    <form onSubmit={handleSalvarMagazine} className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-sm space-y-4">
-                        <div>
-                            <label className={titleClasses}>
-                                <Wrench className="inline w-4 h-4 mr-1 text-kanban-amber" />
-                                Ferramentas — modo padrão
-                                <span className="block text-xs font-normal text-slate-500 mt-1">
-                                    Padrão ao entrar no Setup; cada O.S. pode mudar (ex.: peça longa = magazine completo).
-                                </span>
-                            </label>
-                            <div className="space-y-2 mt-3">
-                                {ESTRATEGIA_FERRAMENTAL_OPTIONS.map((opt) => (
-                                    <label key={opt.key} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer ${modoMagazineLocal === opt.key ? 'border-kanban-amber bg-kanban-amber/10' : 'border-slate-800'}`}>
-                                        <input
-                                            type="radio"
-                                            name="modoMagazine"
-                                            checked={modoMagazineLocal === opt.key}
-                                            onChange={() => setModoMagazineLocal(opt.key)}
-                                            className="mt-1"
-                                        />
-                                        <div>
-                                            <span className="font-bold text-slate-200 text-sm">{opt.label}</span>
-                                            <p className="text-xs text-slate-500">{opt.hint}</p>
+                        <div className="p-6">
+                            <form onSubmit={handleSalvarCustoHora} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                    <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+                                        <label className={titleClasses}>🌀 Usinagem CNC (R$/h)</label>
+                                        <div className="relative mt-2">
+                                            <span className="absolute left-3.5 top-3 text-cyan-400 font-extrabold text-sm">R$</span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                step="0.01"
+                                                value={custoHoraCncLocal}
+                                                onChange={e => setCustoHoraCncLocal(e.target.value)}
+                                                className={`${inputClasses} pl-10 border-cyan-500/30 focus:border-cyan-400`}
+                                            />
                                         </div>
-                                    </label>
-                                ))}
-                            </div>
-                            <label className="flex items-start gap-2 mt-4 text-sm text-slate-400">
-                                <input
-                                    type="checkbox"
-                                    checked={baixaEstoqueSetupLocal}
-                                    onChange={(e) => setBaixaEstoqueSetupLocal(e.target.checked)}
-                                    className="mt-1"
-                                />
-                                <span>Descontar estoque ao montar magazine completo no setup (senão só registra na máquina; quebra desconta depois)</span>
-                            </label>
+                                        <span className="block text-[10px] text-slate-500 mt-2">Centro de Usinagem 3, 4 e 5 eixos.</span>
+                                    </div>
+
+                                    <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+                                        <label className={titleClasses}>⚡ Eletroerosão a Fio (R$/h)</label>
+                                        <div className="relative mt-2">
+                                            <span className="absolute left-3.5 top-3 text-emerald-400 font-extrabold text-sm">R$</span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                step="0.01"
+                                                value={custoHoraEdmLocal}
+                                                onChange={e => setCustoHoraEdmLocal(e.target.value)}
+                                                className={`${inputClasses} pl-10 border-emerald-500/30 focus:border-emerald-400`}
+                                            />
+                                        </div>
+                                        <span className="block text-[10px] text-slate-500 mt-2">Inclui fio de latão + desionizador.</span>
+                                    </div>
+
+                                    <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+                                        <label className={titleClasses}>🏭 Custo Padrão / Geral (R$/h)</label>
+                                        <div className="relative mt-2">
+                                            <span className="absolute left-3.5 top-3 text-indigo-400 font-extrabold text-sm">R$</span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                step="0.01"
+                                                value={custoHoraLocal}
+                                                onChange={e => setCustoHoraLocal(e.target.value)}
+                                                className={`${inputClasses} pl-10`}
+                                            />
+                                        </div>
+                                        <span className="block text-[10px] text-slate-500 mt-2">Torno CNC, bancada e ajuste.</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-2">
+                                    <Button type="submit" variant="primary" size="md" className="px-6 shadow-sm">
+                                        Salvar Custos por Setor
+                                    </Button>
+                                </div>
+                            </form>
                         </div>
-                        <Button type="submit" variant="primary" size="lg">Salvar preferências de ferramentas</Button>
-                    </form>
+                    </div>
 
-                    <form onSubmit={handleSalvarTurnos} className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-sm">
-                        <div className="w-full">
-                            <label className={titleClasses}>
-                                Dimensionamento de Turnos
-                                <span className="block text-xs font-normal text-slate-500 mt-1 mb-4">Gerencie as janelas de tempo de sua fábrica. O Dashboard cruza esse escopo nas medições analíticas.</span>
-                            </label>
+                    {/* Preferências de Magazine Ferramental */}
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Wrench className="text-kanban-amber w-5 h-5" />
+                                <h3 className="text-lg font-bold text-white">Estratégia Ferramental & Magazine CNC</h3>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <form onSubmit={handleSalvarMagazine} className="space-y-5">
+                                <div className="space-y-3">
+                                    {ESTRATEGIA_FERRAMENTAL_OPTIONS.map((opt) => (
+                                        <label key={opt.key} className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${modoMagazineLocal === opt.key ? 'border-kanban-amber/60 bg-kanban-amber/10' : 'border-slate-800/80 hover:bg-slate-950/40'}`}>
+                                            <input
+                                                type="radio"
+                                                name="modoMagazine"
+                                                checked={modoMagazineLocal === opt.key}
+                                                onChange={() => setModoMagazineLocal(opt.key)}
+                                                className="mt-1 accent-amber-500"
+                                            />
+                                            <div>
+                                                <span className="font-bold text-slate-200 text-sm">{opt.label}</span>
+                                                <p className="text-xs text-slate-400 mt-0.5">{opt.hint}</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
 
-                            <div className="flex gap-3 items-end mb-6 bg-slate-900 p-4 border border-slate-800 rounded-xl shadow-sm">
-                                <div className="flex-1">
-                                    <label className={titleClasses}>Adicionar Novo Turno</label>
+                                <label className="flex items-start gap-3 p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl text-xs text-slate-300 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={baixaEstoqueSetupLocal}
+                                        onChange={(e) => setBaixaEstoqueSetupLocal(e.target.checked)}
+                                        className="mt-0.5 accent-amber-500"
+                                    />
+                                    <span>Descontar estoque de fresas/insertos automaticamente ao montar magazine completo no setup</span>
+                                </label>
+
+                                <div className="flex justify-end">
+                                    <Button type="submit" variant="primary" size="md">Salvar Preferências Ferramental</Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* Turnos */}
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Clock className="text-slate-400 w-5 h-5" />
+                                <h3 className="text-lg font-bold text-white">Dimensionamento de Turnos</h3>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <form onSubmit={handleSalvarTurnos} className="space-y-6">
+                                <div className="flex gap-3 items-end bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl">
+                                    <div className="flex-1">
+                                        <label className={titleClasses}>Adicionar Novo Turno</label>
+                                        <input
+                                            type="text"
+                                            value={novoTurnoNome}
+                                            onChange={e => setNovoTurnoNome(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddTurno(e);
+                                                }
+                                            }}
+                                            placeholder="Ex: Turno da Noite"
+                                            className={inputClasses}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddTurno}
+                                        variant="primary"
+                                        size="md"
+                                        className="px-4 h-[44px] shrink-0"
+                                        disabled={!novoTurnoNome.trim()}
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {turnosLocal.map((turno, index) => (
+                                        <div key={turno.id} className="bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl relative group">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <input
+                                                    type="text"
+                                                    value={turno.nome}
+                                                    onChange={(e) => handleTurnoChange(index, 'nome', e.target.value)}
+                                                    className="font-extrabold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-kanban-amber focus:outline-none px-1 text-sm w-2/3"
+                                                />
+                                                {turnosLocal.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveTurno(turno.id)}
+                                                        className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                                                        title="Remover Turno"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1">
+                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Início</label>
+                                                    <input
+                                                        type="time"
+                                                        value={turno.inicio}
+                                                        onChange={(e) => handleTurnoChange(index, 'inicio', e.target.value)}
+                                                        className="w-full p-2 border border-slate-800 rounded-lg text-slate-100 text-xs font-bold bg-slate-900 focus:border-kanban-amber outline-none"
+                                                        required
+                                                    />
+                                                </div>
+                                                <span className="text-slate-500 font-bold mt-4">-</span>
+                                                <div className="flex-1">
+                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Fim</label>
+                                                    <input
+                                                        type="time"
+                                                        value={turno.fim}
+                                                        onChange={(e) => handleTurnoChange(index, 'fim', e.target.value)}
+                                                        className="w-full p-2 border border-slate-800 rounded-lg text-slate-100 text-xs font-bold bg-slate-900 focus:border-kanban-amber outline-none"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex justify-end pt-2">
+                                    <Button type="submit" variant="primary" size="md">
+                                        Salvar Turnos
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ========== ABA 2: RECURSOS (MÁQUINAS & PROGRAMADORES) ========== */}
+            {activeTab === 'recursos' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-modal-in">
+                    {/* Máquinas */}
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Monitor className="text-cyan-400 w-5 h-5" />
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Máquinas do Parque Fabril</h3>
+                                    <p className="text-xs font-bold text-slate-500">
+                                        {maquinas.length} máquinas cadastradas
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <form onSubmit={handleAddMaquina} className="flex flex-col sm:flex-row gap-3 items-end bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl">
+                                <div className="flex-1 w-full">
+                                    <label className={titleClasses}>Identificação da Máquina</label>
                                     <input
                                         type="text"
-                                        value={novoTurnoNome}
-                                        onChange={e => setNovoTurnoNome(e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleAddTurno(e);
-                                            }
-                                        }}
-                                        placeholder="Ex: Turno da Madrugada"
+                                        value={novaMaquinaNome}
+                                        onChange={e => setNovaMaquinaNome(e.target.value)}
+                                        placeholder="Ex: ROMI D800 / Charmilles"
                                         className={inputClasses}
                                     />
                                 </div>
+                                <div className="w-full sm:w-44">
+                                    <label className={titleClasses}>Setor Produtivo</label>
+                                    <select
+                                        value={novaMaquinaSetor}
+                                        onChange={e => setNovaMaquinaSetor(e.target.value)}
+                                        className={inputClasses}
+                                    >
+                                        <option value="CNC">🌀 Centro CNC</option>
+                                        <option value="EDM_FIO">⚡ EDM Fio</option>
+                                        <option value="TORNO">⚙️ Torno CNC</option>
+                                    </select>
+                                </div>
                                 <Button
-                                    type="button"
-                                    onClick={handleAddTurno}
+                                    type="submit"
                                     variant="primary"
-                                    size="lg"
-                                    className="px-5 shadow-sm h-[52px] shrink-0"
-                                    disabled={!novoTurnoNome.trim()}
+                                    size="md"
+                                    className="px-4 h-[44px] w-full sm:w-auto shrink-0"
+                                    disabled={!novaMaquinaNome.trim()}
                                 >
-                                    <Plus className="w-6 h-6" />
+                                    <Plus className="w-5 h-5" />
                                 </Button>
-                            </div>
+                            </form>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                                {turnosLocal.map((turno, index) => (
-                                    <div key={turno.id} className="bg-slate-950/50 p-4 border border-slate-800 rounded-lg shadow-sm relative group">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <input
-                                                type="text"
-                                                value={turno.nome}
-                                                onChange={(e) => handleTurnoChange(index, 'nome', e.target.value)}
-                                                className="font-extrabold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-kanban-amber focus:outline-none px-1 w-2/3"
-                                            />
-                                            {turnosLocal.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveTurno(turno.id)}
-                                                    className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                    title="Remover Turno"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Início</label>
-                                                <input
-                                                    type="time"
-                                                    value={turno.inicio}
-                                                    onChange={(e) => handleTurnoChange(index, 'inicio', e.target.value)}
-                                                    className="w-full p-2 border border-slate-700 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 font-bold bg-slate-900"
-                                                    required
-                                                />
+                            <div className="space-y-2.5">
+                                <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Máquinas Ativas</h4>
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {maquinas.map((m) => (
+                                        <div key={m.id} className="flex items-center justify-between bg-slate-950/60 px-4 py-3 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-bold text-sm text-white">{m.nome}</p>
+                                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                                                    m.setor === 'EDM_FIO' 
+                                                        ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
+                                                        : m.setor === 'TORNO'
+                                                        ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
+                                                        : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
+                                                }`}>
+                                                    {m.setor === 'EDM_FIO' ? '⚡ EDM Fio' : m.setor === 'TORNO' ? '⚙️ Torno' : '🌀 CNC'}
+                                                </span>
                                             </div>
-                                            <span className="text-slate-400 font-bold mt-5">-</span>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Fim</label>
-                                                <input
-                                                    type="time"
-                                                    value={turno.fim}
-                                                    onChange={(e) => handleTurnoChange(index, 'fim', e.target.value)}
-                                                    className="w-full p-2 border border-slate-700 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 font-bold bg-slate-900"
-                                                    required
-                                                />
-                                            </div>
+                                            <button
+                                                onClick={() => removerComAviso(() => removeMaquina(m.id), 'máquina')}
+                                                className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition-colors"
+                                                title="Remover máquina"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
-                                    </div>
-                                ))}
-                                {turnosLocal.length === 0 && (
-                                    <div className="col-span-full p-6 text-center border border-dashed border-slate-700 rounded-lg text-slate-400 font-bold bg-slate-900/50">
-                                        Nenhum turno configurado. O Dashboard analisará o dia inteiro.
-                                    </div>
-                                )}
+                                    ))}
+
+                                    {maquinas.length === 0 && (
+                                        <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl py-6 text-center">Nenhuma máquina cadastrada.</p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="flex justify-end mt-4 pt-4 border-t border-slate-800">
-                            <Button type="submit" variant="primary" size="lg" className="px-8 h-[52px] shadow-sm whitespace-nowrap">
-                                Salvar Turnos
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                {/* ---------- MÁQUINAS ---------- */}
-                <div className={cardClasses}>
-                    <div className={headerClasses}>
-                        <Monitor className="text-slate-700 w-6 h-6" />
-                        <div>
-                            <h3 className="text-xl font-bold text-white">Máquinas (EDM)</h3>
-                            <p className="text-xs font-bold text-slate-500 mt-0.5">
-                                {maquinas.length} / {(configuracoesGlobais?.limiteMaquinas ?? 999) < 999 ? configuracoesGlobais.limiteMaquinas : '∞'} máquinas
-                            </p>
                         </div>
                     </div>
 
-                    <div className="p-5 space-y-8">
-                        {maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999) && (
-                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-amber-200 text-sm font-bold">
-                                Limite do plano atingido. Entre em contato para adicionar mais máquinas.
-                            </div>
-                        )}
-                        <form onSubmit={handleAddMaquina} className="flex flex-col sm:flex-row gap-3 items-end">
-                            <div className="flex-1 w-full">
-                                <label className={titleClasses}>Adicionar Nova Máquina</label>
-                                <input
-                                    type="text"
-                                    value={novaMaquinaNome}
-                                    onChange={e => setNovaMaquinaNome(e.target.value)}
-                                    placeholder="Nome ou identificação"
-                                    className={inputClasses}
-                                    disabled={maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999)}
-                                />
-                            </div>
-                            <div className="w-full sm:w-48">
-                                <label className={titleClasses}>Setor da Máquina</label>
-                                <select
-                                    value={novaMaquinaSetor}
-                                    onChange={e => setNovaMaquinaSetor(e.target.value)}
-                                    className={inputClasses}
-                                >
-                                    <option value="CNC">🌀 CNC</option>
-                                    <option value="EDM_FIO">⚡ EDM Fio</option>
-                                    <option value="TORNO">⚙️ Torno CNC</option>
-                                </select>
-                            </div>
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                size="lg"
-                                className="px-5 shadow-sm h-[52px] w-full sm:w-auto"
-                                disabled={!novaMaquinaNome.trim() || maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999)}
-                            >
-                                <Plus className="w-6 h-6" />
-                            </Button>
-                        </form>
-
-                        <div>
-                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3">Cadastradas</h4>
-                            <ul className="space-y-3">
-                                {maquinas.map((m) => (
-                                    <li key={m.id} className="flex items-center justify-between bg-slate-950/50 px-4 py-3 border border-slate-800 rounded-lg group">
-                                        <div className="flex items-center gap-3">
-                                            <p className="font-extrabold text-lg text-white">{m.nome}</p>
-                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
-                                                m.setor === 'EDM_FIO' 
-                                                    ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
-                                                    : m.setor === 'TORNO'
-                                                    ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
-                                                    : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
-                                            }`}>
-                                                {m.setor === 'EDM_FIO' ? '⚡ EDM Fio' : m.setor === 'TORNO' ? '⚙️ Torno' : '🌀 CNC'}
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={() => removerComAviso(() => removeMaquina(m.id), 'máquina')}
-                                            className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                                            title="Remover máquina"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </li>
-                                ))}
-
-                                {maquinas.length === 0 && (
-                                    <p className="text-base text-slate-400 border border-dashed border-slate-700 rounded-xl py-6 text-center font-bold bg-slate-900/50">Nenhuma máquina cadastrada.</p>
-                                )}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ---------- RECURSOS HUMANOS (PROGRAMADORES) ---------- */}
-                <div className="space-y-6">
+                    {/* Programadores */}
                     <div className={cardClasses}>
                         <div className={headerClasses}>
-                            <Users className="text-kanban-amber w-6 h-6" />
-                            <h3 className="text-xl font-bold text-white">Programadores</h3>
+                            <div className="flex items-center gap-3">
+                                <Layers className="text-amber-400 w-5 h-5" />
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Programadores CAM</h3>
+                                    <p className="text-xs font-bold text-slate-500">
+                                        {programadores.length} programadores cadastrados
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="p-5 space-y-6">
-                            <form onSubmit={handleAddProgramador} className="flex flex-col sm:flex-row gap-3 items-end">
+                        <div className="p-6 space-y-6">
+                            <form onSubmit={handleAddProgramador} className="flex flex-col sm:flex-row gap-3 items-end bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl">
                                 <div className="flex-1 w-full">
                                     <label className={titleClasses}>Nome do Programador</label>
                                     <input
@@ -615,8 +651,8 @@ export default function ConfigSettings() {
                                         className={inputClasses}
                                     />
                                 </div>
-                                <div className="w-full sm:w-48">
-                                    <label className={titleClasses}>Setor do Programador</label>
+                                <div className="w-full sm:w-44">
+                                    <label className={titleClasses}>Setor de Atuação</label>
                                     <select
                                         value={novoProgramadorSetor}
                                         onChange={e => setNovoProgramadorSetor(e.target.value)}
@@ -624,282 +660,160 @@ export default function ConfigSettings() {
                                     >
                                         <option value="CNC">🌀 CNC</option>
                                         <option value="EDM_FIO">⚡ EDM Fio</option>
-                                        <option value="TORNO">⚙️ Torno CNC</option>
-                                        <option value="TODOS">🏢 Todos (Toda Fábrica)</option>
+                                        <option value="TORNO">⚙️ Torno</option>
+                                        <option value="TODOS">🏢 Toda Fábrica</option>
                                     </select>
                                 </div>
-                                <Button type="submit" variant="primary" size="lg" className="px-5 shadow-sm h-[52px] w-full sm:w-auto" disabled={!novoProgramador.trim()}>
-                                    <Plus className="w-6 h-6" />
+                                <Button type="submit" variant="primary" size="md" className="px-4 h-[44px] w-full sm:w-auto shrink-0" disabled={!novoProgramador.trim()}>
+                                    <Plus className="w-5 h-5" />
                                 </Button>
                             </form>
 
-                            <ul className="space-y-3">
-                                {programadores.map((prog) => (
-                                    <li key={prog.id} className="flex items-center justify-between bg-slate-950/50 px-4 py-3 border border-slate-800 rounded-lg group">
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-extrabold text-lg text-white">{prog.nome}</span>
-                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
-                                                prog.setor === 'EDM_FIO' 
-                                                    ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
-                                                    : prog.setor === 'TORNO'
-                                                    ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
-                                                    : prog.setor === 'CNC'
-                                                    ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
-                                                    : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
-                                            }`}>
-                                                {prog.setor === 'EDM_FIO' ? '⚡ EDM Fio' : prog.setor === 'TORNO' ? '⚙️ Torno' : prog.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={() => removerComAviso(() => removeProgramador(prog.id), 'programador')}
-                                            className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                                            title="Remover programador"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </li>
-                                ))}
-
-                                {programadores.length === 0 && (
-                                    <p className="text-base text-slate-400 text-center border border-dashed border-slate-700 rounded-xl py-4 font-bold bg-slate-900/50">Nenhum programador.</p>
-                                )}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ---------- KANBANS AUTOMÁTICOS ---------- */}
-            <div className={cardClasses}>
-                <div className={headerClasses}>
-                    <Bot className="text-kanban-teal w-6 h-6" />
-                    <h3 className="text-xl font-bold text-white">Kanbans Automáticos (Manutenção & Rotinas)</h3>
-                </div>
-
-                <div className="p-5">
-                    <form onSubmit={handleAddKanbanAuto} className="bg-slate-900 p-6 rounded-xl border border-slate-800 mb-8 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
-                            <div className="col-span-1 md:col-span-2 space-y-4">
-                                <div>
-                                    <label className={titleClasses}>Tipo de Rotina / Kanban</label>
-                                    <select
-                                        value={kbTipo}
-                                        onChange={(e) => setKbTipo(e.target.value)}
-                                        className={inputClasses}
-                                        required
-                                    >
-                                        <option value="" disabled>Selecione uma rotina...</option>
-                                        <option value="Manutenção Preditiva">Manutenção Preditiva</option>
-                                        <option value="Alinhamento de Fio">Alinhamento de Fio</option>
-                                        <option value="Manutenção Corretiva">Manutenção Corretiva</option>
-                                        <option value="Outros">Outros</option>
-                                    </select>
-                                </div>
-                                {kbTipo === 'Outros' && (
-                                    <div className="mt-4">
-                                        <label className={titleClasses}>Descrição Personalizada</label>
-                                        <input
-                                            type="text"
-                                            value={kbOutros}
-                                            onChange={(e) => setKbOutros(e.target.value)}
-                                            className={inputClasses}
-                                            placeholder="Ex: Troca de Fluido Refrigerante"
-                                            required
-                                        />
-                                    </div>
-                                )}
-                                <div>
-                                    <label className={titleClasses}>Máquina Associada</label>
-                                    <select
-                                        value={kbMaquina}
-                                        onChange={(e) => setKbMaquina(e.target.value)}
-                                        className={inputClasses}
-                                        required
-                                    >
-                                        <option value="" disabled>Selecione a máquina...</option>
-                                        {maquinas.map(m => (
-                                            <option key={m.id} value={m.nome}>{m.nome}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col">
-                                <label className={titleClasses}>Gatilho de Criação</label>
-                                <div className="flex gap-3 items-center">
-                                    <div className="relative flex-1">
-                                        <input
-                                            type="number"
-                                            value={kbDias}
-                                            onChange={(e) => setKbDias(e.target.value)}
-                                            min="1"
-                                            className={inputClasses + " pr-12"}
-                                            placeholder="Ex: 30"
-                                            required
-                                        />
-                                        <span className="absolute right-4 top-3.5 text-slate-500 font-extrabold text-sm">dias</span>
-                                    </div>
-                                    <Button type="submit" variant="primary" size="lg" className="px-6 h-[52px] shadow-sm">
-                                        <Plus className="w-6 h-6" />
-                                    </Button>
-                                </div>
-                                <p className="text-xs font-bold text-slate-500 mt-3 pl-1 leading-snug">O sistema gerará um Kanban automaticamente neste ciclo.</p>
-                            </div>
-                        </div>
-                    </form>
-
-                    <div className="space-y-4">
-                        <h4 className="font-extrabold text-lg text-white mb-2 px-1 uppercase tracking-wider">Rotinas Ativas</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {kanbansAutomaticos.map((kb) => (
-                                <div key={kb.id} className="flex flex-col justify-between bg-slate-950/50 p-5 border border-slate-800 rounded-xl shadow-sm hover:border-kanban-amber transition-colors group">
-                                    <div>
-                                        <div className="flex items-start justify-between mb-3">
-                                            <span className="inline-block bg-kanban-amber text-slate-900 border border-kanban-amber/20 text-xs font-extrabold px-3 py-1.5 rounded-md uppercase tracking-wider shadow-sm">
-                                                A cada {kb.diasIntervalo} dias
-                                            </span>
-                                            <button
-                                                onClick={() => removerComAviso(() => removeKanbanAutomatico(kb.id), 'rotina')}
-                                                className="text-slate-400 hover:bg-red-100 hover:text-red-500 rounded p-1.5 transition-colors"
-                                                title="Remover rotina"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                        <p className="font-extrabold text-lg text-white leading-tight">{kb.descricao}</p>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <Monitor className="w-3.5 h-3.5 text-slate-500" />
-                                            <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">{kb.maquinaNome || 'Máquina não definida'}</p>
-                                        </div>
-                                        <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-wide">ID: {kb.id}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {kanbansAutomaticos.length === 0 && (
-                            <p className="text-base text-slate-400 border border-dashed border-slate-700 rounded-xl text-center font-bold py-10 bg-slate-900/50">
-                                Nenhuma rotina automática programada. As rotinas programadas aparecerão na linha do Kanban 'A fazer'.
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* ---------- GESTÃO DA EQUIPE (UNIFICADO) ---------- */}
-            <div className={cardClasses}>
-                <div className={headerClasses}>
-                    <Users className="text-kanban-amber w-6 h-6" />
-                    <h3 className="text-xl font-bold text-white">Gestão da Equipe (Operadores e Acessos)</h3>
-                </div>
-
-                <div className="p-6">
-                    {/* Gestão Dual: Manual + Link */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
-                        {/* Lado A: Cadastro Manual (Lista de nomes da equipe) */}
-                        <div className="bg-slate-950/40 p-8 rounded-3xl border border-slate-800 shadow-inner group transition-all hover:border-slate-700">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 bg-kanban-blue/20 rounded-xl flex items-center justify-center border border-kanban-blue/30">
-                                    <Plus className="w-5 h-5 text-kanban-blue" />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-black text-white uppercase tracking-tight leading-none mb-1">Cadastrar nomes de operadores</h4>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lista usada para selecionar quem operou a máquina ou fez a troca</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleAddOperador} className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome e Setor do Operador</label>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <input
-                                            type="text"
-                                            value={novoOperador}
-                                            onChange={e => setNovoOperador(e.target.value)}
-                                            placeholder="Ex: Pedro Oliveira"
-                                            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white font-bold focus:border-kanban-blue outline-none transition-all placeholder:text-slate-700 shadow-sm"
-                                        />
-                                        <select
-                                            value={novoOperadorSetor}
-                                            onChange={e => setNovoOperadorSetor(e.target.value)}
-                                            className="bg-slate-950 border border-slate-800 rounded-xl py-3 px-3 text-white font-bold text-xs focus:border-kanban-blue outline-none cursor-pointer"
-                                        >
-                                            <option value="TODOS">🏢 Todos (Toda Fábrica)</option>
-                                            <option value="CNC">🌀 Centro de Usinagem CNC</option>
-                                            <option value="EDM_FIO">⚡ Eletroerosão a Fio (EDM)</option>
-                                            <option value="TORNO">⚙️ Torno CNC</option>
-                                        </select>
-                                        <Button
-                                            type="submit"
-                                            variant="primary"
-                                            className="bg-kanban-blue hover:bg-blue-500 shadow-lg shadow-blue-500/20 active:scale-95 transition-all h-[52px]"
-                                            disabled={!novoOperador.trim()}
-                                        >
-                                            <Plus className="w-6 h-6" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </form>
-
-                            <div className="mt-8">
-                                <h5 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-kanban-blue rounded-full"></div>
-                                    Lista de operadores para registro ({operadores.length})
-                                </h5>
-                                <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                                    {operadores.map((op) => (
-                                        <div key={op.id} className="flex items-center justify-between bg-slate-900/50 px-4 py-3 border border-slate-800 rounded-xl group hover:border-slate-700 transition-colors">
+                            <div className="space-y-2.5">
+                                <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Programadores Ativos</h4>
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {programadores.map((prog) => (
+                                        <div key={prog.id} className="flex items-center justify-between bg-slate-950/60 px-4 py-3 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <span className="font-bold text-slate-200">{op.nome}</span>
+                                                <span className="font-bold text-sm text-white">{prog.nome}</span>
                                                 <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
-                                                    op.setor === 'EDM_FIO' 
+                                                    prog.setor === 'EDM_FIO' 
                                                         ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
-                                                        : op.setor === 'TORNO'
+                                                        : prog.setor === 'TORNO'
                                                         ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
-                                                        : op.setor === 'CNC'
+                                                        : prog.setor === 'CNC'
                                                         ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
                                                         : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
                                                 }`}>
-                                                    {op.setor === 'EDM_FIO' ? '⚡ EDM Fio' : op.setor === 'TORNO' ? '⚙️ Torno' : op.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
+                                                    {prog.setor === 'EDM_FIO' ? '⚡ EDM Fio' : prog.setor === 'TORNO' ? '⚙️ Torno' : prog.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
                                                 </span>
                                             </div>
                                             <button
-                                                onClick={() => removerComAviso(() => removeOperador(op.id), 'operador')}
-                                                className="text-slate-600 hover:text-red-500 p-2 rounded-lg transition-colors"
-                                                title="Remover nome da lista"
+                                                onClick={() => removerComAviso(() => removeProgramador(prog.id), 'programador')}
+                                                className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition-colors"
+                                                title="Remover programador"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     ))}
 
-                                    {operadores.length === 0 && (
-                                        <p className="text-xs text-slate-600 italic text-center py-6 border border-dashed border-slate-800 rounded-xl">Nenhum nome cadastrado na lista.</p>
+                                    {programadores.length === 0 && (
+                                        <p className="text-xs text-slate-500 text-center border border-dashed border-slate-800 rounded-xl py-6">Nenhum programador cadastrado.</p>
                                     )}
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
 
-                        {/* Lado B: Acesso de Terminais (Link + PIN) */}
-                        <div className="bg-slate-950/40 p-8 rounded-3xl border border-slate-800 shadow-inner relative overflow-hidden transition-all hover:border-slate-700">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-kanban-amber/5 blur-[60px] rounded-full"></div>
-
-                            <div className="flex items-center gap-3 mb-6 relative z-10">
-                                <div className="w-10 h-10 bg-kanban-amber/20 rounded-xl flex items-center justify-center border border-kanban-amber/30">
-                                    <Zap className="w-5 h-5 text-kanban-amber" />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-black text-white uppercase tracking-tight leading-none mb-1">Acesso de terminais (Kanban)</h4>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Use este link + PIN para liberar telas de Kanban em qualquer dispositivo</p>
+            {/* ========== ABA 3: EQUIPE & ACESSOS ========== */}
+            {activeTab === 'equipe' && (
+                <div className="space-y-8 animate-modal-in">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        {/* Operadores do Chão de Fábrica */}
+                        <div className={cardClasses}>
+                            <div className={headerClasses}>
+                                <div className="flex items-center gap-3">
+                                    <Users className="text-kanban-amber w-5 h-5" />
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Operadores de Chão de Fábrica</h3>
+                                        <p className="text-xs font-bold text-slate-500">Usado na assinatura de setup, troca e inspeções</p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-6 relative z-10">
-                                <div className="bg-slate-900/80 px-4 py-4 rounded-xl border border-slate-800 mb-3 shadow-inner space-y-3">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                        1. Copie e envie este link para o terminal
+                            <div className="p-6 space-y-6">
+                                <form onSubmit={handleAddOperador} className="space-y-3 bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl">
+                                    <label className={titleClasses}>Nome e Setor do Operador</label>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <input
+                                            type="text"
+                                            value={novoOperador}
+                                            onChange={e => setNovoOperador(e.target.value)}
+                                            placeholder="Ex: Pedro Oliveira"
+                                            className={inputClasses}
+                                        />
+                                        <select
+                                            value={novoOperadorSetor}
+                                            onChange={e => setNovoOperadorSetor(e.target.value)}
+                                            className={inputClasses + " sm:w-48"}
+                                        >
+                                            <option value="TODOS">🏢 Toda Fábrica</option>
+                                            <option value="CNC">🌀 Centro CNC</option>
+                                            <option value="EDM_FIO">⚡ EDM Fio</option>
+                                            <option value="TORNO">⚙️ Torno CNC</option>
+                                        </select>
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            className="h-[44px] px-4 shrink-0"
+                                            disabled={!novoOperador.trim()}
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                        </Button>
+                                    </div>
+                                </form>
+
+                                <div className="space-y-2">
+                                    <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                        Operadores Registrados ({operadores.length})
+                                    </h5>
+                                    <div className="max-h-[300px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                                        {operadores.map((op) => (
+                                            <div key={op.id} className="flex items-center justify-between bg-slate-950/60 px-4 py-2.5 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="font-bold text-sm text-slate-200">{op.nome}</span>
+                                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                                                        op.setor === 'EDM_FIO' 
+                                                            ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400' 
+                                                            : op.setor === 'TORNO'
+                                                            ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
+                                                            : op.setor === 'CNC'
+                                                            ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
+                                                            : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
+                                                    }`}>
+                                                        {op.setor === 'EDM_FIO' ? '⚡ EDM Fio' : op.setor === 'TORNO' ? '⚙️ Torno' : op.setor === 'CNC' ? '🌀 CNC' : '🏢 Toda Fábrica'}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => removerComAviso(() => removeOperador(op.id), 'operador')}
+                                                    className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition-colors"
+                                                    title="Remover nome"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {operadores.length === 0 && (
+                                            <p className="text-xs text-slate-500 italic text-center py-6 border border-dashed border-slate-800 rounded-xl">Nenhum operador cadastrado.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* PIN Master & Link de Entrada */}
+                        <div className={cardClasses}>
+                            <div className={headerClasses}>
+                                <div className="flex items-center gap-3">
+                                    <Zap className="text-amber-400 w-5 h-5" />
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Terminais de Fábrica & PIN</h3>
+                                        <p className="text-xs font-bold text-slate-500">Acesso simplificado sem necessidade de senha</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        Link de Entrada Direta para Terminais
                                     </p>
-                                    <div className="flex items-center overflow-hidden">
-                                        <code className="text-sm text-kanban-blue font-mono truncate select-all flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <code className="text-xs text-kanban-blue font-mono truncate select-all flex-1 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
                                             {`${window.location.origin}/join/${codigoConvite}`}
                                         </code>
                                         <button
@@ -908,34 +822,29 @@ export default function ConfigSettings() {
                                                 setToastMsg('Link copiado!');
                                                 setTimeout(() => setToastMsg(''), 2000);
                                             }}
-                                            className="ml-3 p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-all shadow-sm"
+                                            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-all shrink-0"
                                             title="Copiar Link"
                                         >
                                             <Copy className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                        O terminal abrirá uma tela pedindo apenas o PIN abaixo. Não é necessário e‑mail ou senha.
-                                    </p>
                                 </div>
 
-                                <div className="pt-6 border-t border-slate-800/50">
-                                    <label className="block text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2">2. Defina o PIN Master da Fábrica & Terminais</label>
-                                    <p className="text-[10px] font-bold text-slate-500 mb-3">Este PIN de 4 dígitos é usado para proteger o acesso à Visão de Gerência/Financeira e para conectar terminais de fábrica.</p>
-                                    <div className="flex items-center gap-4">
+                                <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+                                    <label className="block text-xs font-black text-amber-400 uppercase tracking-widest">PIN Master da Fábrica</label>
+                                    <p className="text-xs text-slate-400">PIN de 4 dígitos para liberação do Kanban nos tablets e autorizações administrativas.</p>
+                                    <div className="flex items-center gap-3">
                                         <div className="relative flex-1">
-                                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
+                                            <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
                                             <input
                                                 type="text"
                                                 maxLength={4}
                                                 value={pinLocal}
                                                 onChange={(e) => {
-                                                    let val = e.target.value.replace(/\D/g, '');
-                                                    // Garante no máximo 4 dígitos
-                                                    val = val.slice(0, 4);
+                                                    let val = e.target.value.replace(/\D/g, '').slice(0, 4);
                                                     setPinLocal(val);
                                                 }}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white font-black text-xl tracking-[0.3em] focus:border-kanban-amber outline-none shadow-sm"
+                                                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 pl-10 pr-3 text-white font-mono font-black text-lg tracking-[0.3em] focus:border-kanban-amber outline-none"
                                             />
                                         </div>
                                         <button
@@ -943,46 +852,46 @@ export default function ConfigSettings() {
                                             onClick={async () => {
                                                 try {
                                                     await salvarConfiguracoes(configuracaoDaTela());
-                                                    setToastMsg('PIN Master atualizado com sucesso!');
+                                                    setToastMsg('PIN Master atualizado!');
                                                     setTimeout(() => setToastMsg(''), 2500);
                                                 } catch (err) {
                                                     setToastMsg('Erro ao salvar PIN: ' + err.message);
                                                     setTimeout(() => setToastMsg(''), 3500);
                                                 }
                                             }}
-                                            className="px-4 py-3 bg-kanban-amber text-slate-950 font-black border border-amber-400 rounded-xl shrink-0 text-xs uppercase tracking-widest hover:bg-amber-400 transition-colors shadow-md"
+                                            className="px-4 py-2.5 bg-kanban-amber text-slate-950 font-black rounded-xl text-xs uppercase tracking-widest hover:bg-amber-400 transition-colors shadow-sm"
                                         >
-                                            Salvar PIN Master
+                                            Salvar PIN
                                         </button>
                                     </div>
-                                    <p className="text-[9px] font-bold text-slate-600 mt-2 uppercase tracking-tight">
-                                        Qualquer alteração aqui passa a valer imediatamente no modal de desbloqueio de gerência e nos terminais.
-                                    </p>
                                 </div>
-
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-14">
-                        <h4 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                            <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                            Contas de Acesso (Login com E-mail)
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {(usuarios || []).map((u) => (
-                                <div key={u.id} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between hover:border-slate-700 transition-all shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl ${u.funcao === 'admin' ? 'bg-kanban-amber/20 text-kanban-amber' : 'bg-slate-800 text-slate-400'}`}>
-                                            <Users className="w-5 h-5" />
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <p className="text-sm font-black text-white truncate max-w-[140px]">{u.email || 'Usuário'}</p>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{u.funcao === 'admin' ? 'Admin Master' : 'Acesso Full'}</p>
-                                        </div>
-                                    </div>
+                    {/* Contas de Acesso com E-mail */}
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <ShieldCheck className="text-emerald-500 w-5 h-5" />
+                                <h3 className="text-lg font-bold text-white">Contas de Acesso (Login com E-mail)</h3>
+                            </div>
+                        </div>
 
-                                    <div className="flex items-center gap-2">
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {(usuarios || []).map((u) => (
+                                    <div key={u.id} className="p-4 bg-slate-950/60 border border-slate-800/80 rounded-xl flex items-center justify-between hover:border-slate-700 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2.5 rounded-lg ${u.funcao === 'admin' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                                                <Users className="w-4 h-4" />
+                                            </div>
+                                            <div className="overflow-hidden">
+                                                <p className="text-xs font-bold text-white truncate max-w-[140px]">{u.email || 'Usuário'}</p>
+                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{u.funcao === 'admin' ? 'Admin Master' : 'Acesso Padrão'}</p>
+                                            </div>
+                                        </div>
+
                                         {u.id !== user?.id && (
                                             <button
                                                 onClick={async () => {
@@ -996,24 +905,147 @@ export default function ConfigSettings() {
                                                     }
                                                     setTimeout(() => setToastMsg(''), 3000);
                                                 }}
-                                                className="p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                title="Remover conta da fábrica"
+                                                className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                                                title="Remover conta"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         )}
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Simple Toast Feedback mechanism */}
+            {/* ========== ABA 4: AUTOMAÇÃO & MANUTENÇÃO ========== */}
+            {activeTab === 'automacao' && (
+                <div className="space-y-6 animate-modal-in">
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Bot className="text-kanban-teal w-5 h-5" />
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Nova Rotina Periódica Automática</h3>
+                                    <p className="text-xs font-bold text-slate-500">O sistema criará automaticamente cartões no Kanban no ciclo programado</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6">
+                            <form onSubmit={handleAddKanbanAuto} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div>
+                                    <label className={titleClasses}>Tipo de Rotina</label>
+                                    <select
+                                        value={kbTipo}
+                                        onChange={(e) => setKbTipo(e.target.value)}
+                                        className={inputClasses}
+                                        required
+                                    >
+                                        <option value="" disabled>Selecione uma rotina...</option>
+                                        <option value="Manutenção Preditiva">Manutenção Preditiva</option>
+                                        <option value="Alinhamento de Fio">Alinhamento de Fio</option>
+                                        <option value="Manutenção Corretiva">Manutenção Corretiva</option>
+                                        <option value="Outros">Outros</option>
+                                    </select>
+                                    {kbTipo === 'Outros' && (
+                                        <div className="mt-3">
+                                            <input
+                                                type="text"
+                                                value={kbOutros}
+                                                onChange={(e) => setKbOutros(e.target.value)}
+                                                className={inputClasses}
+                                                placeholder="Descrição personalizada"
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className={titleClasses}>Máquina Vinculada</label>
+                                    <select
+                                        value={kbMaquina}
+                                        onChange={(e) => setKbMaquina(e.target.value)}
+                                        className={inputClasses}
+                                        required
+                                    >
+                                        <option value="" disabled>Selecione a máquina...</option>
+                                        {maquinas.map(m => (
+                                            <option key={m.id} value={m.nome}>{m.nome}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className={titleClasses}>Intervalo do Gatilho</label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="number"
+                                                value={kbDias}
+                                                onChange={(e) => setKbDias(e.target.value)}
+                                                min="1"
+                                                className={inputClasses + " pr-12"}
+                                                placeholder="30"
+                                                required
+                                            />
+                                            <span className="absolute right-3 top-3 text-slate-500 font-bold text-xs">dias</span>
+                                        </div>
+                                        <Button type="submit" variant="primary" size="md" className="px-4 shrink-0">
+                                            <Plus className="w-5 h-5 mr-1" /> Criar
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* Lista de Rotinas Ativas */}
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest px-1">
+                            Rotinas Ativas ({kanbansAutomaticos.length})
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {kanbansAutomaticos.map((kb) => (
+                                <div key={kb.id} className="flex flex-col justify-between bg-slate-900/90 p-5 border border-slate-800/80 rounded-xl hover:border-slate-700 transition-colors group">
+                                    <div>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <span className="inline-flex items-center gap-1.5 bg-kanban-teal/10 text-kanban-teal border border-kanban-teal/20 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                                <RefreshCw className="w-3 h-3" /> A cada {kb.diasIntervalo} dias
+                                            </span>
+                                            <button
+                                                onClick={() => removerComAviso(() => removeKanbanAutomatico(kb.id), 'rotina')}
+                                                className="text-slate-500 hover:text-red-400 rounded p-1 transition-colors"
+                                                title="Remover rotina"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <p className="font-bold text-base text-white leading-snug mb-2">{kb.descricao}</p>
+                                        <div className="flex items-center gap-2">
+                                            <Monitor className="w-3.5 h-3.5 text-slate-500" />
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{kb.maquinaNome || 'Máquina não definida'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {kanbansAutomaticos.length === 0 && (
+                                <p className="col-span-full text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl text-center py-8">
+                                    Nenhuma rotina automática programada.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast Feedback */}
             {toastMsg && (
-                <div className={`fixed bottom-6 right-6 ${toastMsg.startsWith('Erro') ? 'bg-red-600 border-red-500' : 'bg-emerald-600 border-emerald-500'} text-white border px-6 py-3 rounded-xl shadow-2xl font-extrabold translate-y-0 transition-all flex items-center gap-3 z-50`}>
-                    <Zap className="w-5 h-5 text-white/90" />
+                <div className={`fixed bottom-6 right-6 ${toastMsg.startsWith('Erro') ? 'bg-red-600 border-red-500' : 'bg-emerald-600 border-emerald-500'} text-white border px-5 py-3 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-2.5 z-[300] animate-modal-in`}>
+                    <Zap className="w-4 h-4 text-white/80" />
                     {toastMsg}
                 </div>
             )}
