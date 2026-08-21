@@ -157,7 +157,7 @@ export default function Clientes() {
 
                 {/* Add Client Form */}
                 <div className="xl:col-span-1">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden sticky top-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden sticky top-[72px]">
                         <div className="px-5 py-4 border-b border-slate-800 bg-slate-950/50 flex items-center gap-2">
                             <Plus className="w-4 h-4 text-kanban-amber" />
                             <h3 className="font-bold text-white text-sm uppercase tracking-wider">Novo Cliente</h3>
@@ -411,8 +411,8 @@ export default function Clientes() {
 
             {/* Custom Delete Confirmation Modal */}
             {confirmDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-sm" style={{ animation: 'modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both' }}>
                         <div className="flex items-start gap-4 mb-5">
                             <div className="p-2.5 bg-red-500/10 rounded-xl border border-red-500/20 shrink-0">
                                 <AlertTriangle className="w-6 h-6 text-red-400" />

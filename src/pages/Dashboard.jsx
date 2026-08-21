@@ -185,51 +185,57 @@ export default function Dashboard() {
 
     return (
         <ErrorBoundary>
-            <div className="min-h-full flex flex-col gap-6 w-full pb-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-surface2 p-6 rounded-xl border border-edge">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-kanban-amber/10 rounded-xl border border-kanban-amber/20">
-                            <LayoutDashboard className="w-8 h-8 text-kanban-amber" />
+            <div className="min-h-full flex flex-col gap-8 w-full pb-12">
+                {/* Header com Filtros */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/90 p-6 rounded-2xl border border-slate-800 shadow-sm">
+                    <div className="flex items-center gap-3.5">
+                        <div className="p-2.5 bg-kanban-amber/10 rounded-xl border border-kanban-amber/20 text-kanban-amber">
+                            <LayoutDashboard className="w-7 h-7" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-extrabold text-white">Visão Geral da Produção</h2>
-                            <p className="text-slate-400 mt-1 text-base font-medium">Monitore a eficiência de execução baseada no fluxo Kanban.</p>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Dashboard Executivo</h2>
+                                <span className="hidden sm:inline-block text-[10px] font-black bg-kanban-amber/20 text-kanban-amber border border-kanban-amber/30 px-2 py-0.5 rounded uppercase tracking-wider">
+                                    Gerência
+                                </span>
+                            </div>
+                            <p className="text-slate-400 mt-0.5 text-xs sm:text-sm font-medium">
+                                Acompanhamento de indicadores Lean OEE, rentabilidade e lead time.
+                            </p>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex items-center gap-2 bg-bg px-3 py-2 rounded-lg border border-edge">
-                            <Filter className="w-4 h-4 text-muted" />
+                    <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                        <div className="flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 flex-1 md:flex-initial">
+                            <Filter className="w-3.5 h-3.5 text-kanban-amber shrink-0" />
                             <select
-                                className="bg-bg text-sm text-core outline-none border-none focus:ring-0 cursor-pointer min-w-[160px] appearance-none pr-4"
-                                style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                                className="bg-transparent text-xs sm:text-sm font-bold text-slate-200 outline-none border-none cursor-pointer w-full"
                                 value={periodo}
                                 onChange={(e) => setPeriodo(e.target.value)}
                             >
                                 <optgroup label="Período atual">
-                                    <option value="hoje" className="bg-bg text-core">Hoje</option>
-                                    <option value="semana" className="bg-bg text-core">Esta Semana</option>
-                                    <option value="mes" className="bg-bg text-core">Este Mês</option>
+                                    <option value="hoje" className="bg-slate-900 text-white">Hoje</option>
+                                    <option value="semana" className="bg-slate-900 text-white">Esta Semana</option>
+                                    <option value="mes" className="bg-slate-900 text-white">Este Mês</option>
                                 </optgroup>
                                 <optgroup label="Meses passados">
                                     {gerarMesesPassados().map(({ value, label }) => (
-                                        <option key={value} value={value} className="bg-bg text-core">{label}</option>
+                                        <option key={value} value={value} className="bg-slate-900 text-white">{label}</option>
                                     ))}
                                 </optgroup>
                             </select>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-bg px-3 py-2 rounded-lg border border-edge">
-                            <Clock className="w-4 h-4 text-muted" />
+                        <div className="flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 flex-1 md:flex-initial">
+                            <Clock className="w-3.5 h-3.5 text-kanban-steel shrink-0" />
                             <select
-                                className="bg-bg text-sm text-core outline-none border-none focus:ring-0 cursor-pointer w-full appearance-none pr-4"
-                                style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                                className="bg-transparent text-xs sm:text-sm font-bold text-slate-200 outline-none border-none cursor-pointer w-full"
                                 value={turno}
                                 onChange={(e) => setTurno(e.target.value)}
                             >
-                                <option value="todos" className="bg-bg text-core">Todos os Turnos</option>
+                                <option value="todos" className="bg-slate-900 text-white">Todos os Turnos</option>
                                 {configuracoesGlobais?.turnos?.map(t => (
-                                    <option key={t.id} value={t.id} className="bg-bg text-core">
+                                    <option key={t.id} value={t.id} className="bg-slate-900 text-white">
                                         {t.nome} ({t.inicio} - {t.fim})
                                     </option>
                                 ))}
@@ -238,102 +244,138 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Linha 1: Métricas de Lean Tracking Tradicional */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <KpiCard
-                        title="Eficiência de Execução"
-                        value={`${oeeEfficiency}%`}
-                        icon={Zap}
-                        trend={parseFloat(oeeEfficiency) > 85 ? "up" : "down"}
-                        colorClass={parseFloat(oeeEfficiency) > 85 ? "bg-status-success" : "bg-status-warning"}
-                        tooltipContent="Compara o Tempo Planejado (cadastro) vs Tempo Real (cronometrado p/ o Kanban)."
-                    />
-                    <KpiCard
-                        title="Peças FPY (Qualidade)"
-                        value={`${fpy}%`}
-                        icon={Target}
-                        colorClass="bg-cyan-600"
-                        trend="up"
-                        tooltipContent="First Pass Yield: Porcentagem de peças totalmente aprovadas na CMM contra desvios de refugo."
-                    />
-                    <KpiCard
-                        title="Lead Time Médio"
-                        value={leadTimesHoras.length > 0 ? leadTimeMedioStr : '--'}
-                        icon={Timer}
-                        colorClass="bg-violet-600"
-                        tooltipContent="Tempo médio desde a abertura da O.S até a conclusão (Data Criação → Concluído)."
-                    />
-                    <KpiCard
-                        title="Fila WIP (Ativas)"
-                        value={ativas.toString()}
-                        icon={Activity}
-                        colorClass="bg-blue-600"
-                        tooltipContent="Carga de Work in Progress: O.Ss que ainda estão rodando nas máquinas e SETUP."
-                    />
-                    <KpiCard
-                        title="Produzidas (Período)"
-                        value={concluidas.length.toString()}
-                        icon={Clock}
-                        colorClass="bg-emerald-600"
-                        tooltipContent="Volume total de Peças dadas como Concluídas para o bloco temporal selecionado no filtro."
-                    />
-                    <KpiCard
-                        title="Em Atraso"
-                        value={emAtraso.toString()}
-                        icon={AlertTriangle}
-                        colorClass={emAtraso > 0 ? "bg-red-600" : "bg-slate-600"}
-                        trend={emAtraso > 0 ? "down" : null}
-                        tooltipContent="Peças ativas que já passaram do prazo de entrega sem serem concluídas."
-                    />
+                {/* SEÇÃO 1: Métricas de Lean Tracking Tradicional */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-kanban-amber"></div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                            Desempenho Operacional & Fluxo Lean
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                        <KpiCard
+                            title="Eficiência de Execução"
+                            value={`${oeeEfficiency}%`}
+                            icon={Zap}
+                            trend={parseFloat(oeeEfficiency) > 85 ? "up" : "down"}
+                            colorClass={parseFloat(oeeEfficiency) > 85 ? "bg-status-success" : "bg-status-warning"}
+                            tooltipContent="Compara o Tempo Planejado (cadastro) vs Tempo Real (cronometrado p/ o Kanban)."
+                        />
+                        <KpiCard
+                            title="Qualidade (FPY)"
+                            value={`${fpy}%`}
+                            icon={Target}
+                            colorClass="bg-cyan-600"
+                            trend="up"
+                            tooltipContent="First Pass Yield: Porcentagem de peças totalmente aprovadas na CMM contra desvios de refugo."
+                        />
+                        <KpiCard
+                            title="Lead Time Médio"
+                            value={leadTimesHoras.length > 0 ? leadTimeMedioStr : '--'}
+                            icon={Timer}
+                            colorClass="bg-violet-600"
+                            tooltipContent="Tempo médio desde a abertura da O.S até a conclusão (Data Criação → Concluído)."
+                        />
+                        <KpiCard
+                            title="Fila WIP (Ativas)"
+                            value={ativas.toString()}
+                            icon={Activity}
+                            colorClass="bg-blue-600"
+                            tooltipContent="Carga de Work in Progress: O.Ss que ainda estão rodando nas máquinas e SETUP."
+                        />
+                        <KpiCard
+                            title="Produzidas"
+                            value={concluidas.length.toString()}
+                            icon={Clock}
+                            colorClass="bg-emerald-600"
+                            tooltipContent="Volume total de Peças dadas como Concluídas para o bloco temporal selecionado no filtro."
+                        />
+                        <KpiCard
+                            title="Em Atraso"
+                            value={emAtraso.toString()}
+                            icon={AlertTriangle}
+                            colorClass={emAtraso > 0 ? "bg-red-600" : "bg-slate-600"}
+                            trend={emAtraso > 0 ? "down" : null}
+                            tooltipContent="Peças ativas que já passaram do prazo de entrega sem serem concluídas."
+                        />
+                    </div>
                 </div>
 
-                {/* Linha 2: Métricas de Faturamento Financeiro */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <KpiCard
-                        title="Valor Gerado (Só Corte)"
-                        value={valorGeradoCorte}
-                        icon={DollarSign}
-                        colorClass="bg-emerald-500"
-                        tooltipContent={`Horas de CORTE (usinagem) das peças aprovadas × R$ ${custoHora}/h. Foco em faturamento por usinagem — setup não entra.`}
-                    />
-                    <KpiCard
-                        title="Valor Gerado (Setup+Corte)"
-                        value={valorGeradoTotais}
-                        icon={DollarSign}
-                        colorClass="bg-emerald-600"
-                        tooltipContent={`Horas de Setup + Corte das peças aprovadas × R$ ${custoHora}/h. Custo total do trabalho aprovado.`}
-                    />
-                    <KpiCard
-                        title="Perda por Refugo"
-                        value={valorPerdido}
-                        icon={TrendingDown}
-                        colorClass="bg-red-500"
-                        tooltipContent={`Setup + Corte desperdiçados em peças refugadas na CMM. Custo base: R$ ${custoHora}/h.`}
-                    />
-                    <KpiCard
-                        title="Custo de Tempo Morto (Pausas)"
-                        value={valorTempoMorto}
-                        icon={PauseCircle}
-                        colorClass="bg-amber-500"
-                        tooltipContent={`Horas em pausas (histórico das O.S concluídas + pausas ativas) × R$ ${custoHora}/h. Dinheiro perdido para paradas.`}
-                    />
+                {/* SEÇÃO 2: Métricas de Faturamento Financeiro */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                            Impacto Financeiro & Custos Operacionais
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <KpiCard
+                            title="Faturamento (Só Corte)"
+                            value={valorGeradoCorte}
+                            icon={DollarSign}
+                            colorClass="bg-emerald-500"
+                            tooltipContent={`Horas de CORTE (usinagem) das peças aprovadas × R$ ${custoHora}/h. Foco em faturamento por usinagem.`}
+                        />
+                        <KpiCard
+                            title="Valor Total Produzido"
+                            value={valorGeradoTotais}
+                            icon={DollarSign}
+                            colorClass="bg-emerald-600"
+                            tooltipContent={`Horas de Setup + Corte das peças aprovadas × R$ ${custoHora}/h. Custo total do trabalho aprovado.`}
+                        />
+                        <KpiCard
+                            title="Perda por Refugo"
+                            value={valorPerdido}
+                            icon={TrendingDown}
+                            colorClass="bg-red-500"
+                            tooltipContent={`Setup + Corte desperdiçados em peças refugadas na CMM. Custo base: R$ ${custoHora}/h.`}
+                        />
+                        <KpiCard
+                            title="Custo de Tempo Morto"
+                            value={valorTempoMorto}
+                            icon={PauseCircle}
+                            colorClass="bg-amber-500"
+                            tooltipContent={`Horas em pausas (histórico das O.S concluídas + pausas ativas) × R$ ${custoHora}/h.`}
+                        />
+                    </div>
                 </div>
 
-                {/* Linha 3: Gráficos principais — grid 2 colunas, fluxo contínuo */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <LeadTimeChart concluidas={concluidas} />
-                    <QualityPieChart concluidas={concluidas} />
-                    <InsumosLifeChart periodo={periodo} />
-                    <MachineHoursChart concluidas={concluidas} />
-                    <ClientPiecesChart concluidas={concluidas} />
-                    <MachineConsumptionChart periodo={periodo} />
+                {/* SEÇÃO 3: Gráficos de Produção */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-kanban-steel"></div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                            Análise Gráfica & Consumo
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <LeadTimeChart concluidas={concluidas} />
+                        <QualityPieChart concluidas={concluidas} />
+                        <InsumosLifeChart periodo={periodo} />
+                        <MachineHoursChart concluidas={concluidas} />
+                        <ClientPiecesChart concluidas={concluidas} />
+                        <MachineConsumptionChart periodo={periodo} />
+                    </div>
                 </div>
 
-                {/* Linha 4: Análises de Causa Raiz e Desempenho */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <PauseReasonsChart concluidas={concluidas} kanban={kanban} />
-                    <RefugoPorMaquinaChart concluidas={concluidas} />
-                    <ProducaoPorOperadorChart concluidas={concluidas} />
+                {/* SEÇÃO 4: Causa Raiz & Desempenho por Recurso */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-kanban-teal"></div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                            Causa Raiz & Desempenho Individual
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <PauseReasonsChart concluidas={concluidas} kanban={kanban} />
+                        <RefugoPorMaquinaChart concluidas={concluidas} />
+                        <ProducaoPorOperadorChart concluidas={concluidas} />
+                    </div>
                 </div>
             </div>
         </ErrorBoundary>

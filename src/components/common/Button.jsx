@@ -7,7 +7,7 @@ export default function Button({
     className = '',
     ...props
 }) {
-    const baseClasses = 'inline-flex items-center justify-center font-bold tracking-wide rounded border-2 transition-all active:scale-[0.98] outline-none focus:ring-4 focus:ring-offset-2';
+    const baseClasses = 'inline-flex items-center justify-center font-bold tracking-wide rounded border-2 transition-all active:scale-[0.98] outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
 
     const variants = {
         primary: 'bg-kanban-amber border-kanban-amber text-slate-950 hover:bg-yellow-400 hover:border-yellow-400 focus:ring-kanban-amber/40',

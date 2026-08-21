@@ -135,7 +135,7 @@ export default function Registros() {
     };
 
     return (
-        <div className="p-2 sm:p-4 lg:p-7 w-full flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-xl border border-slate-800">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-kanban-amber/10 rounded-xl border border-kanban-amber/30">

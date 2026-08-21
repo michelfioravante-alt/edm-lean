@@ -2,779 +2,467 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import Button from '../components/common/Button';
-import { Plus, Trash2, Settings2, Zap, ShieldCheck, Users, Monitor, Bot, DollarSign, Copy } from 'lucide-react';
+import {
+    Plus, Trash2, Settings2, Zap, ShieldCheck, Users, Monitor,
+    Bot, DollarSign, Copy, Clock, Cpu, Key, Link2, RefreshCw,
+    AlertCircle
+} from 'lucide-react';
+
+// ─── Input / Label helpers ───────────────────────────────────────────────────
+const inputCls = "w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/30 text-slate-100 text-sm font-semibold bg-slate-950 placeholder-slate-600 transition-colors";
+const labelCls = "block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5";
+
+function SectionHeader({ icon: Icon, color = 'text-kanban-amber', title, subtitle }) {
+    return (
+        <div className="flex items-center gap-3 mb-6">
+            <div className={`p-2 rounded-lg bg-slate-800/60 border border-slate-700/50 ${color}`}>
+                <Icon className="w-5 h-5" />
+            </div>
+            <div>
+                <h3 className="text-base font-extrabold text-white leading-none">{title}</h3>
+                {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+            </div>
+        </div>
+    );
+}
+
+function EmptyState({ label }) {
+    return (
+        <div className="border border-dashed border-slate-800 rounded-xl py-8 text-center">
+            <p className="text-slate-600 text-sm font-bold">{label}</p>
+        </div>
+    );
+}
+
+function ResourceItem({ name, onRemove, accent = 'bg-slate-800 text-slate-300' }) {
+    return (
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-lg group hover:border-slate-700 transition-colors">
+            <div className="flex items-center gap-3">
+                <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-black ${accent}`}>
+                    {name.charAt(0).toUpperCase()}
+                </span>
+                <span className="font-semibold text-slate-200 text-sm">{name}</span>
+            </div>
+            <button
+                onClick={onRemove}
+                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-all"
+            >
+                <Trash2 className="w-4 h-4" />
+            </button>
+        </div>
+    );
+}
+
+function AddRow({ placeholder, value, onChange, onSubmit, disabled }) {
+    return (
+        <form onSubmit={onSubmit} className="flex gap-2">
+            <input type="text" value={value} onChange={onChange} placeholder={placeholder}
+                className={inputCls + " flex-1"} disabled={disabled} />
+            <button type="submit" disabled={!value.trim() || disabled}
+                className="px-4 py-2 bg-kanban-amber hover:bg-yellow-400 text-slate-900 font-extrabold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 text-sm shrink-0">
+                <Plus className="w-4 h-4" />
+            </button>
+        </form>
+    );
+}
+
+const TABS = [
+    { id: 'parametros', label: 'Parâmetros', icon: DollarSign },
+    { id: 'recursos', label: 'Máquinas & Turnos', icon: Cpu },
+    { id: 'equipe', label: 'Equipe & Acesso', icon: Users },
+    { id: 'automacao', label: 'Automação', icon: Bot },
+];
 
 export default function ConfigSettings() {
     const {
-        configuracoesGlobais, atualizarConfiguracoes, salvarConfiguracoes,
+        configuracoesGlobais, salvarConfiguracoes,
         fetchConfiguracoes, fetchMaquinas, fetchOperadores, fetchProgramadores, fetchAutoKanbans, fetchUsuarios,
         maquinas, addMaquina, removeMaquina,
         operadores, addOperador, removeOperador,
         programadores, addProgramador, removeProgramador,
         kanbansAutomaticos, addKanbanAutomatico, removeKanbanAutomatico,
-        usuarios, updateUserRole
+        usuarios
     } = useAppStore();
 
-    const { user, empresaId, codigoConvite } = useAuthStore();
+    const { user, codigoConvite } = useAuthStore();
+    const [activeTab, setActiveTab] = useState('parametros');
+    const [toastMsg, setToastMsg] = useState('');
 
-    // Carrega dados ao montar a página
     useEffect(() => {
-        fetchConfiguracoes();
-        fetchMaquinas();
-        fetchOperadores();
-        fetchProgramadores();
-        fetchAutoKanbans();
-        fetchUsuarios();
+        fetchConfiguracoes(); fetchMaquinas(); fetchOperadores();
+        fetchProgramadores(); fetchAutoKanbans(); fetchUsuarios();
     }, []);
 
-    // Estado Local das Configs Globais
+    const toast = (msg, ms = 2500) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), ms); };
+
+    // Parâmetros state
     const [custoHoraLocal, setCustoHoraLocal] = useState(configuracoesGlobais?.custoHoraMaquina || 50);
-    const [toastMsg, setToastMsg] = useState('');
     const [turnosLocal, setTurnosLocal] = useState(configuracoesGlobais?.turnos || [
         { id: 't1', nome: 'Turno 1', inicio: '07:30', fim: '15:30' },
         { id: 't2', nome: 'Turno 2', inicio: '15:30', fim: '23:30' },
         { id: 't3', nome: 'Turno 3', inicio: '23:30', fim: '07:30' }
     ]);
     const [pinLocal, setPinLocal] = useState(configuracoesGlobais?.pinOnboarding ?? '1234');
+    const [novoTurnoNome, setNovoTurnoNome] = useState('');
 
-    // Sincroniza o estado local sempre que configuracoesGlobais for carregado/atualizado
     useEffect(() => {
         if (configuracoesGlobais) {
-            if (configuracoesGlobais.custoHoraMaquina !== undefined) {
-                setCustoHoraLocal(configuracoesGlobais.custoHoraMaquina);
-            }
-            if (Array.isArray(configuracoesGlobais.turnos) && configuracoesGlobais.turnos.length > 0) {
-                setTurnosLocal(configuracoesGlobais.turnos);
-            }
-            if (configuracoesGlobais.pinOnboarding !== undefined) {
-                setPinLocal(configuracoesGlobais.pinOnboarding);
-            }
+            if (configuracoesGlobais.custoHoraMaquina !== undefined) setCustoHoraLocal(configuracoesGlobais.custoHoraMaquina);
+            if (Array.isArray(configuracoesGlobais.turnos) && configuracoesGlobais.turnos.length > 0) setTurnosLocal(configuracoesGlobais.turnos);
+            if (configuracoesGlobais.pinOnboarding !== undefined) setPinLocal(configuracoesGlobais.pinOnboarding);
         }
     }, [configuracoesGlobais]);
 
     const handleTurnoChange = (index, field, value) => {
-        const novosTurnos = [...turnosLocal];
-        novosTurnos[index] = { ...novosTurnos[index], [field]: value };
-        setTurnosLocal(novosTurnos);
-    }
-
+        const t = [...turnosLocal]; t[index] = { ...t[index], [field]: value }; setTurnosLocal(t);
+    };
     const handleAddTurno = (e) => {
         if (e) e.preventDefault();
-        const nomeTrim = (novoTurnoNome || '').trim();
-        if (nomeTrim) {
-            setTurnosLocal(prev => [
-                ...prev,
-                { id: `t${Date.now()}`, nome: nomeTrim, inicio: '08:00', fim: '18:00' }
-            ]);
-            setNovoTurnoNome('');
-            setToastMsg('Turno adicionado à lista! Clique em "Salvar Turnos" abaixo para gravar no banco.');
-            setTimeout(() => setToastMsg(''), 3500);
-        }
+        const nome = (novoTurnoNome || '').trim();
+        if (!nome) return;
+        setTurnosLocal(prev => [...prev, { id: `t${Date.now()}`, nome, inicio: '08:00', fim: '18:00' }]);
+        setNovoTurnoNome('');
+        toast('Turno adicionado. Clique em "Salvar Turnos".');
     };
-
-    const handleRemoveTurno = (idToRemove) => {
-        setTurnosLocal(turnosLocal.filter(t => t.id !== idToRemove));
-    };
-
     const handleSalvarCustoHora = async (e) => {
         e.preventDefault();
         try {
-            await salvarConfiguracoes({
-                custoHoraMaquina: parseFloat(custoHoraLocal) || 50,
-                turnos: configuracoesGlobais?.turnos || turnosLocal,
-                pinOnboarding: configuracoesGlobais?.pinOnboarding ?? pinLocal ?? '1234'
-            });
-            setToastMsg('Custo Hora Atualizado com Sucesso!');
-        } catch (err) {
-            setToastMsg('Erro ao salvar: ' + err.message);
-        }
-        setTimeout(() => setToastMsg(''), 3500);
+            await salvarConfiguracoes({ custoHoraMaquina: parseFloat(custoHoraLocal) || 50, turnos: configuracoesGlobais?.turnos || turnosLocal, pinOnboarding: configuracoesGlobais?.pinOnboarding ?? pinLocal ?? '1234' });
+            toast('Custo/hora salvo!');
+        } catch (err) { toast('Erro: ' + err.message, 3500); }
     };
-
     const handleSalvarTurnos = async (e) => {
         e.preventDefault();
         try {
-            await salvarConfiguracoes({
-                custoHoraMaquina: configuracoesGlobais?.custoHoraMaquina || custoHoraLocal,
-                turnos: turnosLocal,
-                pinOnboarding: configuracoesGlobais?.pinOnboarding ?? pinLocal ?? '1234'
-            });
-            setToastMsg('Janelas de Turnos Salvas com Sucesso!');
-        } catch (err) {
-            setToastMsg('Erro ao salvar: ' + err.message);
-        }
-        setTimeout(() => setToastMsg(''), 3500);
+            await salvarConfiguracoes({ custoHoraMaquina: configuracoesGlobais?.custoHoraMaquina || custoHoraLocal, turnos: turnosLocal, pinOnboarding: configuracoesGlobais?.pinOnboarding ?? pinLocal ?? '1234' });
+            toast('Turnos salvos!');
+        } catch (err) { toast('Erro: ' + err.message, 3500); }
     };
 
+    // Recursos state
     const [novaMaquinaNome, setNovaMaquinaNome] = useState('');
-    const [novoOperador, setNovoOperador] = useState('');
     const [novoProgramador, setNovoProgramador] = useState('');
-    const [novoTurnoNome, setNovoTurnoNome] = useState('');
+    const handleAddMaquina = async (e) => {
+        e.preventDefault();
+        const limite = configuracoesGlobais?.limiteMaquinas ?? 999;
+        const nome = novaMaquinaNome.trim();
+        if (!nome) return;
+        if (maquinas.length >= limite) { toast('Limite do plano atingido.', 3500); return; }
+        if (maquinas.some(m => m.nome?.toLowerCase() === nome.toLowerCase())) { toast('Máquina já cadastrada!', 3000); return; }
+        try { await addMaquina(nome); setNovaMaquinaNome(''); toast('Máquina adicionada!'); }
+        catch (err) { toast('Erro: ' + err.message, 3500); }
+    };
+    const handleAddProgramador = async (e) => {
+        e.preventDefault();
+        const nome = novoProgramador.trim();
+        if (!nome) return;
+        if (programadores.some(p => p.nome?.toLowerCase() === nome.toLowerCase())) { toast('Já cadastrado!', 2500); return; }
+        try { await addProgramador(nome); setNovoProgramador(''); toast('Programador adicionado!'); }
+        catch (err) { toast('Erro: ' + err.message, 3500); }
+    };
 
-    // Kanban Automático State
+    // Equipe state
+    const [novoOperador, setNovoOperador] = useState('');
+    const handleAddOperador = async (e) => {
+        e.preventDefault();
+        const nome = novoOperador.trim();
+        if (!nome) return;
+        if (operadores.some(o => o.nome?.toLowerCase() === nome.toLowerCase())) { toast('Já cadastrado!', 2500); return; }
+        try { await addOperador(nome); setNovoOperador(''); toast('Operador adicionado!'); }
+        catch (err) { toast('Erro: ' + err.message, 3500); }
+    };
+
+    // Automação state
     const [kbTipo, setKbTipo] = useState('');
     const [kbOutros, setKbOutros] = useState('');
     const [kbMaquina, setKbMaquina] = useState('');
     const [kbDias, setKbDias] = useState('');
-
-    const handleAddMaquina = async (e) => {
-        e.preventDefault();
-        const limite = configuracoesGlobais?.limiteMaquinas ?? 999;
-        if (maquinas.length >= limite) {
-            setToastMsg('Limite do plano atingido. Entre em contato para adicionar mais máquinas.');
-            setTimeout(() => setToastMsg(''), 4000);
-            return;
-        }
-        const nomeTrim = novaMaquinaNome.trim();
-        if (nomeTrim && !maquinas.some(m => m.nome === nomeTrim)) {
-            try {
-                await addMaquina(nomeTrim);
-                setNovaMaquinaNome('');
-                setToastMsg('Máquina adicionada!');
-                setTimeout(() => setToastMsg(''), 2500);
-            } catch (err) {
-                setToastMsg('Erro: ' + err.message);
-                setTimeout(() => setToastMsg(''), 3500);
-            }
-        }
-    };
-
-    const handleAddOperador = async (e) => {
-        e.preventDefault();
-        if (novoOperador.trim()) {
-            try {
-                await addOperador(novoOperador.trim());
-                setNovoOperador('');
-                setToastMsg('Operador adicionado!');
-                setTimeout(() => setToastMsg(''), 2500);
-            } catch (err) {
-                setToastMsg('Erro: ' + err.message);
-                setTimeout(() => setToastMsg(''), 3500);
-            }
-        }
-    };
-
-    const handleAddProgramador = async (e) => {
-        e.preventDefault();
-        if (novoProgramador.trim()) {
-            try {
-                await addProgramador(novoProgramador.trim());
-                setNovoProgramador('');
-                setToastMsg('Programador adicionado!');
-                setTimeout(() => setToastMsg(''), 2500);
-            } catch (err) {
-                setToastMsg('Erro: ' + err.message);
-                setTimeout(() => setToastMsg(''), 3500);
-            }
-        }
-    };
-
     const handleAddKanbanAuto = async (e) => {
         e.preventDefault();
-        if (kbTipo && kbDias) {
-            const diasInt = parseInt(kbDias);
-            if (diasInt > 0) {
-                try {
-                    await addKanbanAutomatico({
-                        tipo: kbTipo,
-                        descricao: kbTipo === 'Outros' ? kbOutros : kbOutros || kbTipo,
-                        maquinaNome: kbMaquina,
-                        diasIntervalo: diasInt
-                    });
-                    setKbTipo('');
-                    setKbOutros('');
-                    setKbMaquina('');
-                    setKbDias('');
-                    setToastMsg('Regra Automática adicionada!');
-                    setTimeout(() => setToastMsg(''), 2500);
-                } catch (err) {
-                    setToastMsg('Erro: ' + err.message);
-                    setTimeout(() => setToastMsg(''), 3500);
-                }
-            }
-        }
+        if (!kbTipo || !kbDias) { toast('Preencha rotina e dias.', 3000); return; }
+        const dias = parseInt(kbDias);
+        if (isNaN(dias) || dias <= 0) { toast('Dias inválido.', 3000); return; }
+        try {
+            const descricao = kbTipo === 'Outros' ? kbOutros : kbTipo;
+            await addKanbanAutomatico({ descricao, diasIntervalo: dias, maquinaNome: kbMaquina });
+            setKbTipo(''); setKbOutros(''); setKbMaquina(''); setKbDias('');
+            toast('Rotina criada!');
+        } catch (err) { toast('Erro: ' + err.message, 3500); }
     };
 
-    const inputClasses = "w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 text-base font-bold bg-slate-950 placeholder-slate-600 transition-colors";
-    const titleClasses = "block text-sm font-bold text-slate-300 mb-2 tracking-wide";
-    const cardClasses = "bg-slate-900 rounded-xl shadow-md border border-slate-800 overflow-hidden";
-    const headerClasses = "bg-slate-950/50 px-5 py-4 border-b border-slate-800 flex items-center gap-3";
-
     return (
-        <div className="max-w-7xl mx-auto space-y-8 pb-10">
-            <div>
-                <h2 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                    <Settings2 className="w-8 h-8 text-kanban-amber" />
-                    Configurações do Sistema
-                </h2>
-                <p className="text-slate-400 mt-2 text-base font-medium">
-                    Gerencie recursos e rotinas automáticas de manutenção no chão de fábrica.
-                </p>
+        <div className="w-full pb-10 flex flex-col gap-0">
+
+            <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-kanban-amber/10 rounded-xl border border-kanban-amber/20">
+                    <Settings2 className="w-7 h-7 text-kanban-amber" />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-extrabold text-white leading-none">Configurações</h2>
+                    <p className="text-slate-500 text-xs mt-0.5 font-medium">Parâmetros operacionais, equipe e automações da fábrica</p>
+                </div>
             </div>
 
-            {/* ---------- PARÂMETROS FINANCEIROS (DASHBOARD) ---------- */}
-            <div className={cardClasses}>
-                <div className={headerClasses}>
-                    <DollarSign className="text-emerald-600 w-6 h-6" />
-                    <h3 className="text-xl font-bold text-white">Parâmetros Financeiros e OEE</h3>
-                </div>
-                <div className="p-5 flex flex-col gap-6">
-                    <form onSubmit={handleSalvarCustoHora} className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-sm flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-                        <div className="w-full lg:w-2/3">
-                            <label className={titleClasses}>
-                                Custo Hora / Máquina (R$)
-                                <span className="block text-xs font-normal text-slate-500 mt-1 mb-3">Sua Despesa Operacional Fixa por Hora. Usado para provisionamento e painel Custo-Benefício.</span>
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-3.5 text-slate-500 font-extrabold text-sm">R$</span>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    step="0.01"
-                                    value={custoHoraLocal}
-                                    onChange={e => setCustoHoraLocal(e.target.value)}
-                                    className={`${inputClasses} pl-10`}
-                                />
-                            </div>
-                        </div>
-                        <Button type="submit" variant="primary" size="lg" className="px-8 h-[52px] shadow-sm whitespace-nowrap">
-                            Salvar Custo
-                        </Button>
-                    </form>
+            <div className="flex gap-0 border-b border-slate-800 mb-8 overflow-x-auto no-scrollbar">
+                {TABS.map(tab => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.id;
+                    return (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-5 py-3.5 text-sm font-bold whitespace-nowrap border-b-2 transition-all -mb-px ${active ? 'border-kanban-amber text-kanban-amber' : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-700'}`}>
+                            <Icon className="w-4 h-4" />
+                            {tab.label}
+                        </button>
+                    );
+                })}
+            </div>
 
-                    <form onSubmit={handleSalvarTurnos} className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-sm">
-                        <div className="w-full">
-                            <label className={titleClasses}>
-                                Dimensionamento de Turnos
-                                <span className="block text-xs font-normal text-slate-500 mt-1 mb-4">Gerencie as janelas de tempo de sua fábrica. O Dashboard cruza esse escopo nas medições analíticas.</span>
-                            </label>
-
-                            <div className="flex gap-3 items-end mb-6 bg-slate-900 p-4 border border-slate-800 rounded-xl shadow-sm">
-                                <div className="flex-1">
-                                    <label className={titleClasses}>Adicionar Novo Turno</label>
-                                    <input
-                                        type="text"
-                                        value={novoTurnoNome}
-                                        onChange={e => setNovoTurnoNome(e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleAddTurno(e);
-                                            }
-                                        }}
-                                        placeholder="Ex: Turno da Madrugada"
-                                        className={inputClasses}
-                                    />
+            {activeTab === 'parametros' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <SectionHeader icon={DollarSign} color="text-emerald-400" title="Custo Hora / Máquina" subtitle="Base para cálculo financeiro no Dashboard" />
+                        <form onSubmit={handleSalvarCustoHora} className="space-y-4">
+                            <div>
+                                <label className={labelCls}>Valor por hora (R$)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3.5 top-3 text-slate-500 font-bold text-sm">R$</span>
+                                    <input type="number" min="1" step="0.01" value={custoHoraLocal} onChange={e => setCustoHoraLocal(e.target.value)} className={inputCls + " pl-10"} />
                                 </div>
-                                <Button
-                                    type="button"
-                                    onClick={handleAddTurno}
-                                    variant="primary"
-                                    size="lg"
-                                    className="px-5 shadow-sm h-[52px] shrink-0"
-                                    disabled={!novoTurnoNome.trim()}
-                                >
-                                    <Plus className="w-6 h-6" />
-                                </Button>
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                                {turnosLocal.map((turno, index) => (
-                                    <div key={turno.id} className="bg-slate-950/50 p-4 border border-slate-800 rounded-lg shadow-sm relative group">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <input
-                                                type="text"
-                                                value={turno.nome}
-                                                onChange={(e) => handleTurnoChange(index, 'nome', e.target.value)}
-                                                className="font-extrabold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-kanban-amber focus:outline-none px-1 w-2/3"
-                                            />
-                                            {turnosLocal.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveTurno(turno.id)}
-                                                    className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                    title="Remover Turno"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Início</label>
-                                                <input
-                                                    type="time"
-                                                    value={turno.inicio}
-                                                    onChange={(e) => handleTurnoChange(index, 'inicio', e.target.value)}
-                                                    className="w-full p-2 border border-slate-700 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 font-bold bg-slate-900"
-                                                    required
-                                                />
-                                            </div>
-                                            <span className="text-slate-400 font-bold mt-5">-</span>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Fim</label>
-                                                <input
-                                                    type="time"
-                                                    value={turno.fim}
-                                                    onChange={(e) => handleTurnoChange(index, 'fim', e.target.value)}
-                                                    className="w-full p-2 border border-slate-700 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-slate-100 font-bold bg-slate-900"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {turnosLocal.length === 0 && (
-                                    <div className="col-span-full p-6 text-center border border-dashed border-slate-700 rounded-lg text-slate-400 font-bold bg-slate-900/50">
-                                        Nenhum turno configurado. O Dashboard analisará o dia inteiro.
-                                    </div>
-                                )}
+                            <p className="text-xs text-slate-600 leading-relaxed">Usado para calcular o valor gerado por O.S aprovadas e o custo de refugos e pausas no Dashboard.</p>
+                            <div className="flex justify-end">
+                                <button type="submit" className="px-6 py-2.5 bg-kanban-amber hover:bg-yellow-400 text-slate-900 font-extrabold rounded-lg transition-colors text-sm">Salvar</button>
                             </div>
-                        </div>
-
-                        <div className="flex justify-end mt-4 pt-4 border-t border-slate-800">
-                            <Button type="submit" variant="primary" size="lg" className="px-8 h-[52px] shadow-sm whitespace-nowrap">
-                                Salvar Turnos
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                {/* ---------- MÁQUINAS ---------- */}
-                <div className={cardClasses}>
-                    <div className={headerClasses}>
-                        <Monitor className="text-slate-700 w-6 h-6" />
-                        <div>
-                            <h3 className="text-xl font-bold text-white">Máquinas (EDM)</h3>
-                            <p className="text-xs font-bold text-slate-500 mt-0.5">
-                                {maquinas.length} / {(configuracoesGlobais?.limiteMaquinas ?? 999) < 999 ? configuracoesGlobais.limiteMaquinas : '∞'} máquinas
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="p-5 space-y-8">
-                        {maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999) && (
-                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-amber-200 text-sm font-bold">
-                                Limite do plano atingido. Entre em contato para adicionar mais máquinas.
-                            </div>
-                        )}
-                        <form onSubmit={handleAddMaquina} className="flex gap-3 items-end">
-                            <div className="flex-1">
-                                <label className={titleClasses}>Adicionar Nova Máquina</label>
-                                <input
-                                    type="text"
-                                    value={novaMaquinaNome}
-                                    onChange={e => setNovaMaquinaNome(e.target.value)}
-                                    placeholder="Nome ou identificação"
-                                    className={inputClasses}
-                                    disabled={maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999)}
-                                />
-                            </div>
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                size="lg"
-                                className="px-5 shadow-sm h-[52px]"
-                                disabled={!novaMaquinaNome.trim() || maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999)}
-                            >
-                                <Plus className="w-6 h-6" />
-                            </Button>
                         </form>
-
-                        <div>
-                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3">Cadastradas</h4>
-                            <ul className="space-y-3">
-                                {maquinas.map((m) => (
-                                    <li key={m.id} className="flex items-center justify-between bg-slate-950/50 px-4 py-3 border border-slate-800 rounded-lg group">
-                                        <p className="font-extrabold text-lg text-white">{m.nome}</p>
-                                        <button
-                                            onClick={() => removeMaquina(m.id)}
-                                            className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                                            title="Remover máquina"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </li>
-                                ))}
-                                {maquinas.length === 0 && (
-                                    <p className="text-base text-slate-400 border border-dashed border-slate-700 rounded-xl py-6 text-center font-bold bg-slate-900/50">Nenhuma máquina cadastrada.</p>
-                                )}
-                            </ul>
-                        </div>
                     </div>
-                </div>
 
-                {/* ---------- RECURSOS HUMANOS (PROGRAMADORES) ---------- */}
-                <div className="space-y-6">
-                    <div className={cardClasses}>
-                        <div className={headerClasses}>
-                            <Users className="text-kanban-amber w-6 h-6" />
-                            <h3 className="text-xl font-bold text-white">Programadores</h3>
-                        </div>
-
-                        <div className="p-5 space-y-6">
-                            <form onSubmit={handleAddProgramador} className="flex gap-3 items-end">
-                                <div className="flex-1">
-                                    <label className={titleClasses}>Adicionar Programador</label>
-                                    <input
-                                        type="text"
-                                        value={novoProgramador}
-                                        onChange={e => setNovoProgramador(e.target.value)}
-                                        placeholder="Nome do Programador"
-                                        className={inputClasses}
-                                    />
-                                </div>
-                                <Button type="submit" variant="primary" size="lg" className="px-5 shadow-sm h-[52px]" disabled={!novoProgramador.trim()}>
-                                    <Plus className="w-6 h-6" />
-                                </Button>
-                            </form>
-
-                            <ul className="space-y-3">
-                                {programadores.map((prog) => (
-                                    <li key={prog.id} className="flex items-center justify-between bg-slate-950/50 px-4 py-3 border border-slate-800 rounded-lg group">
-                                        <span className="font-extrabold text-lg text-white">{prog.nome}</span>
-                                        <button
-                                            onClick={() => removeProgramador(prog.id)}
-                                            className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                                            title="Remover programador"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </li>
-                                ))}
-                                {programadores.length === 0 && (
-                                    <p className="text-base text-slate-400 text-center border border-dashed border-slate-700 rounded-xl py-4 font-bold bg-slate-900/50">Nenhum programador.</p>
-                                )}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ---------- KANBANS AUTOMÁTICOS ---------- */}
-            <div className={cardClasses}>
-                <div className={headerClasses}>
-                    <Bot className="text-kanban-teal w-6 h-6" />
-                    <h3 className="text-xl font-bold text-white">Kanbans Automáticos (Manutenção & Rotinas)</h3>
-                </div>
-
-                <div className="p-5">
-                    <form onSubmit={handleAddKanbanAuto} className="bg-slate-900 p-6 rounded-xl border border-slate-800 mb-8 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
-                            <div className="col-span-1 md:col-span-2 space-y-4">
-                                <div>
-                                    <label className={titleClasses}>Tipo de Rotina / Kanban</label>
-                                    <select
-                                        value={kbTipo}
-                                        onChange={(e) => setKbTipo(e.target.value)}
-                                        className={inputClasses}
-                                        required
-                                    >
-                                        <option value="" disabled>Selecione uma rotina...</option>
-                                        <option value="Manutenção Preditiva">Manutenção Preditiva</option>
-                                        <option value="Alinhamento de Fio">Alinhamento de Fio</option>
-                                        <option value="Manutenção Corretiva">Manutenção Corretiva</option>
-                                        <option value="Outros">Outros</option>
-                                    </select>
-                                </div>
-                                {kbTipo === 'Outros' && (
-                                    <div className="mt-4">
-                                        <label className={titleClasses}>Descrição Personalizada</label>
-                                        <input
-                                            type="text"
-                                            value={kbOutros}
-                                            onChange={(e) => setKbOutros(e.target.value)}
-                                            className={inputClasses}
-                                            placeholder="Ex: Troca de Fluido Refrigerante"
-                                            required
-                                        />
-                                    </div>
-                                )}
-                                <div>
-                                    <label className={titleClasses}>Máquina Associada</label>
-                                    <select
-                                        value={kbMaquina}
-                                        onChange={(e) => setKbMaquina(e.target.value)}
-                                        className={inputClasses}
-                                        required
-                                    >
-                                        <option value="" disabled>Selecione a máquina...</option>
-                                        {maquinas.map(m => (
-                                            <option key={m.id} value={m.nome}>{m.nome}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <SectionHeader icon={Clock} color="text-kanban-steel" title="Janelas de Turno" subtitle="Usado para filtro de turno no Dashboard" />
+                        <form onSubmit={handleSalvarTurnos} className="space-y-4">
+                            <div className="flex gap-2">
+                                <input type="text" value={novoTurnoNome} onChange={e => setNovoTurnoNome(e.target.value)}
+                                    placeholder="Nome do turno (ex: Turno Noturno)" className={inputCls + " flex-1 text-xs"}
+                                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTurno(e))} />
+                                <button type="button" onClick={handleAddTurno} disabled={!novoTurnoNome.trim()}
+                                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-lg border border-slate-700 transition-colors">
+                                    <Plus className="w-4 h-4" />
+                                </button>
                             </div>
-
-                            <div className="flex flex-col">
-                                <label className={titleClasses}>Gatilho de Criação</label>
-                                <div className="flex gap-3 items-center">
-                                    <div className="relative flex-1">
-                                        <input
-                                            type="number"
-                                            value={kbDias}
-                                            onChange={(e) => setKbDias(e.target.value)}
-                                            min="1"
-                                            className={inputClasses + " pr-12"}
-                                            placeholder="Ex: 30"
-                                            required
-                                        />
-                                        <span className="absolute right-4 top-3.5 text-slate-500 font-extrabold text-sm">dias</span>
-                                    </div>
-                                    <Button type="submit" variant="primary" size="lg" className="px-6 h-[52px] shadow-sm">
-                                        <Plus className="w-6 h-6" />
-                                    </Button>
-                                </div>
-                                <p className="text-xs font-bold text-slate-500 mt-3 pl-1 leading-snug">O sistema gerará um Kanban automaticamente neste ciclo.</p>
-                            </div>
-                        </div>
-                    </form>
-
-                    <div className="space-y-4">
-                        <h4 className="font-extrabold text-lg text-white mb-2 px-1 uppercase tracking-wider">Rotinas Ativas</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {kanbansAutomaticos.map((kb) => (
-                                <div key={kb.id} className="flex flex-col justify-between bg-slate-950/50 p-5 border border-slate-800 rounded-xl shadow-sm hover:border-kanban-amber transition-colors group">
-                                    <div>
-                                        <div className="flex items-start justify-between mb-3">
-                                            <span className="inline-block bg-kanban-amber text-slate-900 border border-kanban-amber/20 text-xs font-extrabold px-3 py-1.5 rounded-md uppercase tracking-wider shadow-sm">
-                                                A cada {kb.diasIntervalo} dias
-                                            </span>
-                                            <button
-                                                onClick={() => removeKanbanAutomatico(kb.id)}
-                                                className="text-slate-400 hover:bg-red-100 hover:text-red-500 rounded p-1.5 transition-colors"
-                                                title="Remover rotina"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
+                            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                {turnosLocal.map((t, idx) => (
+                                    <div key={t.id} className="flex items-center gap-2 bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2">
+                                        <input type="text" value={t.nome} onChange={e => handleTurnoChange(idx, 'nome', e.target.value)}
+                                            className="flex-1 bg-transparent text-white text-sm font-bold focus:outline-none min-w-0" />
+                                        <input type="time" value={t.inicio} onChange={e => handleTurnoChange(idx, 'inicio', e.target.value)}
+                                            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono rounded-md px-2 py-1 focus:outline-none focus:border-kanban-amber w-[90px]" />
+                                        <span className="text-slate-600 text-xs">–</span>
+                                        <input type="time" value={t.fim} onChange={e => handleTurnoChange(idx, 'fim', e.target.value)}
+                                            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono rounded-md px-2 py-1 focus:outline-none focus:border-kanban-amber w-[90px]" />
+                                        {turnosLocal.length > 1 && (
+                                            <button type="button" onClick={() => setTurnosLocal(turnosLocal.filter(x => x.id !== t.id))}
+                                                className="text-slate-700 hover:text-red-400 transition-colors p-1">
+                                                <Trash2 className="w-3.5 h-3.5" />
                                             </button>
-                                        </div>
-                                        <p className="font-extrabold text-lg text-white leading-tight">{kb.descricao}</p>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <Monitor className="w-3.5 h-3.5 text-slate-500" />
-                                            <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">{kb.maquinaNome || 'Máquina não definida'}</p>
-                                        </div>
-                                        <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-wide">ID: {kb.id}</p>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                        {kanbansAutomaticos.length === 0 && (
-                            <p className="text-base text-slate-400 border border-dashed border-slate-700 rounded-xl text-center font-bold py-10 bg-slate-900/50">
-                                Nenhuma rotina automática programada. As rotinas programadas aparecerão na linha do Kanban 'A fazer'.
-                            </p>
+                                ))}
+                                {turnosLocal.length === 0 && <EmptyState label="Nenhum turno configurado." />}
+                            </div>
+                            <div className="flex justify-end pt-1">
+                                <button type="submit" className="px-6 py-2.5 bg-kanban-amber hover:bg-yellow-400 text-slate-900 font-extrabold rounded-lg transition-colors text-sm">Salvar Turnos</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'recursos' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col gap-5">
+                        <SectionHeader icon={Monitor} color="text-kanban-teal" title="Máquinas EDM"
+                            subtitle={`${maquinas.length} / ${(configuracoesGlobais?.limiteMaquinas ?? 999) < 999 ? configuracoesGlobais.limiteMaquinas : 'ilimitadas'} cadastradas`} />
+                        {maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999) && (
+                            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2.5 text-xs font-bold text-amber-300">
+                                <AlertCircle className="w-4 h-4 shrink-0" />Limite do plano atingido.
+                            </div>
                         )}
+                        <AddRow placeholder="Nome ou identificação da máquina" value={novaMaquinaNome}
+                            onChange={e => setNovaMaquinaNome(e.target.value)} onSubmit={handleAddMaquina}
+                            disabled={maquinas.length >= (configuracoesGlobais?.limiteMaquinas ?? 999)} />
+                        <div className="space-y-2 flex-1">
+                            {maquinas.map(m => <ResourceItem key={m.id} name={m.nome} accent="bg-kanban-teal/10 text-kanban-teal" onRemove={() => removeMaquina(m.id)} />)}
+                            {maquinas.length === 0 && <EmptyState label="Nenhuma máquina cadastrada." />}
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col gap-5">
+                        <SectionHeader icon={Users} color="text-kanban-amber" title="Programadores CNC/EDM" subtitle="Responsáveis pelo setup e programação das O.S." />
+                        <AddRow placeholder="Nome do programador" value={novoProgramador}
+                            onChange={e => setNovoProgramador(e.target.value)} onSubmit={handleAddProgramador} />
+                        <div className="space-y-2 flex-1">
+                            {programadores.map(p => <ResourceItem key={p.id} name={p.nome} accent="bg-kanban-amber/10 text-kanban-amber" onRemove={() => removeProgramador(p.id)} />)}
+                            {programadores.length === 0 && <EmptyState label="Nenhum programador cadastrado." />}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* ---------- GESTÃO DA EQUIPE (UNIFICADO) ---------- */}
-            <div className={cardClasses}>
-                <div className={headerClasses}>
-                    <Users className="text-kanban-amber w-6 h-6" />
-                    <h3 className="text-xl font-bold text-white">Gestão da Equipe (Operadores e Acessos)</h3>
-                </div>
-
-                <div className="p-6">
-                    {/* Gestão Dual: Manual + Link */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
-                        {/* Lado A: Cadastro Manual (Lista de nomes da equipe) */}
-                        <div className="bg-slate-950/40 p-8 rounded-3xl border border-slate-800 shadow-inner group transition-all hover:border-slate-700">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 bg-kanban-blue/20 rounded-xl flex items-center justify-center border border-kanban-blue/30">
-                                    <Plus className="w-5 h-5 text-kanban-blue" />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-black text-white uppercase tracking-tight leading-none mb-1">Cadastrar nomes de operadores</h4>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lista usada para selecionar quem operou a máquina ou fez a troca</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleAddOperador} className="space-y-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Nome a exibir nos registros</label>
-                                    <div className="flex gap-3">
-                                        <input
-                                            type="text"
-                                            value={novoOperador}
-                                            onChange={e => setNovoOperador(e.target.value)}
-                                            placeholder="Ex: Pedro Oliveira"
-                                            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white font-bold focus:border-kanban-blue outline-none transition-all placeholder:text-slate-700 shadow-sm"
-                                        />
-                                        <Button
-                                            type="submit"
-                                            variant="primary"
-                                            className="bg-kanban-blue hover:bg-blue-500 shadow-lg shadow-blue-500/20 active:scale-95 transition-all h-[52px]"
-                                            disabled={!novoOperador.trim()}
-                                        >
-                                            <Plus className="w-6 h-6" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </form>
-
-                            <div className="mt-8">
-                                <h5 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-kanban-blue rounded-full"></div>
-                                    Lista de operadores para registro ({operadores.length})
-                                </h5>
-                                <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                                    {operadores.map((op) => (
-                                        <div key={op.id} className="flex items-center justify-between bg-slate-900/50 px-4 py-3 border border-slate-800 rounded-xl group hover:border-slate-700 transition-colors">
-                                            <span className="font-bold text-slate-200">{op.nome}</span>
-                                            <button
-                                                onClick={() => removeOperador(op.id)}
-                                                className="text-slate-600 hover:text-red-500 p-2 rounded-lg transition-colors"
-                                                title="Remover nome da lista"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {operadores.length === 0 && (
-                                        <p className="text-xs text-slate-600 italic text-center py-6 border border-dashed border-slate-800 rounded-xl">Nenhum nome cadastrado na lista.</p>
-                                    )}
-                                </div>
+            {activeTab === 'equipe' && (
+                <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col gap-5">
+                            <SectionHeader icon={Users} color="text-kanban-steel" title="Operadores de Chão" subtitle="Lista para seleção nos registros de O.S." />
+                            <AddRow placeholder="Nome do operador (ex: João Silva)" value={novoOperador}
+                                onChange={e => setNovoOperador(e.target.value)} onSubmit={handleAddOperador} />
+                            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                                {operadores.map(op => <ResourceItem key={op.id} name={op.nome} accent="bg-kanban-steel/10 text-kanban-steel" onRemove={() => removeOperador(op.id)} />)}
+                                {operadores.length === 0 && <EmptyState label="Nenhum operador cadastrado." />}
                             </div>
                         </div>
 
-                        {/* Lado B: Acesso de Terminais (Link + PIN) */}
-                        <div className="bg-slate-950/40 p-8 rounded-3xl border border-slate-800 shadow-inner relative overflow-hidden transition-all hover:border-slate-700">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-kanban-amber/5 blur-[60px] rounded-full"></div>
-
-                            <div className="flex items-center gap-3 mb-6 relative z-10">
-                                <div className="w-10 h-10 bg-kanban-amber/20 rounded-xl flex items-center justify-center border border-kanban-amber/30">
-                                    <Zap className="w-5 h-5 text-kanban-amber" />
-                                </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-kanban-amber/5 blur-[60px] rounded-full pointer-events-none" />
+                            <SectionHeader icon={Link2} color="text-kanban-amber" title="Acesso de Terminais" subtitle="Link + PIN para liberar o Kanban em qualquer dispositivo" />
+                            <div className="space-y-5 relative z-10">
                                 <div>
-                                    <h4 className="text-lg font-black text-white uppercase tracking-tight leading-none mb-1">Acesso de terminais (Kanban)</h4>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Use este link + PIN para liberar telas de Kanban em qualquer dispositivo</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6 relative z-10">
-                                <div className="bg-slate-900/80 px-4 py-4 rounded-xl border border-slate-800 mb-3 shadow-inner space-y-3">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                        1. Copie e envie este link para o terminal
-                                    </p>
-                                    <div className="flex items-center overflow-hidden">
-                                        <code className="text-sm text-kanban-blue font-mono truncate select-all flex-1">
+                                    <label className={labelCls}>1. Link de acesso</label>
+                                    <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5">
+                                        <code className="text-xs text-kanban-steel font-mono truncate flex-1 select-all">
                                             {`${window.location.origin}/join/${codigoConvite}`}
                                         </code>
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(`${window.location.origin}/join/${codigoConvite}`);
-                                                setToastMsg('Link copiado!');
-                                                setTimeout(() => setToastMsg(''), 2000);
-                                            }}
-                                            className="ml-3 p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-all shadow-sm"
-                                            title="Copiar Link"
-                                        >
-                                            <Copy className="w-4 h-4" />
+                                        <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/join/${codigoConvite}`); toast('Link copiado!', 2000); }}
+                                            className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 hover:text-white transition-colors shrink-0">
+                                            <Copy className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                        O terminal abrirá uma tela pedindo apenas o PIN abaixo. Não é necessário e‑mail ou senha.
-                                    </p>
+                                    <p className="text-xs text-slate-600 mt-1.5">O operador acessa este link e insere o PIN — sem e-mail ou senha.</p>
                                 </div>
-
-                                <div className="pt-6 border-t border-slate-800/50">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">2. Defina o PIN de Segurança do terminal</label>
-                                    <div className="flex items-center gap-4">
+                                <div>
+                                    <label className={labelCls}>2. PIN de segurança</label>
+                                    <div className="flex items-center gap-3">
                                         <div className="relative flex-1">
-                                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-                                            <input
-                                                type="text"
-                                                maxLength={4}
-                                                value={pinLocal}
-                                                onChange={(e) => {
-                                                    let val = e.target.value.replace(/\D/g, '');
-                                                    // Garante no máximo 4 dígitos
-                                                    val = val.slice(0, 4);
-                                                    setPinLocal(val);
-                                                }}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white font-black text-xl tracking-[0.3em] focus:border-kanban-amber outline-none shadow-sm"
-                                            />
+                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                                            <input type="text" maxLength={4} value={pinLocal}
+                                                onChange={e => setPinLocal(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-3 pl-10 pr-4 text-white font-black text-xl tracking-[0.5em] focus:border-kanban-amber outline-none transition-colors" />
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={async () => {
-                                                try {
-                                                    await salvarConfiguracoes({
-                                                        custoHoraMaquina: configuracoesGlobais?.custoHoraMaquina || custoHoraLocal,
-                                                        turnos: configuracoesGlobais?.turnos || turnosLocal,
-                                                        pinOnboarding: pinLocal || '1234'
-                                                    });
-                                                    setToastMsg('PIN atualizado com sucesso!');
-                                                    setTimeout(() => setToastMsg(''), 2500);
-                                                } catch (err) {
-                                                    setToastMsg('Erro ao salvar PIN: ' + err.message);
-                                                    setTimeout(() => setToastMsg(''), 3500);
-                                                }
-                                            }}
-                                            className="px-3 py-2 bg-kanban-amber/10 border border-kanban-amber/20 rounded-lg shrink-0 text-[10px] font-black text-kanban-amber uppercase tracking-widest hover:bg-kanban-amber/20 transition-colors"
-                                        >
+                                        <button onClick={async () => {
+                                            try {
+                                                await salvarConfiguracoes({ custoHoraMaquina: configuracoesGlobais?.custoHoraMaquina || custoHoraLocal, turnos: configuracoesGlobais?.turnos || turnosLocal, pinOnboarding: pinLocal || '1234' });
+                                                toast('PIN salvo!');
+                                            } catch (err) { toast('Erro: ' + err.message, 3500); }
+                                        }} className="px-4 py-3 bg-kanban-amber/10 border border-kanban-amber/20 rounded-lg text-xs font-extrabold text-kanban-amber uppercase tracking-wider hover:bg-kanban-amber/20 transition-colors shrink-0">
                                             Salvar PIN
                                         </button>
                                     </div>
-                                    <p className="text-[9px] font-bold text-slate-600 mt-2 uppercase tracking-tight">
-                                        O operador só entra no Kanban se estiver com o link desta empresa e souber este PIN.
-                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-14">
-                        <h4 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                            <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                            Contas de Acesso (Login com E-mail)
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {(usuarios || []).map((u) => (
-                                <div key={u.id} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between hover:border-slate-700 transition-all shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl ${u.funcao === 'admin' ? 'bg-kanban-amber/20 text-kanban-amber' : 'bg-slate-800 text-slate-400'}`}>
-                                            <Users className="w-5 h-5" />
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <SectionHeader icon={ShieldCheck} color="text-emerald-400" title="Contas com Login" subtitle="Usuários com acesso por e-mail e senha" />
+                        {(usuarios || []).length === 0 ? <EmptyState label="Nenhum usuário encontrado." /> : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                {(usuarios || []).map(u => (
+                                    <div key={u.id} className="flex items-center gap-3 p-4 bg-slate-950/60 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors group">
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${u.funcao === 'admin' ? 'bg-kanban-amber/20 text-kanban-amber' : 'bg-slate-800 text-slate-400'}`}>
+                                            {(u.email || 'U').charAt(0).toUpperCase()}
                                         </div>
-                                        <div className="overflow-hidden">
-                                            <p className="text-sm font-black text-white truncate max-w-[140px]">{u.email || 'Usuário'}</p>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{u.funcao === 'admin' ? 'Admin Master' : 'Acesso Full'}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-white truncate">{u.email || 'Usuário'}</p>
+                                            <span className={`text-[10px] font-extrabold uppercase tracking-widest ${u.funcao === 'admin' ? 'text-kanban-amber' : 'text-slate-500'}`}>
+                                                {u.funcao === 'admin' ? '★ Admin' : 'Operador'}
+                                            </span>
                                         </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
                                         {u.id !== user?.id && (
-                                            <button
-                                                onClick={() => {
-                                                    if (window.confirm(`Remover ${u.email}?`)) {
-                                                        const { removeUserFromEquipe } = useAppStore.getState();
-                                                        removeUserFromEquipe(u.id);
-                                                        setToastMsg('Conta removido!');
-                                                        setTimeout(() => setToastMsg(''), 2000);
-                                                    }
-                                                }}
-                                                className="p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                title="Remover conta da fábrica"
-                                            >
+                                            <button onClick={() => { if (window.confirm(`Remover ${u.email}?`)) { const { removeUserFromEquipe } = useAppStore.getState(); removeUserFromEquipe(u.id); toast('Conta removida.'); } }}
+                                                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 p-1 rounded-lg transition-all">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Simple Toast Feedback mechanism */}
+            {activeTab === 'automacao' && (
+                <div className="flex flex-col gap-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <SectionHeader icon={Bot} color="text-kanban-teal" title="Nova Rotina Automática" subtitle="O sistema criará um Kanban de manutenção no ciclo configurado" />
+                        <form onSubmit={handleAddKanbanAuto} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className={labelCls}>Tipo de rotina</label>
+                                <select value={kbTipo} onChange={e => setKbTipo(e.target.value)} className={inputCls} required>
+                                    <option value="" disabled>Selecionar...</option>
+                                    <option value="Manutenção Preditiva">Manutenção Preditiva</option>
+                                    <option value="Alinhamento de Fio">Alinhamento de Fio</option>
+                                    <option value="Manutenção Corretiva">Manutenção Corretiva</option>
+                                    <option value="Outros">Outros...</option>
+                                </select>
+                                {kbTipo === 'Outros' && (
+                                    <input type="text" value={kbOutros} onChange={e => setKbOutros(e.target.value)}
+                                        className={inputCls + " mt-2"} placeholder="Descrição personalizada" required />
+                                )}
+                            </div>
+                            <div>
+                                <label className={labelCls}>Máquina associada</label>
+                                <select value={kbMaquina} onChange={e => setKbMaquina(e.target.value)} className={inputCls} required>
+                                    <option value="" disabled>Selecionar...</option>
+                                    {maquinas.map(m => <option key={m.id} value={m.nome}>{m.nome}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelCls}>Intervalo (dias)</label>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <input type="number" value={kbDias} onChange={e => setKbDias(e.target.value)}
+                                            min="1" placeholder="30" className={inputCls + " pr-12"} required />
+                                        <span className="absolute right-3 top-3 text-slate-500 text-xs font-bold">dias</span>
+                                    </div>
+                                    <button type="submit" className="px-4 py-2 bg-kanban-teal hover:bg-teal-400 text-slate-900 font-extrabold rounded-lg transition-colors text-sm flex items-center gap-1.5 shrink-0">
+                                        <Plus className="w-4 h-4" />Criar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Rotinas Ativas ({kanbansAutomaticos.length})</h4>
+                        {kanbansAutomaticos.length === 0 ? <EmptyState label="Nenhuma rotina programada." /> : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {kanbansAutomaticos.map(kb => (
+                                    <div key={kb.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors group">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <span className="inline-flex items-center gap-1 bg-kanban-teal/10 text-kanban-teal border border-kanban-teal/20 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                                <RefreshCw className="w-2.5 h-2.5" />A cada {kb.diasIntervalo}d
+                                            </span>
+                                            <button onClick={() => removeKanbanAutomatico(kb.id)}
+                                                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 p-1 rounded-lg transition-all">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <p className="font-bold text-white text-sm mb-2">{kb.descricao}</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <Monitor className="w-3 h-3 text-slate-500" />
+                                            <p className="text-xs text-slate-500">{kb.maquinaNome || 'Sem máquina'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {toastMsg && (
-                <div className="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-xl font-bold translate-y-0 transition-transform flex items-center gap-3 z-50">
-                    <Zap className="w-5 h-5 text-emerald-200" />
-                    {toastMsg}
+                <div className={`fixed bottom-6 right-6 ${toastMsg.startsWith('Erro') ? 'bg-red-600 border-red-500' : 'bg-emerald-600 border-emerald-500'} text-white border px-5 py-3 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-2.5 z-[300]`}
+                    style={{ animation: 'modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both' }}>
+                    <Zap className="w-4 h-4 text-white/80" />{toastMsg}
                 </div>
             )}
         </div>

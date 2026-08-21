@@ -41,20 +41,20 @@ export default function Header({ onMenuToggle }) {
                     Visualize · Controle · Produza
                 </div>
 
-                {/* Right side: Empresa + Status + Quick Logout */}
-                <div className="flex items-center gap-3 sm:gap-6">
+                {/* Right side: Empresa + Perfil + Status + Quick Logout */}
+                <div className="flex items-center gap-2.5 sm:gap-4">
                     {nomeEmpresa && (
-                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-800/40 rounded-full border border-slate-700/50 max-w-[100px] xs:max-w-[150px] sm:max-w-[300px]">
-                            <Briefcase className="w-3 h-3 text-kanban-amber shrink-0" />
-                            <span className="font-mono text-[9px] sm:text-[10px] text-slate-300 tracking-wider uppercase truncate">
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/80 rounded-lg border border-slate-800 max-w-[120px] xs:max-w-[180px] sm:max-w-[280px]">
+                            <Briefcase className="w-3.5 h-3.5 text-kanban-amber shrink-0" />
+                            <span className="font-mono text-[10px] sm:text-[11px] font-bold text-slate-300 tracking-wider uppercase truncate">
                                 {nomeEmpresa}
                             </span>
                         </div>
                     )}
 
-                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted tracking-[0.05em] uppercase">
+                    <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/80 rounded-lg border border-slate-800 font-mono text-[10px] tracking-wider uppercase">
                         <span className="w-1.5 h-1.5 rounded-full bg-kanban-teal animate-pulse"></span>
-                        <span className="hidden sm:inline">Online</span>
+                        <span className="text-slate-400">Online</span>
                     </div>
 
                     {/* Botão Sair visível no mobile (evita depender do menu lateral) */}

@@ -87,7 +87,7 @@ export default function Layout({ children, activeView, onViewChange }) {
                     activeView={activeView}
                     onViewChange={onViewChange}
                 />
-                <main className="flex-1 overflow-x-auto overflow-y-visible relative z-10 w-full no-scrollbar">
+                <main className="flex-1 min-w-0 w-full no-scrollbar" style={{ overflowX: 'clip' }}>
                     <div className="p-2 sm:p-4 lg:p-7 w-full max-w-[1800px] mx-auto min-h-full flex flex-col">
                         {children}
                     </div>
