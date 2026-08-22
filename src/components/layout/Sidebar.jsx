@@ -121,6 +121,20 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                             <span>Kanban de Produção</span>
                         </button>
 
+                        {!isAdmin && (
+                        <button
+                            onClick={() => { onViewChange('dashboard'); onClose(); }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
+                                activeView === 'dashboard'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
+                            }`}
+                        >
+                            <LayoutDashboard className="h-4 w-4 shrink-0 text-[#7B808F]" />
+                            <span>Dashboard do setor</span>
+                        </button>
+                        )}
+
                         <button
                             onClick={() => { onViewChange('registros'); onClose(); }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${

@@ -240,9 +240,13 @@ export default function Dashboard() {
                             <LayoutDashboard className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Indicadores de Produção</h2>
+                            <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">
+                                {isProgrammerLocked ? 'Indicadores do setor' : 'Indicadores de Produção'}
+                            </h2>
                             <p className="text-[#565B68] mt-0.5 text-xs">
-                                Eficiência operacional por setor (CNC, EDM Fio e Tornos).
+                                {isProgrammerLocked
+                                    ? 'Eficiência, qualidade e tempos do CNC ou EDM — sem valores financeiros.'
+                                    : 'Eficiência operacional por setor (CNC, EDM Fio e Tornos).'}
                             </p>
                         </div>
                     </div>
@@ -251,9 +255,16 @@ export default function Dashboard() {
                         
                         {/* FILTRO DE SETOR PRODUTIVO */}
                         {isProgrammerLocked ? (
-                            <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33] text-xs font-medium text-[#9DA2AE]">
+                            <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
                                 <Lock className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
-                                <span>KPIs: {setorFilter === 'EDM_FIO' ? 'Eletroerosão a Fio' : setorFilter === 'TORNO' ? 'Torno CNC' : 'Centro CNC'}</span>
+                                <select
+                                    className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
+                                    value={setorFilter}
+                                    onChange={(e) => setSetorFilter(e.target.value)}
+                                >
+                                    <option value="CNC">Centro CNC</option>
+                                    <option value="EDM_FIO">Eletroerosão a Fio</option>
+                                </select>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
@@ -380,7 +391,8 @@ export default function Dashboard() {
                                 />
                             </div>
 
-                            {/* Linha 2: Métricas Financeiras / Custo Operacional */}
+                            {/* Linha 2: Métricas Financeiras — só gerente */}
+                            {role === 'admin' && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <KpiCard
                                     title={isEdmProg ? "Valor Corte de Fio" : isCncProg ? "Valor Usinagem CNC" : "Valor Usinagem / Ciclo"}
@@ -411,9 +423,10 @@ export default function Dashboard() {
                                     tooltipContent={`Horas em pausas acumuladas × taxa horária do setor produtivo.`}
                                 />
                             </div>
+                            )}
 
                             {/* COMPARATIVO EXECUTIVO POR SETOR (Aparece na Visão Geral Fábrica / Gerente) */}
-                            {setorFilter === 'TODOS' && (() => {
+                            {role === 'admin' && setorFilter === 'TODOS' && (() => {
                                 const rawConcluidas = kanban.concluido || [];
 
                                 const calcularMetricasSetor = (setorId, rateDefault) => {

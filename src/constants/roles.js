@@ -16,3 +16,22 @@ export function filtrarPorSetorDoPerfil(lista, role, setorAtivo) {
     const setor = SETORES_PROGRAMADOR.includes(setorAtivo) ? setorAtivo : 'CNC';
     return lista.filter((os) => (os.setor || os.tipo_processo || 'CNC') === setor);
 }
+
+/** Nomes para o autocomplete da Nova O.S. (sem e-mail/telefone). */
+export function nomesClienteAutocomplete(clientes = [], nomeEmpresa) {
+    const nomes = new Set();
+    (clientes || []).forEach((c) => {
+        const n = String(c?.nome || '').trim();
+        if (n) nomes.add(n);
+    });
+    const empresa = String(nomeEmpresa || '').trim();
+    if (empresa) nomes.add(empresa);
+    nomes.add('Outros');
+    return Array.from(nomes).sort((a, b) => {
+        if (a === 'Outros') return 1;
+        if (b === 'Outros') return -1;
+        if (empresa && a === empresa) return -1;
+        if (empresa && b === empresa) return 1;
+        return a.localeCompare(b, 'pt-BR');
+    });
+}

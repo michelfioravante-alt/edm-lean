@@ -220,7 +220,7 @@ function App() {
                 </div>
             }>
                 {activeView === 'carteira' && role === 'admin' && <Carteira onNavigate={setActiveView} />}
-                {activeView === 'dashboard' && role === 'admin' && <Dashboard />}
+                {activeView === 'dashboard' && <Dashboard />}
                 {activeView === 'kanban' && <Board />}
                 {activeView === 'estoque' && <Estoque />}
                 {activeView === 'registros' && <Registros />}
@@ -228,7 +228,7 @@ function App() {
                 {activeView === 'clientes' && role === 'admin' && <Clientes />}
                 {activeView === 'ferramental' && <Ferramental />}
 
-                {(activeView === 'dashboard' || activeView === 'configuracoes' || activeView === 'clientes' || activeView === 'carteira') && role !== 'admin' && (
+                {(activeView === 'configuracoes' || activeView === 'clientes' || activeView === 'carteira') && role !== 'admin' && (
                     <Board />
                 )}
             </Suspense>

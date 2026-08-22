@@ -4,6 +4,7 @@ import Modal from '../common/Modal';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { TIPOS_KANBAN_GESTOR, labelSetor } from '../../constants/osWorkflow';
+import { nomesClienteAutocomplete } from '../../constants/roles';
 import { Plus, Trash2, Flag, ArrowRight, X, Calculator } from 'lucide-react';
 import { compressImageFile } from '../../utils/folhaProcesso';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
@@ -22,6 +23,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const addOrdemServico = useAppStore((s) => s.addOrdemServico);
     const addGrupoOrdensServico = useAppStore((s) => s.addGrupoOrdensServico);
     const role = useAuthStore((s) => s.role);
+    const nomeEmpresa = useAuthStore((s) => s.nomeEmpresa);
     const isGestor = role === 'admin';
 
     const setorPadrao = activeSector && activeSector !== 'TODOS' ? activeSector : 'CNC';
@@ -41,6 +43,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const [linkDesenho, setLinkDesenho] = useState('');
     const [folhaBlob, setFolhaBlob] = useState(null);
     const [folhaPreview, setFolhaPreview] = useState('');
+
+    const nomesClientes = nomesClienteAutocomplete(clientes, nomeEmpresa);
 
     if (!isOpen) return null;
 
@@ -290,11 +294,13 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                         className={inputCls}
                     />
                     <datalist id="os-clientes-nomes">
-                        {clientes.map((c) => <option key={c.id} value={c.nome} />)}
+                        {nomesClientes.map((nome) => <option key={nome} value={nome} />)}
                     </datalist>
-                    {!isGestor && (
-                        <p className="text-[10px] text-[#565B68] mt-1">Somente o nome. Contatos ficam na agenda do gestor.</p>
-                    )}
+                    <p className="text-[10px] text-[#565B68] mt-1">
+                        {isGestor
+                            ? 'Lista de clientes cadastrados, a própria empresa e “Outros”.'
+                            : 'Só o nome (autocomplete). Sem contatos nem dados financeiros. Inclui a empresa e “Outros”.'}
+                    </p>
                 </div>
 
                 {modo === 'molde' && isGestor ? (
