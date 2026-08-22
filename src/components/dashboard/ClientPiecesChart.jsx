@@ -14,14 +14,14 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 // Paleta de cores para os diferentes clientes
 const COLORS = [
-    '#14b8a6', // teal
-    '#f59e0b', // amber
-    '#3b82f6', // blue
-    '#a855f7', // purple
-    '#22c55e', // green
-    '#f43f5e', // rose
-    '#fb923c', // orange
-    '#06b6d4', // cyan
+    '#D97D3D',
+    '#4A9D74',
+    '#C85558',
+    '#C99A4A',
+    '#7B808F',
+    '#9DA2AE',
+    '#8A5A38',
+    '#565B68',
 ];
 
 export default function ClientPiecesChart({ concluidas = [] }) {

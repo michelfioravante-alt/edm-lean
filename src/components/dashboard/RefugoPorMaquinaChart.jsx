@@ -75,7 +75,7 @@ export default function RefugoPorMaquinaChart({ concluidas = [] }) {
         datasets: [{
             label: 'Horas em Refugo',
             data: sortedData.map(([, h]) => h),
-            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+            backgroundColor: 'rgba(200, 85, 88, 0.8)',
             borderRadius: 4,
             borderSkipped: false,
         }]

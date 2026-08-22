@@ -11,13 +11,12 @@
     "testar-e2e": "node scripts/testar-e2e.mjs",
     "testar-e2e:mobile": "node scripts/testar-e2e-mobile.mjs"
   },
-
-
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
     "chart.js": "^4.5.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.378.0",
+    "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.2.0",

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Column from './Column';
 import Button from '../common/Button';
 import NovaOSForm from './NovaOSForm';
+import ProgramarKanbanModal from './ProgramarKanbanModal';
 import TransitionModal from './TransitionModal';
 import PauseModal from './PauseModal';
 import AfericaoModal from './AfericaoModal';
@@ -19,6 +20,9 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { KANBAN_COLUMNS } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
+import { kanbanPrecisaProgramar, todosKanbans } from '../../constants/osWorkflow';
+import FolhaProcessoModal from './FolhaProcessoModal';
+import { SETORES_PROGRAMADOR, setorPermitido } from '../../constants/roles';
 
 export default function Board() {
     // Seletores granulares
@@ -30,14 +34,14 @@ export default function Board() {
 
     const role = useAuthStore(state => state.role);
     const setorPadrao = useAuthStore(state => state.setorPadrao);
-    const isProgrammerLocked = role !== 'admin';
-    const effectiveSector = (setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC';
+    const isGestor = role === 'admin';
 
     useEffect(() => {
-        if (isProgrammerLocked && activeSector !== effectiveSector) {
-            setActiveSector(effectiveSector);
+        if (!isGestor && !setorPermitido(role, activeSector)) {
+            const fallback = SETORES_PROGRAMADOR.includes(setorPadrao) ? setorPadrao : 'CNC';
+            setActiveSector(fallback);
         }
-    }, [isProgrammerLocked, effectiveSector, activeSector, setActiveSector]);
+    }, [isGestor, role, activeSector, setorPadrao, setActiveSector]);
 
     const moveOrdemServico = useAppStore(state => state.moveOrdemServico);
     const togglePausaOrdemServico = useAppStore(state => state.togglePausaOrdemServico);
@@ -62,9 +66,31 @@ export default function Board() {
     const [occupiedMachineAlert, setOccupiedMachineAlert] = useState(null);
     const [extraSetupContext, setExtraSetupContext] = useState(null);
     const [splitContext, setSplitContext] = useState(null);
+    const [programarOs, setProgramarOs] = useState(null);
     const [transitionError, setTransitionError] = useState(null);
     const [pendingDevolverAFazer, setPendingDevolverAFazer] = useState(null);
     const [pendingDevolverCorteSetup, setPendingDevolverCorteSetup] = useState(null);
+    const [folhasPrint, setFolhasPrint] = useState(null);
+    const destaqueOsId = useAppStore((s) => s.destaqueOsId);
+    const limparDestaqueOs = useAppStore((s) => s.limparDestaqueOs);
+    const osDeepLinkId = useAppStore((s) => s.osDeepLinkId);
+    const setOsDeepLinkId = useAppStore((s) => s.setOsDeepLinkId);
+    const irParaKanban = useAppStore((s) => s.irParaKanban);
+
+    useEffect(() => {
+        if (!destaqueOsId) return;
+        const t = setTimeout(() => limparDestaqueOs(), 8000);
+        return () => clearTimeout(t);
+    }, [destaqueOsId, limparDestaqueOs]);
+
+    useEffect(() => {
+        if (!osDeepLinkId) return;
+        const found = todosKanbans(kanban).find((o) => String(o.id) === String(osDeepLinkId));
+        if (!found) return;
+        irParaKanban(found);
+        setSelectedOs(found);
+        setOsDeepLinkId(null);
+    }, [osDeepLinkId, kanban, irParaKanban, setOsDeepLinkId]);
 
     // Memoização simples da contagem de estoque
     const lowStockCount = (estoque || []).filter(item => item.quantidade <= item.alerta_minimo).length;
@@ -411,7 +437,8 @@ export default function Board() {
 
     return (
         <ErrorBoundary>
-            <div className="h-full flex flex-col kanban-col-animate relative space-y-4">
+            <div className="h-full flex flex-col relative">
+                <div className="flex flex-col space-y-4 kanban-col-animate">
                 {transitionError && (
                     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#C85558] text-white px-4 py-2.5 rounded-[7px] shadow-2xl text-xs font-semibold animate-in fade-in duration-200 max-w-[90vw] border border-[#C85558]">
                         {transitionError}
@@ -429,41 +456,19 @@ export default function Board() {
 
                 {/* 1. SECTOR SELECTOR — SEGMENTED CONTROL */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#262A33]">
-                    {isProgrammerLocked ? (
-                        <div className="flex items-center gap-2 py-1.5 text-xs text-[#7B808F]">
-                            <Lock className="w-3.5 h-3.5 text-[#565B68] shrink-0" />
-                            <span>Setor Ativo: <b className="text-[#E7E9ED] font-semibold">{sectorConfig.label}</b></span>
+                    {isGestor ? (
+                        <div className="selector-bar py-1">
+                            <button type="button" onClick={() => setActiveSector('EDM_FIO')} className={`sel-btn ${activeSector === 'EDM_FIO' ? 'active' : ''}`}>Eletroerosão (EDM)</button>
+                            <button type="button" onClick={() => setActiveSector('CNC')} className={`sel-btn ${activeSector === 'CNC' ? 'active' : ''}`}>Centro CNC</button>
+                            <button type="button" onClick={() => setActiveSector('TORNO')} className={`sel-btn ${activeSector === 'TORNO' ? 'active' : ''}`}>Torno CNC</button>
+                            <button type="button" onClick={() => setActiveSector('RETIFICA')} className={`sel-btn ${activeSector === 'RETIFICA' ? 'active' : ''}`}>Retífica</button>
+                            <button type="button" onClick={() => setActiveSector('EXTERNO')} className={`sel-btn ${activeSector === 'EXTERNO' ? 'active' : ''}`}>Externo</button>
+                            <button type="button" onClick={() => setActiveSector('TODOS')} className={`sel-btn ${activeSector === 'TODOS' ? 'active' : ''}`}>Visão Geral</button>
                         </div>
                     ) : (
                         <div className="selector-bar py-1">
-                            <button
-                                type="button"
-                                onClick={() => setActiveSector('EDM_FIO')}
-                                className={`sel-btn ${activeSector === 'EDM_FIO' ? 'active' : ''}`}
-                            >
-                                Eletroerosão (EDM)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveSector('CNC')}
-                                className={`sel-btn ${activeSector === 'CNC' ? 'active' : ''}`}
-                            >
-                                Centro CNC
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveSector('TORNO')}
-                                className={`sel-btn ${activeSector === 'TORNO' ? 'active' : ''}`}
-                            >
-                                Torno CNC
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveSector('TODOS')}
-                                className={`sel-btn ${activeSector === 'TODOS' ? 'active' : ''}`}
-                            >
-                                Visão Geral
-                            </button>
+                            <button type="button" onClick={() => setActiveSector('CNC')} className={`sel-btn ${activeSector === 'CNC' ? 'active' : ''}`}>Centro CNC</button>
+                            <button type="button" onClick={() => setActiveSector('EDM_FIO')} className={`sel-btn ${activeSector === 'EDM_FIO' ? 'active' : ''}`}>Eletroerosão (EDM)</button>
                         </div>
                     )}
 
@@ -531,6 +536,12 @@ export default function Board() {
                                     }
                                     if (destCol === 'setup' || destCol === 'emCorte') {
                                         const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
+                                        if (sourceCol === 'aFazer' && kanbanPrecisaProgramar(osToMove)) {
+                                            setTransitionError('Este kanban ainda não foi programado. Programe no A fazer antes do set-up.');
+                                            setProgramarOs(osToMove);
+                                            setTimeout(() => setTransitionError(null), 4000);
+                                            return;
+                                        }
                                         if (destCol === 'setup' && sourceCol === 'emCorte') {
                                             setPendingDevolverCorteSetup({ osId, sourceCol, destCol, osData: osToMove });
                                         } else if (destCol === 'setup' && sourceCol === 'afericao') {
@@ -574,14 +585,26 @@ export default function Board() {
                                     if (sourceCol) setPauseContext({ osData, colKey: sourceCol });
                                 }}
                                 onViewRequest={(osData) => setSelectedOs(osData)}
+                                onProgramarRequest={(osData) => setProgramarOs(osData)}
                             />
                         ))}
+                </div>
                 </div>
 
                 {/* MODAIS DO FLUXO */}
                 <NovaOSForm
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                    onCreated={(lista) => setFolhasPrint(lista)}
+                />
+                {folhasPrint && (
+                    <FolhaProcessoModal osList={folhasPrint} onClose={() => setFolhasPrint(null)} />
+                )}
+
+                <ProgramarKanbanModal
+                    isOpen={!!programarOs}
+                    osData={programarOs}
+                    onClose={() => setProgramarOs(null)}
                 />
 
                 {pendingTransition && (

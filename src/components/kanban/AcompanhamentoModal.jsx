@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import EditOSModal from './EditOSModal';
-import { Clock, User, Settings, CheckCircle2, PauseCircle, PlayCircle, History, AlertTriangle, Trash, Link as LinkIcon, Copy, Check, Pencil } from 'lucide-react';
+import { Clock, Settings, CheckCircle2, PauseCircle, PlayCircle, History, AlertTriangle, Trash, Link as LinkIcon, Copy, Check, Pencil, Printer } from 'lucide-react';
+import FolhaProcessoModal from './FolhaProcessoModal';
 import { format } from 'date-fns';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { listarKanbansDoGrupo, labelSetor, custoHoraKanban } from '../../constants/osWorkflow';
 
 export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteRequest, onPauseRequest }) {
     if (!osData) return null;
 
     const [copied, setCopied] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isFolhaOpen, setIsFolhaOpen] = useState(false);
+    const [obsDraft, setObsDraft] = useState('');
     const [isEditingTotal, setIsEditingTotal] = useState(false);
 
     // Busca a versão mais atualizada da OS do store para garantir que vemos as mudanças de Realtime
@@ -23,7 +27,16 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     });
 
     const activeData = currentOs || osData;
+    const kanban = useAppStore((s) => s.kanban);
+    const configuracoesGlobais = useAppStore((s) => s.configuracoesGlobais);
+    const irmaos = listarKanbansDoGrupo(kanban, activeData);
+    const custoInfo = custoHoraKanban(activeData, configuracoesGlobais || {});
+    const isGestor = useAuthStore((s) => s.role) === 'admin';
     const [newTotal, setNewTotal] = useState(activeData.quantidade || 1);
+
+    useEffect(() => {
+        setObsDraft(activeData.observacoes || '');
+    }, [activeData.id, activeData.observacoes]);
 
     const temposFases = activeData.tempos_fases || activeData.temposFases || { setup: 0, emCorte: 0, afericao: 0 };
     const historicoPausas = activeData.historico_pausas || activeData.historicoPausas || [];
@@ -69,6 +82,13 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                         <div className="text-right flex flex-col items-end gap-2">
                             <div className="flex items-center gap-2">
                                 <button
+                                    onClick={() => setIsFolhaOpen(true)}
+                                    className="p-1.5 rounded-md hover:bg-kanban-amber/10 text-[#7B808F] hover:text-kanban-amber transition-colors"
+                                    title="Imprimir folha de processo"
+                                >
+                                    <Printer className="w-5 h-5" />
+                                </button>
+                                <button
                                     onClick={() => setIsEditOpen(true)}
                                     className="p-1.5 rounded-md hover:bg-kanban-amber/10 text-[#7B808F] hover:text-kanban-amber transition-colors"
                                     title="Editar O.S."
@@ -100,6 +120,49 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {(irmaos.length > 1 || (isGestor && (custoInfo.custo > 0 || activeData.valor_orcado))) && (
+                        <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-3">
+                            <h5 className="text-xs font-bold uppercase text-[#565B68]">Roteiro desta O.S.</h5>
+                            {isGestor && custoInfo.custo > 0 && (
+                                <p className="text-sm text-[#E7E9ED]">
+                                    Custo hora deste kanban: <span className="font-semibold text-[#D97D3D]">R$ {custoInfo.custo.toFixed(2)}</span>
+                                    <span className="text-[#7B808F] text-xs"> ({custoInfo.horas.toFixed(2)} h × R$ {custoInfo.rate}/h)</span>
+                                </p>
+                            )}
+                            {isGestor && activeData.valor_orcado != null && (
+                                <p className="text-xs text-[#7B808F]">Orçado da O.S.: R$ {Number(activeData.valor_orcado).toFixed(2)}</p>
+                            )}
+                            {irmaos.length > 1 && (
+                                <ul className="space-y-1.5 text-xs">
+                                    {irmaos.map((k) => (
+                                        <li key={k.id} className={`flex justify-between gap-2 ${k.id === activeData.id ? 'text-[#D97D3D]' : 'text-[#E7E9ED]'}`}>
+                                            <span>{k.codigo_peca || k.codigoPeca} · {labelSetor(k.setor)}</span>
+                                            <span className="text-[#7B808F]">{k.status}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-2">
+                        <h5 className="text-xs font-bold uppercase text-[#565B68]">Observações</h5>
+                        <textarea
+                            value={obsDraft}
+                            onChange={(e) => setObsDraft(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-[8px] text-sm text-[#E7E9ED]"
+                            placeholder="Anotações de chão de fábrica, pedido do cliente…"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => useAppStore.getState().editOrdemServico(activeData.id, { observacoes: obsDraft })}
+                            className="text-[11px] font-semibold text-[#D97D3D] cursor-pointer"
+                        >
+                            Salvar observações
+                        </button>
                     </div>
 
                     {/* Grid de Informações Vitais */}
@@ -173,7 +236,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
 
                         <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
                             <h5 className="text-xs font-bold uppercase text-[#565B68] mb-3 flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-kanban-teal" /> Progresso do Lote
+                                <CheckCircle2 className="w-4 h-4 text-[#4A9D74]" /> Progresso do Lote
                             </h5>
                             {osData.quantidade > 1 ? (
                                 <div className="space-y-4">
@@ -197,7 +260,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                                             editOrdemServico(osData.id, { quantidade: newTotal });
                                                             setIsEditingTotal(false);
                                                         }}
-                                                        className="bg-kanban-green text-[#111318] p-1.5 rounded-md hover:bg-green-400"
+                                                        className="bg-kanban-green text-[#111318] p-1.5 rounded-md hover:bg-[#3d8763]"
                                                     >
                                                         <Check className="w-4 h-4" />
                                                     </button>
@@ -367,6 +430,9 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                 onClose={() => setIsEditOpen(false)}
                 osData={osData}
             />
+            {isFolhaOpen && (
+                <FolhaProcessoModal osList={[activeData]} onClose={() => setIsFolhaOpen(false)} />
+            )}
         </>
     );
 }

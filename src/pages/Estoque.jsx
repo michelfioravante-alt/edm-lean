@@ -119,13 +119,13 @@ export default function Estoque() {
             {Object.keys(ferramentasPorMaquina).length > 0 && (
                 <div className={cardClasses}>
                     <div className={headerClasses}>
-                        <Monitor className="text-kanban-teal w-6 h-6" />
+                        <Monitor className="text-[#4A9D74] w-6 h-6" />
                         <h3 className="text-xl font-bold text-white">Ferramentas nas máquinas (agora)</h3>
                     </div>
                     <div className="p-5 grid md:grid-cols-2 gap-4 bg-[#181B22]">
                         {Object.entries(ferramentasPorMaquina).map(([maq, itens]) => (
                             <div key={maq} className="bg-[#111318]/80 border border-[#262A33] rounded-xl p-4">
-                                <h4 className="font-bold text-kanban-teal mb-3">{maq}</h4>
+                                <h4 className="font-bold text-[#4A9D74] mb-3">{maq}</h4>
                                 <ul className="space-y-2 text-sm">
                                     {itens.map((f) => (
                                         <li key={f.id} className="flex flex-wrap justify-between gap-2 border-b border-[#262A33]/60 pb-2">
@@ -219,14 +219,14 @@ export default function Estoque() {
                                         <button
                                             type="button"
                                             onClick={() => setSetorFiltro('CNC')}
-                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'CNC' ? 'bg-cyan-950 border border-cyan-500/40 text-cyan-400 shadow-sm' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
+                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'CNC' ? 'bg-[rgba(123,128,143,0.12)] border border-[#7B808F]/40 text-[#9DA2AE] shadow-sm' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                         >
                                             CNC
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setSetorFiltro('EDM_FIO')}
-                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'EDM_FIO' ? 'bg-emerald-950 border border-emerald-500/40 text-[#4A9D74] shadow-sm' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
+                                            className={`px-3 py-1.5 rounded-md transition-colors ${setorFiltro === 'EDM_FIO' ? 'bg-[rgba(74,157,116,0.1)] border border-[#4A9D74]/40 text-[#4A9D74] shadow-sm' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                         >
                                             EDM Fio
                                         </button>
@@ -268,12 +268,12 @@ export default function Estoque() {
                                                     <p className="font-semibold text-base sm:text-lg text-white leading-snug">{item.nome}</p>
                                                     <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border shrink-0 ${
                                                         item.setor === 'EDM_FIO' 
-                                                            ? 'bg-emerald-950/80 border-emerald-500/50 text-[#4A9D74]' 
+                                                            ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]' 
                                                             : item.setor === 'TORNO'
                                                             ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
                                                             : item.setor === 'CNC'
-                                                            ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
-                                                            : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
+                                                            ? 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
+                                                            : 'bg-[#1F232B] border-[#333844] text-[#7B808F]'
                                                     }`}>
                                                         {item.setor === 'EDM_FIO' ? 'EDM Fio' : item.setor === 'TORNO' ? 'Torno' : item.setor === 'CNC' ? 'CNC' : 'Geral'}
                                                     </span>

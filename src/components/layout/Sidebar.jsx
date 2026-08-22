@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
     LayoutDashboard, ListTodo, Settings, ChevronLeft, Package, 
-    History, LogOut, Briefcase, Wrench, Home, ShieldCheck, UserCheck, Code 
+    History, LogOut, Briefcase, Wrench, Home, ShieldCheck, Code 
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { isLocalMode } from '../../local/mode';
@@ -10,27 +10,19 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
     const { user, role, logout } = useAuthStore();
     const demoMode = isLocalMode();
     const isAdmin = role === 'admin';
-    const isProgrammer = role === 'programmer';
 
     const getRoleBadge = () => {
         if (isAdmin) {
             return {
-                label: 'Gerência / Admin',
+                label: 'Gerência',
                 icon: ShieldCheck,
                 classes: 'bg-[#1F232B] text-[#E7E9ED] border-[#333844]'
             };
         }
-        if (isProgrammer) {
-            return {
-                label: 'Programador CAM',
-                icon: Code,
-                classes: 'bg-[#1F232B] text-[#9DA2AE] border-[#333844]'
-            };
-        }
         return {
-            label: 'Chão de Fábrica',
-            icon: UserCheck,
-            classes: 'bg-[#1F232B] text-[#7B808F] border-[#333844]'
+            label: 'Programador',
+            icon: Code,
+            classes: 'bg-[#1F232B] text-[#9DA2AE] border-[#333844]'
         };
     };
 
@@ -79,11 +71,11 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                 {/* Perfil Compacto do Usuário */}
                 <div className="p-3.5 bg-[#181B22]/60 border-b border-[#262A33] flex items-center gap-3">
                     <div className="w-8 h-8 rounded-[7px] bg-[#1F232B] border border-[#333844] flex items-center justify-center font-semibold text-xs text-[#E7E9ED] shrink-0 font-['Space_Grotesk']">
-                        {user?.email ? user.email.charAt(0).toUpperCase() : (isAdmin ? 'G' : (isProgrammer ? 'P' : 'O'))}
+                        {user?.email ? user.email.charAt(0).toUpperCase() : (isAdmin ? 'G' : 'P')}
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-[#E7E9ED] truncate leading-tight">
-                            {user?.email || (isAdmin ? 'Gerente Geral' : (isProgrammer ? 'Programador CAM' : 'Operador'))}
+                            {user?.email || (isAdmin ? 'Gerente' : 'Programador')}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
                             <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-[5px] border ${roleBadge.classes}`}>
@@ -102,6 +94,20 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                         <div className="px-3 pb-2 text-[10px] font-semibold text-[#565B68] uppercase tracking-[0.15em]">
                             Operação & Produção
                         </div>
+
+                        {isAdmin && (
+                        <button
+                            onClick={() => { onViewChange('carteira'); onClose(); }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
+                                activeView === 'carteira'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
+                            }`}
+                        >
+                            <Home className="h-4 w-4 shrink-0 text-[#7B808F]" />
+                            <span>Carteira de O.S.</span>
+                        </button>
+                        )}
 
                         <button
                             onClick={() => { onViewChange('kanban'); onClose(); }}
@@ -151,6 +157,7 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                             <span>Ferramental & Magazines</span>
                         </button>
 
+                        {isAdmin && (
                         <button
                             onClick={() => { onViewChange('clientes'); onClose(); }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
@@ -162,10 +169,11 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                             <Briefcase className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Clientes</span>
                         </button>
+                        )}
                     </div>
 
                     {/* Grupo 2: Gestão Executiva */}
-                    {(isAdmin || isProgrammer) && (
+                    {isAdmin && (
                         <div className="space-y-0.5 pt-3 border-t border-[#262A33]">
                             <div className="px-3 pb-2 text-[10px] font-semibold text-[#565B68] uppercase tracking-[0.15em] flex items-center justify-between">
                                 <span>Gestão & Estratégia</span>

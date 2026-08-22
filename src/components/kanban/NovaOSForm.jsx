@@ -1,820 +1,448 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
-import ImportNxSheet from './ImportNxSheet';
-import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 import { useAppStore } from '../../store/useAppStore';
-import { minutosParaHorasMin } from '../../utils/nxShopDocParser';
-import { Cpu, Zap, Wrench, Plus, Trash2, CheckCircle2, RotateCw, Calculator } from 'lucide-react';
+import { useAuthStore } from '../../store/useAuthStore';
+import { TIPOS_KANBAN_GESTOR, labelSetor } from '../../constants/osWorkflow';
+import { Plus, Trash2, Flag, ArrowRight, X, Calculator } from 'lucide-react';
+import { compressImageFile } from '../../utils/folhaProcesso';
 
+const novaPeca = () => ({ nome: '', etapas: [], quantidade: 1 });
 
-/**
- * Nome vindo da folha CAM só preenche o formulário se existir no cadastro —
- * caso contrário o campo ficaria com um valor que o select nem consegue exibir.
- */
-function nomeCadastrado(cadastro, nome) {
-    const alvo = (nome || '').trim().toLowerCase();
-    if (!alvo) return '';
-    return cadastro.find((item) => item.nome?.trim().toLowerCase() === alvo)?.nome || '';
-}
+const PRESETS = [
+    { id: 'cnc-tt-fio', label: 'CNC → TT → Fio', etapas: ['CNC', 'EXTERNO', 'EDM_FIO'] },
+    { id: 'cnc-ret', label: 'CNC → Retífica', etapas: ['CNC', 'RETIFICA'] },
+    { id: 'fio-tt', label: 'Fio → TT', etapas: ['EDM_FIO', 'EXTERNO'] },
+];
 
-export default function NovaOSForm({ onClose }) {
-    const { maquinas, operadores, programadores, clientes, addCliente, estoque = [] } = useAppStore();
-    // maquinas e operadores são selecionados na etapa Set-up (TransitionModal)
+export default function NovaOSForm({ isOpen, onClose, onCreated }) {
+    const clientes = useAppStore((s) => s.clientes);
+    const activeSector = useAppStore((s) => s.activeSector);
+    const addOrdemServico = useAppStore((s) => s.addOrdemServico);
+    const addGrupoOrdensServico = useAppStore((s) => s.addGrupoOrdensServico);
+    const role = useAuthStore((s) => s.role);
+    const isGestor = role === 'admin';
 
-    const activeSector = useAppStore(state => state.activeSector);
+    const setorPadrao = activeSector && activeSector !== 'TODOS' ? activeSector : 'CNC';
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [nxImportMeta, setNxImportMeta] = useState(null);
-    const [ferramentasList, setFerramentasList] = useState([]);
-    const [showEdmCalculator, setShowEdmCalculator] = useState(false);
-    const [clienteWarning, setClienteWarning] = useState(false);
-    const [quickEmail, setQuickEmail] = useState('');
-    const [quickTelefone, setQuickTelefone] = useState('');
-    const [quickSaving, setQuickSaving] = useState(false);
+    const [modo, setModo] = useState('avulsa');
+    const [cliente, setCliente] = useState('');
+    const [codigoPeca, setCodigoPeca] = useState('');
+    const [codigoMolde, setCodigoMolde] = useState('');
+    const [prazoEntrega, setPrazoEntrega] = useState('');
+    const [valorOrcado, setValorOrcado] = useState('');
+    const [quantidade, setQuantidade] = useState(1);
+    const [isPrioridade, setIsPrioridade] = useState(false);
+    const [pecas, setPecas] = useState([novaPeca()]);
+    const [showEdmCalc, setShowEdmCalc] = useState(false);
+    const [edmTempo, setEdmTempo] = useState(null);
+    const [observacoes, setObservacoes] = useState('');
+    const [linkDesenho, setLinkDesenho] = useState('');
+    const [folhaImagem, setFolhaImagem] = useState('');
 
-    const [formData, setFormData] = useState({
-        setor: activeSector !== 'TODOS' ? activeSector : 'CNC',
-        cliente: '',
-        codigoPeca: '',
-        codigoMolde: '',
-        componenteMolde: '',
-        numeroPrograma: '',
-        dataCriacao: new Date().toISOString().slice(0, 10), // date format YYYY-MM-DD
-        prazoEntrega: '',
-        tempoEstimadoCorteHoras: '',
-        tempoEstimadoCorteMinutos: '',
-        tempoEstimadoSetupHoras: '',
-        tempoEstimadoSetupMinutos: '',
-        programador: '',
-        linkDesenho: '',
-        isPrioridade: false,
-        isRetrabalho: false,
-        quantidade: 1,
-        totalSetups: 1,
-        setupsList: [{ nome: 'OP10 - Desbaste Bruto', horas: '', minutos: '', programa: '' }],
-    });
+    if (!isOpen) return null;
 
-
-    const handleTotalSetupsChange = (numStr) => {
-        const count = Math.max(1, Math.min(10, parseInt(numStr, 10) || 1));
-
-        const presetNames = [
-            'OP10 - Desbaste Bruto',
-            'OP20 - Acabamento 3D (Pós-Têmpera)',
-            'OP30 - Usinagem de Gavetas / Postiços',
-            'OP40 - Furação / Machos',
-        ];
-
-        setFormData(prev => {
-            const currentList = prev.setupsList || [];
-            const newList = Array.from({ length: count }, (_, i) => {
-                const opNum = (i + 1) * 10;
-                const defaultName = presetNames[i] || `OP${opNum} (Virada)`;
-                return currentList[i] || { nome: defaultName, horas: '', minutos: '', programa: '' };
-            });
-
-            let totalH = prev.tempoEstimadoSetupHoras;
-            let totalM = prev.tempoEstimadoSetupMinutos;
-
-            if (count > 1) {
-                let totalMinutos = 0;
-                newList.forEach(s => {
-                    const h = parseInt(s.horas, 10) || 0;
-                    const m = parseInt(s.minutos, 10) || 0;
-                    totalMinutos += h * 60 + m;
-                });
-                totalH = totalMinutos > 0 ? String(Math.floor(totalMinutos / 60)) : '';
-                totalM = totalMinutos > 0 ? String(totalMinutos % 60) : '';
-            }
-
-            return {
-                ...prev,
-                totalSetups: count,
-                setupsList: newList,
-                nomesSetups: newList.map(s => s.nome),
-                tempoEstimadoSetupHoras: totalH,
-                tempoEstimadoSetupMinutos: totalM,
-            };
-        });
+    const reset = () => {
+        setModo('avulsa');
+        setCliente('');
+        setCodigoPeca('');
+        setCodigoMolde('');
+        setPrazoEntrega('');
+        setValorOrcado('');
+        setQuantidade(1);
+        setIsPrioridade(false);
+        setPecas([novaPeca()]);
+        setShowEdmCalc(false);
+        setEdmTempo(null);
+        setObservacoes('');
+        setLinkDesenho('');
+        setFolhaImagem('');
     };
 
-    const handleSetupItemChange = (index, field, value) => {
-        setFormData(prev => {
-            const newList = (prev.setupsList || []).map((item, i) => {
-                if (i !== index) return item;
-                return { ...item, [field]: value };
-            });
-
-            let totalMinutos = 0;
-            newList.forEach(s => {
-                const h = parseInt(s.horas, 10) || 0;
-                const m = parseInt(s.minutos, 10) || 0;
-                totalMinutos += h * 60 + m;
-            });
-
-            const totalH = totalMinutos > 0 ? String(Math.floor(totalMinutos / 60)) : '';
-            const totalM = totalMinutos > 0 ? String(totalMinutos % 60) : '';
-
-            return {
-                ...prev,
-                setupsList: newList,
-                nomesSetups: newList.map(s => s.nome),
-                tempoEstimadoSetupHoras: totalH,
-                tempoEstimadoSetupMinutos: totalM,
-            };
-        });
+    const handleClose = () => {
+        reset();
+        onClose();
     };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-
-        // Validação estrita para os campos de tempo (apenas números positivos)
-        if (name.includes('tempoEstimado')) {
-            if (value !== '' && (!/^\d+$/.test(value) || parseInt(value) < 0)) return;
-
-            // Validação extra para minutos (0-59)
-            if (name.includes('Minutos') && value !== '' && parseInt(value) > 59) return;
-        }
-
-        // Checkbox handling
-        if (e.target.type === 'checkbox') {
-            setFormData(prev => ({ ...prev, [name]: e.target.checked }));
-            return;
-        }
-
-        setFormData(prev => ({ ...prev, [name]: value }));
-        // Reset warning whenever client field changes
-        if (name === 'cliente') setClienteWarning(false);
+    const setEtapasPeca = (idx, etapas) => {
+        setPecas((p) => p.map((row, i) => (i === idx ? { ...row, etapas } : row)));
     };
 
-    // Called when user leaves the client field
-    const handleClienteBlur = () => {
-        const typed = formData.cliente.trim();
-        if (!typed) return;
-        const isRegistered = clientes.some(
-            c => c.nome.toLowerCase() === typed.toLowerCase()
-        );
-        if (!isRegistered) setClienteWarning('ask');
+    const addEtapa = (idx, setor) => {
+        setPecas((p) => p.map((row, i) => (
+            i === idx ? { ...row, etapas: [...row.etapas, setor] } : row
+        )));
     };
 
-    const handleQuickRegister = async () => {
-        if (!formData.cliente.trim() || quickSaving) return;
-
-        setQuickSaving(true);
-        try {
-            await addCliente({
-                nome: formData.cliente.trim(),
-                email: quickEmail.trim(),
-                telefone: quickTelefone.trim()
-            });
-            // Sucesso
-            setClienteWarning(false);
-            setQuickEmail('');
-            setQuickTelefone('');
-        } catch (err) {
-            console.error('Erro ao cadastrar cliente rápido:', err);
-            alert(err?.message || 'Erro ao cadastrar cliente. Verifique a conexão.');
-        } finally {
-            setQuickSaving(false);
-        }
-    };
-
-    const handleNxImport = (data) => {
-        setNxImportMeta(data);
-        if (Array.isArray(data.ferramentas) && data.ferramentas.length > 0) {
-            setFerramentasList(data.ferramentas);
-        }
-        const usinagem = minutosParaHorasMin(data.tempoUsinagemMinutos || 0);
-        const setup = minutosParaHorasMin(data.tempoSetupMinutos || 0);
-        setFormData((prev) => ({
-            ...prev,
-            codigoPeca: data.codigoPeca || prev.codigoPeca,
-            numeroPrograma: data.numeroPrograma || prev.numeroPrograma,
-            cliente: nomeCadastrado(clientes, data.cliente) || prev.cliente,
-            programador: nomeCadastrado(programadores, data.programador) || prev.programador,
-            tempoEstimadoCorteHoras: usinagem.horas ? String(usinagem.horas) : prev.tempoEstimadoCorteHoras,
-            tempoEstimadoCorteMinutos: usinagem.minutos ? String(usinagem.minutos) : prev.tempoEstimadoCorteMinutos,
-            tempoEstimadoSetupHoras: setup.horas ? String(setup.horas) : prev.tempoEstimadoSetupHoras,
-            tempoEstimadoSetupMinutos: setup.minutos ? String(setup.minutos) : prev.tempoEstimadoSetupMinutos,
+    const removeEtapa = (idx, ei) => {
+        setPecas((p) => p.map((row, i) => {
+            if (i !== idx) return row;
+            const etapas = row.etapas.filter((_, j) => j !== ei);
+            return { ...row, etapas };
         }));
     };
 
-    const handleAddFerramenta = () => {
-        setFerramentasList(prev => [
-            ...prev,
-            { codigoT: `T${String(prev.length + 1).padStart(2, '0')}`, nome: '' }
-        ]);
-    };
-
-    const handleRemoveFerramenta = (index) => {
-        setFerramentasList(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const handleUpdateFerramenta = (index, field, value) => {
-        setFerramentasList(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (isSubmitting) return;
-
-        const nxImportData = nxImportMeta
-            ? { arquivo: nxImportMeta.arquivo, ferramentas: ferramentasList, operacoes: nxImportMeta.operacoes }
-            : (ferramentasList.length > 0 ? { arquivo: 'Manual', ferramentas: ferramentasList, operacoes: [] } : null);
-
-        const novaOS = {
-            ...formData,
-            status: 'A fazer',
-            setup_atual: 1,
-            total_setups: parseInt(formData.totalSetups) || 1,
-            nomes_setups: formData.setupsList?.map(s => s.nome) || ['OP10'],
-            detalhes_setups: formData.setupsList || [],
-            nxImport: nxImportData,
-        };
-        const { addOrdemServico } = useAppStore.getState();
-
-        setIsSubmitting(true);
-        // Modo otimista: coloca a O.S. na lista na hora e fecha o modal; o salvamento segue em background.
-        addOrdemServico(novaOS, {
-            optimistic: true,
-            onError: (err) => {
-                const msg = err?.message === 'TIMEOUT'
-                    ? 'A conexão está lenta. A O.S. pode ter sido criada — confira a lista em alguns segundos.'
-                    : (err?.message || 'Não foi possível criar a O.S. Verifique a conexão e tente de novo.');
-                alert(msg);
-                console.error('Erro ao criar OS:', err);
-            }
+    const flattenKanbans = () => {
+        if (!isGestor) {
+            return [{
+                componente: '',
+                setor: setorPadrao,
+                codigoPeca: (codigoPeca || 'S/N').toUpperCase(),
+                quantidade: parseInt(quantidade, 10) || 1,
+            }];
+        }
+        const lista = modo === 'molde' ? pecas : [pecas[0] || novaPeca()];
+        const linhas = [];
+        lista.forEach((peca, pi) => {
+            const qtd = parseInt(modo === 'molde' ? peca.quantidade : quantidade, 10) || 1;
+            const nome = (peca.nome || codigoPeca || codigoMolde || `P${pi + 1}`).trim();
+            (peca.etapas || []).forEach((setor) => {
+                const sufixo = (peca.etapas.length > 1) ? ` · ${labelSetor(setor)}` : '';
+                const isEdm = setor === 'EDM_FIO';
+                linhas.push({
+                    componente: peca.nome?.trim() || '',
+                    setor,
+                    quantidade: qtd,
+                    codigoPeca: modo === 'molde'
+                        ? `${codigoMolde || 'MOLDE'}-${nome}${sufixo}`
+                        : `${(codigoPeca || nome).toUpperCase()}${peca.etapas.length > 1 ? sufixo : ''}`,
+                    tempoEstimadoCorteHoras: isEdm && edmTempo ? edmTempo.horas : undefined,
+                    tempoEstimadoCorteMinutos: isEdm && edmTempo ? edmTempo.minutos : undefined,
+                });
+            });
         });
-        onClose();
+        return linhas;
+    };
+
+    const cabecalho = () => ({
+        cliente: cliente.trim(),
+        codigoPeca: codigoPeca.trim() || codigoMolde.trim() || 'S/N',
+        codigoMolde: modo === 'molde' ? codigoMolde.trim() : '',
+        prazoEntrega,
+        valorOrcado: valorOrcado === '' ? null : valorOrcado,
+        quantidade: parseInt(quantidade, 10) || 1,
+        status: 'A fazer',
+        programado: false,
+        isPrioridade,
+        is_prioridade: isPrioridade,
+        observacoes: observacoes.trim(),
+        linkDesenho: linkDesenho.trim(),
+        folhaImagem,
+        folha_imagem: folhaImagem,
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (isSubmitting || !cliente.trim()) return;
+        setIsSubmitting(true);
+        try {
+            const linhas = flattenKanbans().filter((k) => k.setor);
+            if (linhas.length === 0) {
+                alert('Defina pelo menos uma etapa no roteiro.');
+                setIsSubmitting(false);
+                return;
+            }
+            const precisaGrupo = linhas.length > 1;
+            let criados = [];
+            if (precisaGrupo) {
+                criados = await addGrupoOrdensServico(cabecalho(), linhas);
+            } else {
+                const one = await addOrdemServico({
+                    ...cabecalho(),
+                    setor: linhas[0].setor,
+                    componenteMolde: linhas[0].componente,
+                    quantidade: linhas[0].quantidade || cabecalho().quantidade,
+                    tempoEstimadoCorteHoras: linhas[0].tempoEstimadoCorteHoras,
+                    tempoEstimadoCorteMinutos: linhas[0].tempoEstimadoCorteMinutos,
+                    programado: linhas[0].setor === 'EXTERNO',
+                    roteiro_ordem: 1,
+                }, { optimistic: false });
+                criados = one ? [one] : [];
+            }
+            handleClose();
+            if (criados?.length) onCreated?.(criados);
+        } catch (err) {
+            alert(err?.message || 'Falha ao criar O.S.');
+        }
         setIsSubmitting(false);
     };
 
-    return (
-        <>
-            <form onSubmit={handleSubmit} className="space-y-5">
+    const inputCls = 'w-full px-3 py-2.5 border border-[#262A33] bg-[#111318] rounded-[8px] text-[#E7E9ED] text-sm placeholder-[#565B68] focus:outline-none focus:border-[#D97D3D]';
+    const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
 
-                {/* Seleção do Setor Produtivo */}
-                <div className="bg-[#181B22] border border-[#262A33] p-3.5 rounded-xl">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#7B808F] mb-2">Setor Produtivo da O.S.</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, setor: 'CNC' }))}
-                            className={`px-3 py-3 rounded-xl border font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                                formData.setor === 'CNC'
-                                    ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-md ring-1 ring-cyan-500'
-                                    : 'bg-[#111318] border-[#262A33] text-[#7B808F] hover:border-[#333844]'
-                            }`}
-                        >
-                            <Cpu className="w-4 h-4 shrink-0" />
-                            <span>Usinagem CNC</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, setor: 'EDM_FIO' }))}
-                            className={`px-3 py-3 rounded-xl border font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                                formData.setor === 'EDM_FIO'
-                                    ? 'bg-emerald-950/80 border-emerald-500 text-[#4A9D74] shadow-md ring-1 ring-emerald-500'
-                                    : 'bg-[#111318] border-[#262A33] text-[#7B808F] hover:border-[#333844]'
-                            }`}
-                        >
-                            <Zap className="w-4 h-4 shrink-0" />
-                            <span>Eletroerosão Fio</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, setor: 'TORNO' }))}
-                            className={`px-3 py-3 rounded-xl border font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                                formData.setor === 'TORNO'
-                                    ? 'bg-amber-950/80 border-amber-500 text-[#D97D3D] shadow-md ring-1 ring-amber-500'
-                                    : 'bg-[#111318] border-[#262A33] text-[#7B808F] hover:border-[#333844]'
-                            }`}
-                        >
-                            <RotateCw className="w-4 h-4 shrink-0" />
-                            <span>Torno CNC</span>
-                        </button>
-                    </div>
-                </div>
-
-                {(formData.setor === 'CNC' || formData.setor === 'TORNO') && (
-                    <>
-                        <ImportNxSheet onImport={handleNxImport} disabled={isSubmitting} />
-
-                        {/* Cadastro Manual / Edição de Ferramentas */}
-                        <div className="bg-[#181B22] border border-[#262A33] p-4 rounded-xl space-y-3">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Wrench className="w-4 h-4 text-kanban-amber" />
-                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[#E7E9ED]">
-                                        Lista de Ferramentas / Magazine Previsto
-                                    </h4>
-                                    {ferramentasList.length > 0 && (
-                                        <span className="text-[10px] font-bold bg-kanban-amber/20 text-kanban-amber px-2 py-0.5 rounded-full border border-kanban-amber/30">
-                                            {ferramentasList.length} {ferramentasList.length === 1 ? 'ferramenta' : 'ferramentas'}
-                                        </span>
-                                    )}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleAddFerramenta}
-                                    className="text-xs font-semibold bg-[#1F232B] hover:bg-[#333844] text-kanban-amber px-3 py-1.5 rounded-lg border border-[#333844] hover:border-kanban-amber/50 transition-colors flex items-center gap-1.5 cursor-pointer"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>Adicionar Ferramenta</span>
-                                </button>
-                            </div>
-
-                            {ferramentasList.length === 0 ? (
-                                <p className="text-xs text-[#565B68] italic py-1">
-                                    Nenhuma ferramenta adicionada. Importe a folha CAM acima ou clique em "Adicionar Ferramenta" para especificar o magazine manualmente.
-                                </p>
-                            ) : (
-                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                                    {ferramentasList.map((f, idx) => (
-                                        <div key={idx} className="flex items-center gap-2 bg-[#111318] p-2 rounded-lg border border-[#262A33]">
-                                            <div className="w-20 shrink-0">
-                                                <input
-                                                    type="text"
-                                                    value={f.codigoT || ''}
-                                                    onChange={(e) => handleUpdateFerramenta(idx, 'codigoT', e.target.value)}
-                                                    placeholder="T01"
-                                                    className="w-full bg-[#181B22] border border-[#333844] rounded-md px-2 py-1 text-xs text-center font-mono text-kanban-amber font-bold outline-none focus:border-kanban-amber"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <input
-                                                    type="text"
-                                                    list={`estoque-lista-${idx}`}
-                                                    value={f.nome || ''}
-                                                    onChange={(e) => handleUpdateFerramenta(idx, 'nome', e.target.value)}
-                                                    placeholder="Nome ou especificação da ferramenta (ex: Fresa MD D10 4F)"
-                                                    className="w-full bg-[#181B22] border border-[#333844] rounded-md px-3 py-1 text-xs text-[#E7E9ED] placeholder-[#565B68] outline-none focus:border-kanban-amber"
-                                                />
-                                                {estoque.length > 0 && (
-                                                    <datalist id={`estoque-lista-${idx}`}>
-                                                        {estoque
-                                                            .filter(item => !item.setor || item.setor === 'TODOS' || item.setor === formData.setor)
-                                                            .map(item => (
-                                                                <option key={item.id} value={item.nome} />
-                                                            ))}
-                                                    </datalist>
-                                                )}
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveFerramenta(idx)}
-                                                className="p-1.5 text-[#565B68] hover:text-[#C85558] hover:bg-[#181B22] rounded-md transition-colors cursor-pointer"
-                                                title="Remover ferramenta"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-
-                {/* Calculadora de Tempo WEDM — exclusiva para Eletroerosão a Fio */}
-                {formData.setor === 'EDM_FIO' && (
-                    <div className="bg-emerald-950/30 border border-emerald-500/40 p-3.5 sm:p-4 rounded-xl space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                                <Calculator className="w-4 h-4 text-[#4A9D74] shrink-0" />
-                                <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
-                                    Calculadora de Tempo de Corte WEDM
-                                </h4>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowEdmCalculator(prev => !prev)}
-                                className="text-xs font-semibold bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-600 hover:border-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
-                            >
-                                <Calculator className="w-3.5 h-3.5" />
-                                <span>{showEdmCalculator ? 'Ocultar Calculadora' : 'Abrir Calculadora'}</span>
-                            </button>
-                        </div>
-
-                        {!showEdmCalculator && (
-                            <p className="text-xs text-[#7B808F] leading-relaxed">
-                                Informe o <strong className="text-emerald-300">perímetro de corte (mm)</strong>, a <strong className="text-emerald-300">velocidade de cada passada (mm/min)</strong> e a quantidade de peças para calcular o tempo total estimado.
-                            </p>
-                        )}
-
-                        {(formData.tempoEstimadoCorteHoras || formData.tempoEstimadoCorteMinutos) && (
-                            <div className="flex items-center gap-2 text-xs text-[#4A9D74] font-bold bg-emerald-950/60 p-2 rounded-lg border border-[#4A9D74]/30">
-                                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                                <span>Tempo de corte aplicado: {formData.tempoEstimadoCorteHoras || 0}h {formData.tempoEstimadoCorteMinutos || '00'}m</span>
-                            </div>
-                        )}
-
-                        {showEdmCalculator && (
-                            <div className="pt-2 border-t border-[#4A9D74]/30 animate-in fade-in duration-150">
-                                <CalculadoraTempoModal
-                                    onCalculate={(h, m, qtd) => {
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            tempoEstimadoCorteHoras: String(h),
-                                            tempoEstimadoCorteMinutos: String(m),
-                                            quantidade: qtd || prev.quantidade,
-                                        }));
-                                        setShowEdmCalculator(false);
-                                    }}
-                                    onClose={() => setShowEdmCalculator(false)}
-                                    initialQuantidade={formData.quantidade || 1}
-                                />
-                            </div>
-                        )}
-                    </div>
-                )}
-
-
-                {/* Informações Básicas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Cliente</label>
-                        <input
-                            type="text"
-                            name="cliente"
-                            list="clientes-lista"
-                            value={formData.cliente}
-                            onChange={handleChange}
-                            onBlur={handleClienteBlur}
-                            required
-                            placeholder="Selecione ou digite o nome"
-                            className={`w-full px-3 py-2 border bg-[#111318] rounded-lg focus:outline-none focus:ring-0 text-[#E7E9ED] text-base placeholder-[#565B68] transition-colors ${clienteWarning ? 'border-amber-500' : 'border-[#262A33] focus:border-kanban-amber'
-                                }`}
-                        />
-                        <datalist id="clientes-lista">
-                            {clientes.map(c => (
-                                <option key={c.id} value={c.nome} />
-                            ))}
-                        </datalist>
-
-                        {/* Warning: unregistered client */}
-                        {clienteWarning === 'ask' && (
-                            <div className="mt-2 flex items-center gap-3 bg-amber-950/40 border border-amber-500/50 rounded-lg px-3 py-2">
-                                <span className="text-[#D97D3D] text-sm font-bold flex-1">
-                                    Cliente não cadastrado. Deseja cadastrar?
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => setClienteWarning('register')}
-                                    className="text-xs font-semibold bg-kanban-amber text-[#111318] px-3 py-1.5 rounded-md hover:bg-[#c46d32] transition-colors"
-                                >Sim</button>
-                                <button
-                                    type="button"
-                                    onClick={() => setClienteWarning(false)}
-                                    className="text-xs font-bold text-[#7B808F] hover:text-[#E7E9ED] transition-colors"
-                                >Não</button>
-                            </div>
-                        )}
-
-                        {/* Inline quick-register form */}
-                        {clienteWarning === 'register' && (
-                            <div className="mt-3 bg-[#181B22] border border-kanban-amber/40 rounded-xl p-4 space-y-3">
-                                <p className="text-xs font-semibold text-kanban-amber uppercase tracking-wider">Cadastro Rápido de Cliente</p>
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                    <input
-                                        type="email"
-                                        value={quickEmail}
-                                        onChange={e => setQuickEmail(e.target.value)}
-                                        placeholder="E-mail (opcional)"
-                                        className="flex-1 min-h-[44px] px-3 py-2 border border-[#333844] bg-[#111318] rounded-lg text-sm text-[#E7E9ED] placeholder-[#565B68] focus:outline-none focus:border-kanban-amber touch-manipulation"
-                                    />
-                                    <input
-                                        type="tel"
-                                        value={quickTelefone}
-                                        onChange={e => setQuickTelefone(e.target.value)}
-                                        placeholder="Telefone (opcional)"
-                                        className="flex-1 min-h-[44px] px-3 py-2 border border-[#333844] bg-[#111318] rounded-lg text-sm text-[#E7E9ED] placeholder-[#565B68] focus:outline-none focus:border-kanban-amber touch-manipulation"
-                                    />
-                                </div>
-                                <div className="flex gap-2 justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={() => setClienteWarning(false)}
-                                        className="text-xs font-bold text-[#7B808F] hover:text-[#E7E9ED] px-3 py-1.5 rounded-md border border-[#333844] hover:border-[#424856] transition-colors"
-                                    >Cancelar</button>
-                                    <button
-                                        type="button"
-                                        onClick={handleQuickRegister}
-                                        disabled={quickSaving}
-                                        className="text-xs font-semibold bg-kanban-amber text-[#111318] px-4 py-2.5 min-h-[44px] rounded-md hover:bg-[#c46d32] transition-colors disabled:opacity-60 touch-manipulation"
-                                    >{quickSaving ? 'Salvando...' : 'Salvar Cliente'}</button>
-                                </div>
-                                {/* Name preview */}
-                                <p className="text-[10px] text-[#565B68]">
-                                    Nome: <span className="font-bold text-[#E7E9ED]">{formData.cliente.trim()}</span>
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="md:col-span-1">
-                            <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Código da Peça *</label>
-                            <input
-                                type="text"
-                                name="codigoPeca"
-                                value={formData.codigoPeca}
-                                onChange={handleChange}
-                                required
-                                placeholder="Ex: PN-12345"
-                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-base uppercase placeholder-[#565B68]"
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5 flex items-center gap-1.5">
-                                Programa CNC (G-Code)
-                            </label>
-                            <input
-                                type="text"
-                                name="numeroPrograma"
-                                value={formData.numeroPrograma}
-                                onChange={handleChange}
-                                placeholder="Ex: O1001 / O1001.NC"
-                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-base font-mono uppercase placeholder-[#565B68]"
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Quantidade</label>
-                            <input
-                                type="number"
-                                name="quantidade"
-                                value={formData.quantidade}
-                                onChange={handleChange}
-                                min="1"
-                                required
-                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-base font-bold text-center"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Identificação de Molde e Componente (Opcional) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                        <div>
-                            <label className="block text-xs font-bold text-[#7B808F] mb-1 flex items-center gap-1.5">
-                                Código do Molde / Projeto
-                                <span className="text-[9px] font-semibold text-[#565B68] bg-[#181B22] px-1.5 py-0.5 rounded border border-[#262A33] uppercase">OPCIONAL</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="codigoMolde"
-                                value={formData.codigoMolde}
-                                onChange={handleChange}
-                                placeholder="Ex: Molde M-2024 ou Proj 804"
-                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-sm font-medium placeholder-[#565B68]"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-[#7B808F] mb-1 flex items-center gap-1.5">
-                                Componente do Molde
-                                <span className="text-[9px] font-semibold text-[#565B68] bg-[#181B22] px-1.5 py-0.5 rounded border border-[#262A33] uppercase">OPCIONAL</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="componenteMolde"
-                                value={formData.componenteMolde}
-                                onChange={handleChange}
-                                placeholder="Ex: Postiço Macho / Gaveta A"
-                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-sm font-medium placeholder-[#565B68]"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Switches: Prioridade e Retrabalho */}
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-3 bg-[#181B22]/80 p-3 rounded-lg border border-[#262A33] cursor-pointer group hover:bg-[#181B22] transition-colors" onClick={() => setFormData(p => ({ ...p, isPrioridade: !p.isPrioridade }))}>
-                        <input
-                            type="checkbox"
-                            name="isPrioridade"
-                            checked={formData.isPrioridade}
-                            onChange={handleChange}
-                            className="w-5 h-5 rounded border-2 border-[#333844] bg-[#111318] text-[#C85558] focus:ring-[#C85558] focus:ring-offset-[#111318] cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                        <label className="text-sm font-bold text-[#E7E9ED] cursor-pointer group-hover:text-[#E7E9ED] transition-colors flex items-center gap-2 relative">
-                            💥 Marcar como Prioridade
-                        </label>
-                    </div>
-
-                    <div className="flex items-center gap-3 bg-[#181B22]/80 p-3 rounded-lg border border-[#262A33] cursor-pointer group hover:bg-[#181B22] transition-colors" onClick={() => setFormData(p => ({ ...p, isRetrabalho: !p.isRetrabalho }))}>
-                        <input
-                            type="checkbox"
-                            name="isRetrabalho"
-                            checked={formData.isRetrabalho}
-                            onChange={handleChange}
-                            className="w-5 h-5 rounded border-2 border-[#333844] bg-[#111318] text-amber-500 focus:ring-amber-500 focus:ring-offset-[#111318] cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                        <label className="text-sm font-bold text-amber-300 cursor-pointer group-hover:text-amber-200 transition-colors flex items-center gap-2 relative">
-                            Retrabalho / Ajuste Fino de Bancada
-                        </label>
-                    </div>
-                </div>
-
-                {/* Endereço do Desenho Técnico */}
-                <div>
-                    <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5 flex items-center gap-2">
-                        Link / Caminho do Desenho (DXF/DWG)
-                        <span className="text-[10px] font-bold text-[#565B68] bg-[#1F232B] px-2 py-0.5 rounded tracking-widest uppercase">OPCIONAL</span>
-                    </label>
+    const renderRoteiroPeca = (peca, idx, { showNome }) => (
+        <div key={idx} className="border border-[#262A33] rounded-[8px] p-3 bg-[#111318] space-y-2">
+            {showNome && (
+                <div className="flex gap-2 items-center">
                     <input
-                        type="text"
-                        name="linkDesenho"
-                        value={formData.linkDesenho}
-                        onChange={handleChange}
-                        placeholder="Ex: Z:\Engenharia\Projetos\Peca_123.dxf ou link do Google Drive"
-                        className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-sm font-medium placeholder-[#565B68]"
+                        value={peca.nome}
+                        onChange={(e) => setPecas((p) => p.map((row, i) => i === idx ? { ...row, nome: e.target.value } : row))}
+                        placeholder="Nome da peça (cavidade, macho…)"
+                        className={`${inputCls} flex-1`}
                     />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-[#181B22] p-3 rounded-xl border border-[#262A33]">
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Tempo Est. de Usinagem</label>
-                        <div className="flex gap-2 items-center mt-1">
-                            <div className="relative flex-1">
-                                <input
-                                    type="number"
-                                    name="tempoEstimadoCorteHoras"
-                                    value={formData.tempoEstimadoCorteHoras}
-                                    onChange={handleChange}
-                                    placeholder="0"
-                                    min="0"
-                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
-                                />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">h</span>
-                            </div>
-                            <span className="text-[#7B808F] font-semibold text-xl">:</span>
-                            <div className="relative flex-1">
-                                <input
-                                    type="number"
-                                    name="tempoEstimadoCorteMinutos"
-                                    value={formData.tempoEstimadoCorteMinutos}
-                                    onChange={handleChange}
-                                    placeholder="00"
-                                    min="0" max="59"
-                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
-                                />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">m</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#181B22] p-3 rounded-xl border border-[#262A33]">
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-2 mt-1">Tempo Est. de Setup</label>
-                        <div className="flex gap-2 items-center">
-                            <div className="relative flex-1">
-                                <input
-                                    type="number"
-                                    name="tempoEstimadoSetupHoras"
-                                    value={formData.tempoEstimadoSetupHoras}
-                                    onChange={handleChange}
-                                    placeholder="0"
-                                    min="0"
-                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
-                                />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">h</span>
-                            </div>
-                            <span className="text-[#7B808F] font-semibold text-xl">:</span>
-                            <div className="relative flex-1">
-                                <input
-                                    type="number"
-                                    name="tempoEstimadoSetupMinutos"
-                                    value={formData.tempoEstimadoSetupMinutos}
-                                    onChange={handleChange}
-                                    placeholder="00"
-                                    min="0" max="59"
-                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
-                                />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">m</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Datas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Data de Criação</label>
-                        <input
-                            type="date"
-                            name="dataCriacao"
-                            value={formData.dataCriacao}
-                            disabled
-                            className="w-full px-3 py-2 border border-[#262A33] rounded-lg bg-[#181B22] text-[#565B68] cursor-not-allowed font-medium text-base [color-scheme:dark]"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Prazo de Entrega (Deadline)</label>
-                        <input
-                            type="date"
-                            name="prazoEntrega"
-                            value={formData.prazoEntrega}
-                            onChange={handleChange}
-                            required
-                            className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] font-semibold text-base [color-scheme:dark]"
-                        />
-                    </div>
-                </div>
-
-                <hr className="border-t border-[#262A33] border-dashed my-1" />
-
-                {/* Programador e Configuração de Setups */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Programador Responsável</label>
-                        <select
-                            name="programador"
-                            value={formData.programador}
-                            onChange={handleChange}
-                            required
-                            className="w-full px-3 py-2 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-[#111318] text-[#E7E9ED] text-base font-bold [color-scheme:dark]"
-                        >
-                            <option value="" disabled className="bg-[#181B22] text-[#7B808F]">Selecione um profissional...</option>
-                            {programadores.map(p => (
-                                <option key={p.id} value={p.nome} className="bg-[#181B22] text-[#E7E9ED] hover:bg-[#1F232B]">{p.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Nº de Setups / Viradas de Peça</label>
+                    <div className="w-[88px] shrink-0">
                         <input
                             type="number"
                             min="1"
-                            max="10"
-                            value={formData.totalSetups}
-                            onChange={(e) => handleTotalSetupsChange(e.target.value)}
-                            className="w-full px-3 py-2 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-[#111318] text-[#E7E9ED] text-base font-bold"
-                            placeholder="1"
+                            value={peca.quantidade || 1}
+                            onChange={(e) => setPecas((p) => p.map((row, i) => i === idx ? { ...row, quantidade: e.target.value } : row))}
+                            className={inputCls}
+                            title="Qtd. iguais deste tipo"
                         />
                     </div>
+                    {pecas.length > 1 && (
+                        <button type="button" onClick={() => setPecas((p) => p.filter((_, i) => i !== idx))} className="p-2 text-[#565B68] hover:text-[#C85558] cursor-pointer">
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
+            )}
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565B68]">Caminho nesta peça</p>
+            <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                {peca.etapas.length === 0 && (
+                    <span className="text-[11px] text-[#565B68]">Nenhuma etapa — escolha o setor na ordem do processo.</span>
+                )}
+                {peca.etapas.map((setor, ei) => (
+                    <React.Fragment key={`${setor}-${ei}`}>
+                        {ei > 0 && <ArrowRight className="w-3.5 h-3.5 text-[#565B68] shrink-0" />}
+                        <span className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-[6px] border border-[#D97D3D]/40 bg-[rgba(217,125,61,0.1)] text-[11px] font-semibold text-[#D97D3D]">
+                            {ei + 1}. {labelSetor(setor)}
+                            <button type="button" onClick={() => removeEtapa(idx, ei)} className="p-0.5 text-[#7B808F] hover:text-[#C85558] cursor-pointer">
+                                <X className="w-3 h-3" />
+                            </button>
+                        </span>
+                    </React.Fragment>
+                ))}
+            </div>
+            <div>
+                <p className="text-[10px] text-[#565B68] mb-1.5">{peca.etapas.length === 0 ? 'Adicionar etapa' : 'Próxima etapa'}</p>
+                <div className="flex flex-wrap gap-1.5">
+                    {TIPOS_KANBAN_GESTOR.map((t) => (
+                        <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => addEtapa(idx, t.id)}
+                            className="px-2 py-1 rounded-[6px] border border-[#262A33] text-[10px] font-semibold text-[#7B808F] hover:border-[#D97D3D] hover:text-[#D97D3D] cursor-pointer"
+                        >
+                            + {t.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            {idx === 0 && isGestor && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                    {PRESETS.map((pr) => (
+                        <button
+                            key={pr.id}
+                            type="button"
+                            onClick={() => setEtapasPeca(idx, [...pr.etapas])}
+                            className="text-[10px] px-2 py-1 rounded-[5px] bg-[#181B22] border border-[#262A33] text-[#9DA2AE] cursor-pointer hover:text-[#E7E9ED]"
+                        >
+                            {pr.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
-                {formData.totalSetups > 1 && (
-                    <div className="p-4 bg-[#181B22]/80 border border-[#262A33] rounded-xl space-y-3 animate-in fade-in duration-200">
-                        <div className="flex items-center justify-between">
-                            <label className="block text-xs font-semibold text-kanban-amber uppercase tracking-wider">
-                                Tempos e Nome de cada Setup ({formData.totalSetups} viradas)
-                            </label>
-                            <span className="text-xs text-[#7B808F] font-bold bg-[#111318] px-2 py-1 rounded border border-[#262A33]">
-                                Soma Total: <strong className="text-kanban-amber">{formData.tempoEstimadoSetupHoras || 0}h {formData.tempoEstimadoSetupMinutos || 0}m</strong>
-                            </span>
-                        </div>
-                        <div className="space-y-2">
-                            {formData.setupsList?.map((setupItem, idx) => (
-                                <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#111318]/80 p-2 rounded-lg border border-[#262A33]/80">
-                                    <span className="text-xs font-mono text-[#565B68] w-6 font-bold">{idx + 1}º:</span>
-                                    <input
-                                        type="text"
-                                        value={setupItem.nome}
-                                        onChange={(e) => handleSetupItemChange(idx, 'nome', e.target.value)}
-                                        className="flex-1 bg-[#111318] border border-[#333844] rounded-lg px-3 py-1.5 text-xs text-white focus:border-kanban-amber outline-none"
-                                        placeholder={`OP${(idx + 1) * 10}`}
-                                    />
-                                    <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                                        <span className="text-xs text-[#7B808F] font-semibold">Tempo:</span>
-                                        <div className="relative w-16">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={setupItem.horas}
-                                                onChange={(e) => handleSetupItemChange(idx, 'horas', e.target.value)}
-                                                placeholder="0"
-                                                className="w-full bg-[#111318] border border-[#333844] rounded-lg px-2 py-1 pr-5 text-xs text-center text-white focus:border-kanban-amber outline-none font-bold"
-                                            />
-                                            <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[#565B68]">h</span>
-                                        </div>
-                                        <span className="text-[#565B68] font-bold">:</span>
-                                        <div className="relative w-16">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="59"
-                                                value={setupItem.minutos}
-                                                onChange={(e) => handleSetupItemChange(idx, 'minutos', e.target.value)}
-                                                placeholder="00"
-                                                className="w-full bg-[#111318] border border-[#333844] rounded-lg px-2 py-1 pr-5 text-xs text-center text-white focus:border-kanban-amber outline-none font-bold"
-                                            />
-                                            <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[#565B68]">m</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={isGestor ? 'Nova O.S. — despacho para o setor' : 'Novo kanban'}
+            maxWidth="max-w-lg"
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {isGestor && (
+                    <div className="flex bg-[#111318] p-1 rounded-[7px] border border-[#262A33] gap-1">
+                        <button
+                            type="button"
+                            onClick={() => { setModo('avulsa'); setPecas([pecas[0] || novaPeca()]); }}
+                            className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold uppercase tracking-wider cursor-pointer ${modo === 'avulsa' ? 'bg-[#D97D3D] text-[#111318]' : 'text-[#7B808F]'}`}
+                        >
+                            Uma peça
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setModo('molde')}
+                            className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold uppercase tracking-wider cursor-pointer ${modo === 'molde' ? 'bg-[#D97D3D] text-[#111318]' : 'text-[#7B808F]'}`}
+                        >
+                            Molde (várias peças)
+                        </button>
                     </div>
                 )}
 
-                <div className="pt-4 flex items-center justify-end gap-3 mt-4 border-t border-[#262A33]">
-                    <Button type="button" variant="outline" size="lg" onClick={onClose} className="w-1/3 min-h-[48px] cursor-pointer">Cancelar</Button>
-                    <Button type="submit" variant="primary" size="lg" className="w-2/3 min-h-[48px] shadow-md cursor-pointer" disabled={isSubmitting}>
-                        {isSubmitting ? 'Criando...' : 'Criar Ordem'}
-                    </Button>
+                <div>
+                    <label className={labelCls}>Cliente *</label>
+                    <input
+                        list="os-clientes-nomes"
+                        value={cliente}
+                        onChange={(e) => setCliente(e.target.value)}
+                        required
+                        placeholder="Nome do cliente"
+                        className={inputCls}
+                    />
+                    <datalist id="os-clientes-nomes">
+                        {clientes.map((c) => <option key={c.id} value={c.nome} />)}
+                    </datalist>
+                    {!isGestor && (
+                        <p className="text-[10px] text-[#565B68] mt-1">Somente o nome. Contatos ficam na agenda do gestor.</p>
+                    )}
                 </div>
 
+                {modo === 'molde' && isGestor ? (
+                    <div>
+                        <label className={labelCls}>Código do molde</label>
+                        <input value={codigoMolde} onChange={(e) => setCodigoMolde(e.target.value)} placeholder="Ex: KINNER" className={inputCls} />
+                    </div>
+                ) : (
+                    <div>
+                        <label className={labelCls}>Código da peça</label>
+                        <input value={codigoPeca} onChange={(e) => setCodigoPeca(e.target.value)} placeholder="Ex: PN-123" className={`${inputCls} uppercase`} />
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className={labelCls}>Prazo {modo === 'molde' ? '(do molde)' : ''}</label>
+                        <input type="date" value={prazoEntrega} onChange={(e) => setPrazoEntrega(e.target.value)} className={inputCls} />
+                    </div>
+                    {modo !== 'molde' && (
+                        <div>
+                            <label className={labelCls}>Qtd. do lote (peças iguais)</label>
+                            <input type="number" min="1" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} className={inputCls} />
+                        </div>
+                    )}
+                    {isGestor && (
+                        <div className={modo === 'molde' ? '' : 'col-span-2'}>
+                            <label className={labelCls}>Valor orçado (R$)</label>
+                            <input type="number" min="0" step="0.01" value={valorOrcado} onChange={(e) => setValorOrcado(e.target.value)} placeholder="0,00" className={inputCls} />
+                        </div>
+                    )}
+                </div>
+                {modo !== 'molde' && parseInt(quantidade, 10) > 1 && (
+                    <p className="text-[11px] text-[#7B808F] -mt-2">
+                        Um kanban só: {quantidade} peças iguais. O operador marca o progresso no cartão (0/{quantidade}). Não abre um cartão por unidade.
+                    </p>
+                )}
+
+                <button
+                    type="button"
+                    onClick={() => setIsPrioridade((v) => !v)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] border cursor-pointer ${
+                        isPrioridade
+                            ? 'border-[#C85558]/50 bg-[rgba(200,85,88,0.1)]'
+                            : 'border-[#262A33] bg-[#111318]'
+                    }`}
+                >
+                    <span className="flex items-center gap-2 text-sm font-medium text-[#E7E9ED]">
+                        <Flag className={`w-4 h-4 ${isPrioridade ? 'text-[#C85558]' : 'text-[#565B68]'}`} />
+                        Prioridade
+                    </span>
+                    <span className={`text-[11px] font-semibold uppercase tracking-wider ${isPrioridade ? 'text-[#C85558]' : 'text-[#565B68]'}`}>
+                        {isPrioridade ? 'Destaque no quadro' : 'Normal'}
+                    </span>
+                </button>
+
+                {isGestor ? (
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className={labelCls}>
+                                {modo === 'molde' ? 'Peças do molde e o caminho de cada uma' : 'Roteiro desta peça'}
+                            </label>
+                            {modo === 'molde' && (
+                                <button
+                                    type="button"
+                                    onClick={() => setPecas((p) => [...p, novaPeca()])}
+                                    className="text-[11px] font-semibold text-[#D97D3D] flex items-center gap-1 cursor-pointer"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Peça
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-[#565B68] leading-relaxed">
+                            A ordem da esquerda para a direita é o caminho. Lote de peças iguais: informe a quantidade — vira um único cartão com progresso (ex.: 4/12), não 12 cartões.
+                        </p>
+                        {(modo === 'molde' ? pecas : [pecas[0]]).map((peca, idx) =>
+                            renderRoteiroPeca(peca, idx, { showNome: modo === 'molde' })
+                        )}
+                    </div>
+                ) : (
+                    <p className="text-sm text-[#E7E9ED] bg-[#111318] border border-[#262A33] rounded-[8px] px-3 py-2">
+                        {labelSetor(setorPadrao)} — cai em A fazer para programar
+                    </p>
+                )}
+
+                {isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')) && (
+                    <div>
+                        <button
+                            type="button"
+                            onClick={() => setShowEdmCalc((v) => !v)}
+                            className="text-[11px] text-[#565B68] hover:text-[#7B808F] flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <Calculator className="w-3.5 h-3.5" />
+                            {showEdmCalc ? 'Ocultar calculadora de perímetro EDM' : 'Calculadora de perímetro EDM'}
+                        </button>
+                        {edmTempo && !showEdmCalc && (
+                            <p className="text-[10px] text-[#7B808F] mt-1">Estimativa WEDM: {edmTempo.horas}h {String(edmTempo.minutos).padStart(2, '0')}m (aplica nas etapas de fio)</p>
+                        )}
+                        {showEdmCalc && (
+                            <div className="mt-2 border border-[#262A33] rounded-[8px] p-2">
+                                <CalculadoraTempoModal
+                                    initialQuantidade={parseInt(quantidade, 10) || 1}
+                                    onCalculate={(h, m, qtd) => {
+                                        setEdmTempo({ horas: h, minutos: m });
+                                        if (qtd) setQuantidade(qtd);
+                                        setShowEdmCalc(false);
+                                    }}
+                                    onClose={() => setShowEdmCalc(false)}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div>
+                    <label className={labelCls}>Caminho / link do desenho</label>
+                    <input value={linkDesenho} onChange={(e) => setLinkDesenho(e.target.value)} placeholder="Pasta de rede, URL ou caminho do arquivo" className={inputCls} />
+                </div>
+                <div>
+                    <label className={labelCls}>Observações (vão para o cartão e a folha)</label>
+                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={3} placeholder="Sobremetal, cuidado no setup, pedido do cliente…" className={`${inputCls} min-h-[72px] resize-y`} />
+                </div>
+                <div>
+                    <label className={labelCls}>Print da peça (NX / Mastercam)</label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        className="block w-full text-[11px] text-[#7B808F] file:mr-3 file:py-1.5 file:px-3 file:rounded-[6px] file:border-0 file:bg-[#1F232B] file:text-[#E7E9ED] file:text-[11px] cursor-pointer"
+                        onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            try {
+                                setFolhaImagem(await compressImageFile(f));
+                            } catch (err) {
+                                alert(err?.message || 'Não foi possível ler a imagem.');
+                            }
+                        }}
+                    />
+                    {folhaImagem && (
+                        <img src={folhaImagem} alt="Print" className="mt-2 max-h-28 rounded-[6px] border border-[#262A33] object-contain" />
+                    )}
+                </div>
+
+                <p className="text-[11px] text-[#7B808F] leading-relaxed">
+                    Depois da criação abre a folha para imprimir (PDF). CAM e máquina continuam no A fazer.
+                </p>
+
+                <div className="flex gap-3 pt-2 border-t border-[#262A33]">
+                    <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>Cancelar</Button>
+                    <Button type="submit" variant="primary" className="flex-[2]" disabled={isSubmitting}>
+                        {isSubmitting ? 'Criando...' : 'Enviar para A fazer'}
+                    </Button>
+                </div>
             </form>
-        </>
+        </Modal>
     );
 }

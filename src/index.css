@@ -278,3 +278,19 @@ html {
   font-size: 10.5px;
   color: var(--text-tertiary);
 }
+
+@media print {
+  body * { visibility: hidden; }
+  #folha-print-root,
+  #folha-print-root * { visibility: visible; }
+  #folha-print-root {
+    position: absolute;
+    inset: 0;
+    background: white;
+    overflow: visible;
+  }
+  .folha-a4 {
+    page-break-after: always;
+    box-shadow: none;
+  }
+}

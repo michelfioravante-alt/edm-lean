@@ -305,7 +305,7 @@ export default function Ferramental() {
                                                 <span>{f.tipo}</span>
                                                 {maq && (
                                                     <span className="text-[#7B808F] font-semibold flex items-center gap-1">
-                                                        · <Cpu className="w-3 h-3 text-kanban-teal" /> {maq.nome}
+                                                        · <Cpu className="w-3 h-3 text-[#4A9D74]" /> {maq.nome}
                                                     </span>
                                                 )}
                                             </div>
@@ -391,7 +391,7 @@ export default function Ferramental() {
                                 <span className="text-xs font-bold text-[#7B808F] uppercase tracking-wider">Tipo: {selectedTool.tipo}</span>
                                 <span className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
                                     selectedTool.status === 'quebrado' ? 'bg-[rgba(200,85,88,0.12)] text-[#C85558] border-[#C85558]/40' :
-                                    selectedTool.status === 'em_uso' ? 'bg-kanban-teal/20 text-kanban-teal border-kanban-teal/40' :
+                                    selectedTool.status === 'em_uso' ? 'bg-kanban-teal/20 text-[#4A9D74] border-kanban-teal/40' :
                                     'bg-kanban-green/20 text-kanban-green border-kanban-green/40'
                                 }`}>
                                     {STATUS_FERRAMENTAL[selectedTool.status]?.label || selectedTool.status}
@@ -413,7 +413,7 @@ export default function Ferramental() {
                         {/* Localização Atual e Operação em Andamento */}
                         <div className="bg-[#181B22]/80 border border-[#262A33] p-4 rounded-xl space-y-3">
                             <h3 className="text-xs font-semibold text-[#7B808F] uppercase tracking-widest flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-kanban-teal" />
+                                <MapPin className="w-4 h-4 text-[#4A9D74]" />
                                 Localização e O.S. Atual
                             </h3>
 
@@ -440,7 +440,7 @@ export default function Ferramental() {
                                         )}
                                         {osAtivaNaMaquina.operador_atual && (
                                             <div className="text-xs text-[#7B808F] flex items-center gap-1.5 pt-1">
-                                                <User className="w-3.5 h-3.5 text-kanban-teal" /> Operador Responsável: <strong className="text-white">{osAtivaNaMaquina.operador_atual}</strong>
+                                                <User className="w-3.5 h-3.5 text-[#4A9D74]" /> Operador Responsável: <strong className="text-white">{osAtivaNaMaquina.operador_atual}</strong>
                                             </div>
                                         )}
                                     </div>

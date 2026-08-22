@@ -10,7 +10,7 @@ export const SECTORS = {
         shortLabel: 'CNC',
         icon: 'Cpu',
         color: 'cyan',
-        themeColor: '#06b6d4',
+        themeColor: '#7B808F',
         kanbanColumns: {
             aFazer: { key: 'aFazer', label: 'A fazer', dbStatus: 'A fazer', theme: 'kanban-steel' },
             setup: { key: 'setup', label: 'Prep. Ferramental', dbStatus: 'Set-up', theme: 'kanban-amber' },
@@ -39,7 +39,7 @@ export const SECTORS = {
         shortLabel: 'EDM Fio',
         icon: 'Zap',
         color: 'emerald',
-        themeColor: '#10b981',
+        themeColor: '#4A9D74',
         kanbanColumns: {
             aFazer: { key: 'aFazer', label: 'Fila', dbStatus: 'Fila', theme: 'kanban-steel' },
             setup: { key: 'setup', label: 'Preparação', dbStatus: 'Preparação', theme: 'kanban-amber' },
@@ -67,7 +67,7 @@ export const SECTORS = {
         shortLabel: 'Torno CNC',
         icon: 'RotateCw',
         color: 'amber',
-        themeColor: '#f59e0b',
+        themeColor: '#D97D3D',
         kanbanColumns: {
             aFazer: { key: 'aFazer', label: 'A fazer', dbStatus: 'A fazer', theme: 'kanban-steel' },
             setup: { key: 'setup', label: 'Prep. Ferramental', dbStatus: 'Set-up', theme: 'kanban-amber' },
@@ -90,13 +90,59 @@ export const SECTORS = {
             'Outros'
         ]
     },
+    RETIFICA: {
+        id: 'RETIFICA',
+        label: 'Retífica',
+        shortLabel: 'Retífica',
+        icon: 'Wrench',
+        color: 'steel',
+        themeColor: '#9DA2AE',
+        kanbanColumns: {
+            aFazer: { key: 'aFazer', label: 'A fazer', dbStatus: 'A fazer', theme: 'kanban-steel' },
+            setup: { key: 'setup', label: 'Preparação', dbStatus: 'Set-up', theme: 'kanban-amber' },
+            emCorte: { key: 'emCorte', label: 'Em Retífica', dbStatus: 'Em Usinagem', theme: 'kanban-teal' },
+            afericao: { key: 'afericao', label: 'Inspeção', dbStatus: 'Inspeção', theme: 'kanban-violet' },
+            concluido: { key: 'concluido', label: 'Concluído', dbStatus: 'Concluído', theme: 'kanban-green' },
+        },
+        motivosPausa: [
+            'Troca de Rebolo',
+            'Ajuste de Medida',
+            'Entrada de outra O.S.',
+            'Intervalo',
+            'Falta de Energia',
+            'Manutenção Corretiva',
+            'Falta de Operador',
+            'Outros'
+        ]
+    },
+    EXTERNO: {
+        id: 'EXTERNO',
+        label: 'Serviço externo',
+        shortLabel: 'Externo',
+        icon: 'Factory',
+        color: 'warn',
+        themeColor: '#C99A4A',
+        kanbanColumns: {
+            aFazer: { key: 'aFazer', label: 'A enviar', dbStatus: 'A fazer', theme: 'kanban-steel' },
+            setup: { key: 'setup', label: 'Separação', dbStatus: 'Set-up', theme: 'kanban-amber' },
+            emCorte: { key: 'emCorte', label: 'No terceiro', dbStatus: 'Em Usinagem', theme: 'kanban-teal' },
+            afericao: { key: 'afericao', label: 'Retorno / inspeção', dbStatus: 'Inspeção', theme: 'kanban-violet' },
+            concluido: { key: 'concluido', label: 'Concluído', dbStatus: 'Concluído', theme: 'kanban-green' },
+        },
+        motivosPausa: [
+            'Aguardando terceiro',
+            'Frete / logística',
+            'Aguardando NF',
+            'Outros'
+        ]
+    },
     TODOS: {
         id: 'TODOS',
         label: 'Visão Geral (Toda a Fábrica)',
         shortLabel: 'Toda Fábrica',
         icon: 'Factory',
         color: 'indigo',
-        themeColor: '#6366f1',
+        themeColor: '#9DA2AE',
         kanbanColumns: {
             aFazer: { key: 'aFazer', label: 'A fazer / Fila', dbStatus: 'A fazer', theme: 'kanban-steel' },
             setup: { key: 'setup', label: 'Setup / Preparação', dbStatus: 'Set-up', theme: 'kanban-amber' },
@@ -128,5 +174,7 @@ export const SECTOR_OPTIONS = [
     { value: SECTORS.CNC.id, label: SECTORS.CNC.label, shortLabel: SECTORS.CNC.shortLabel },
     { value: SECTORS.EDM_FIO.id, label: SECTORS.EDM_FIO.label, shortLabel: SECTORS.EDM_FIO.shortLabel },
     { value: SECTORS.TORNO.id, label: SECTORS.TORNO.label, shortLabel: SECTORS.TORNO.shortLabel },
+    { value: SECTORS.RETIFICA.id, label: SECTORS.RETIFICA.label, shortLabel: SECTORS.RETIFICA.shortLabel },
+    { value: SECTORS.EXTERNO.id, label: SECTORS.EXTERNO.label, shortLabel: SECTORS.EXTERNO.shortLabel },
     { value: SECTORS.TODOS.id, label: SECTORS.TODOS.label, shortLabel: SECTORS.TODOS.shortLabel },
 ];

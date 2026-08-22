@@ -214,7 +214,7 @@ export default function Clientes() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181B22] p-5 sm:p-6 rounded-xl border border-[#262A33]">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-kanban-teal/10 rounded-xl border border-kanban-teal/30 shrink-0">
-                        <Users className="w-7 h-7 sm:w-8 sm:h-8 text-kanban-teal" />
+                        <Users className="w-7 h-7 sm:w-8 sm:h-8 text-[#4A9D74]" />
                     </div>
                     <div>
                         <h2 className="text-2xl sm:text-3xl font-semibold text-white">Clientes & Contatos</h2>
@@ -298,7 +298,7 @@ export default function Clientes() {
                             <div className="pt-3 border-t border-[#262A33] space-y-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-semibold uppercase tracking-wider text-[#7B808F] flex items-center gap-1.5">
-                                        <UserPlus className="w-4 h-4 text-kanban-teal" /> Contatos Adicionais ({contatos.length})
+                                        <UserPlus className="w-4 h-4 text-[#4A9D74]" /> Contatos Adicionais ({contatos.length})
                                     </span>
                                     {!showAddContatoForm && (
                                         <button
@@ -377,7 +377,7 @@ export default function Clientes() {
                                             type="button"
                                             onClick={handleAddContatoToList}
                                             disabled={!newContatoNome.trim()}
-                                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#111318] font-semibold rounded text-xs uppercase"
+                                            className="w-full py-1.5 bg-[#4A9D74] hover:bg-[#3d8763] disabled:opacity-50 text-[#111318] font-semibold rounded text-xs uppercase"
                                         >
                                             Confirmar Contato
                                         </button>
@@ -441,8 +441,8 @@ export default function Clientes() {
                                                 
                                                 {/* Nome e Indicador */}
                                                 <div className="flex items-start gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kanban-teal/20 to-teal-900/30 border border-kanban-teal/30 flex items-center justify-center shrink-0 mt-0.5">
-                                                        <span className="text-kanban-teal font-semibold text-sm">
+                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(74,157,116,0.15)] to-[rgba(74,157,116,0.05)] border border-[#4A9D74]/30 flex items-center justify-center shrink-0 mt-0.5">
+                                                        <span className="text-[#4A9D74] font-semibold text-sm">
                                                             {c.nome.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
@@ -464,7 +464,7 @@ export default function Clientes() {
                                                                     onClick={e => e.stopPropagation()}
                                                                     className="text-[#E7E9ED] hover:text-[#D97D3D] transition-colors flex items-center gap-1.5"
                                                                 >
-                                                                    <Mail className="w-3.5 h-3.5 text-kanban-teal shrink-0" />
+                                                                    <Mail className="w-3.5 h-3.5 text-[#4A9D74] shrink-0" />
                                                                     <span>{c.email}</span>
                                                                 </a>
                                                             ) : (
@@ -509,10 +509,10 @@ export default function Clientes() {
                                                     <div className="flex items-center gap-1.5">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleOpenStats(c); }}
-                                                            className="p-2 bg-[#111318] hover:bg-[#1F232B] text-[#7B808F] hover:text-kanban-teal rounded-lg border border-[#262A33] transition-all flex items-center gap-1 text-xs font-bold"
+                                                            className="p-2 bg-[#111318] hover:bg-[#1F232B] text-[#7B808F] hover:text-[#4A9D74] rounded-lg border border-[#262A33] transition-all flex items-center gap-1 text-xs font-bold"
                                                             title="Ver histórico de Kanbans"
                                                         >
-                                                            <Eye className="w-4 h-4 text-kanban-teal" />
+                                                            <Eye className="w-4 h-4 text-[#4A9D74]" />
                                                             <span className="hidden sm:inline">Histórico</span>
                                                         </button>
                                                         <button
@@ -598,7 +598,7 @@ export default function Clientes() {
                     <div className="pt-3 border-t border-[#262A33] space-y-3">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-wider text-[#7B808F] flex items-center gap-1.5">
-                                <UserPlus className="w-4 h-4 text-kanban-teal" /> Contatos Adicionais ({editContatos.length})
+                                <UserPlus className="w-4 h-4 text-[#4A9D74]" /> Contatos Adicionais ({editContatos.length})
                             </span>
                             {!showEditContatoForm && (
                                 <button
@@ -675,7 +675,7 @@ export default function Clientes() {
                                     type="button"
                                     onClick={handleAddEditContatoToList}
                                     disabled={!editContatoNome.trim()}
-                                    className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#111318] font-semibold rounded text-xs uppercase"
+                                    className="w-full py-1.5 bg-[#4A9D74] hover:bg-[#3d8763] disabled:opacity-50 text-[#111318] font-semibold rounded text-xs uppercase"
                                 >
                                     Incluir na Lista
                                 </button>
@@ -748,7 +748,7 @@ export default function Clientes() {
             >
                 {statsLoading ? (
                     <div className="py-20 flex flex-col items-center gap-4">
-                        <div className="w-10 h-10 border-4 border-kanban-teal/20 border-t-kanban-teal rounded-full animate-spin"></div>
+                        <div className="w-10 h-10 border-4 border-[#4A9D74]/20 border-t-[#4A9D74] rounded-full animate-spin"></div>
                         <p className="text-[#7B808F] font-bold text-sm tracking-widest animate-pulse">CARREGANDO HISTÓRICO DE O.S....</p>
                     </div>
                 ) : (
@@ -758,8 +758,8 @@ export default function Clientes() {
                             <div>
                                 <h3 className="text-lg font-semibold text-white">{viewingStats?.nome}</h3>
                                 <div className="flex flex-wrap items-center gap-3 mt-1 text-xs font-semibold text-[#7B808F]">
-                                    {viewingStats?.email && <span>📧 {viewingStats.email}</span>}
-                                    {viewingStats?.telefone && <span>📞 {viewingStats.telefone}</span>}
+                                    {viewingStats?.email && <span>{viewingStats.email}</span>}
+                                    {viewingStats?.telefone && <span>{viewingStats.telefone}</span>}
                                 </div>
                             </div>
                             <span className="text-[10px] font-semibold bg-[rgba(74,157,116,0.1)] text-[#4A9D74] px-3 py-1 rounded-full border border-[#4A9D74]/30 uppercase">
@@ -777,8 +777,8 @@ export default function Clientes() {
                                     {viewingStats.contatos.map((ct, idx) => (
                                         <div key={idx} className="p-2 bg-[#181B22] border border-[#262A33] rounded-lg text-xs space-y-0.5">
                                             <p className="font-bold text-white">{ct.nome} {ct.cargo && <span className="text-[#7B808F] font-normal">({ct.cargo})</span>}</p>
-                                            {ct.email && <p className="text-[11px] text-[#E7E9ED]">📧 {ct.email}</p>}
-                                            {ct.telefone && <p className="text-[11px] text-[#E7E9ED]">📞 {ct.telefone}</p>}
+                                            {ct.email && <p className="text-[11px] text-[#E7E9ED]">{ct.email}</p>}
+                                            {ct.telefone && <p className="text-[11px] text-[#E7E9ED]">{ct.telefone}</p>}
                                         </div>
                                     ))}
                                 </div>
@@ -792,14 +792,14 @@ export default function Clientes() {
                                 <p className="text-2xl font-semibold text-white">{getStatsSummary()?.total || 0}</p>
                                 <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Total de O.S.</p>
                             </div>
-                            <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl border-l-kanban-teal border-l-2">
-                                <TrendingUp className="w-5 h-5 text-kanban-teal mb-1 opacity-60" />
+                            <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl border-l-[#4A9D74] border-l-2">
+                                <TrendingUp className="w-5 h-5 text-[#4A9D74] mb-1 opacity-60" />
                                 <p className="text-2xl font-semibold text-white">{getStatsSummary()?.last30Days || 0}</p>
                                 <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Últimos 30 Dias</p>
                             </div>
                             <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl">
-                                <Clock className="w-5 h-5 text-cyan-400 mb-1 opacity-60" />
-                                <p className="text-2xl font-semibold text-cyan-400">{getStatsSummary()?.active || 0}</p>
+                                <Clock className="w-5 h-5 text-[#9DA2AE] mb-1 opacity-60" />
+                                <p className="text-2xl font-semibold text-[#9DA2AE]">{getStatsSummary()?.active || 0}</p>
                                 <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Em Andamento</p>
                             </div>
                             <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl">
@@ -852,9 +852,9 @@ export default function Clientes() {
                                     .map(os => {
                                         const setorName = os.setor || 'CNC';
                                         const statusColor = os.status === 'Concluído'
-                                            ? 'bg-emerald-950 border-emerald-500/50 text-[#4A9D74]'
+                                            ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]'
                                             : os.status === 'Em Usinagem' || os.status === 'Em Corte'
-                                            ? 'bg-cyan-950 border-cyan-500/50 text-cyan-400'
+                                            ? 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
                                             : os.status === 'Set-up' || os.status === 'Setup'
                                             ? 'bg-amber-950 border-amber-500/50 text-[#D97D3D]'
                                             : 'bg-[#181B22] border-[#333844] text-[#E7E9ED]';
@@ -865,10 +865,10 @@ export default function Clientes() {
                                                     <div className="flex items-center gap-2">
                                                         <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${
                                                             setorName === 'EDM_FIO'
-                                                                ? 'bg-emerald-950/80 border-emerald-500/50 text-[#4A9D74]'
+                                                                ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]'
                                                                 : setorName === 'TORNO'
                                                                 ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
-                                                                : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
+                                                                : 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
                                                         }`}>
                                                             {setorName === 'EDM_FIO' ? 'EDM Fio' : setorName === 'TORNO' ? 'Torno' : 'CNC'}
                                                         </span>

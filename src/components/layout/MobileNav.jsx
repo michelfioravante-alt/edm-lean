@@ -13,12 +13,13 @@ export default function MobileNav({ activeView, onViewChange, role }) {
     const isKanbanView = activeView === 'kanban';
 
     const pagesItems = [
+        ...(role === 'admin' ? [{ id: 'carteira', label: 'Carteira', icon: Briefcase }] : []),
         { id: 'kanban', label: 'Kanban', icon: ListTodo },
-        ...(role === 'admin' || role === 'programmer' ? [{ id: 'dashboard', label: 'Dash', icon: LayoutDashboard }] : []),
+        ...(role === 'admin' ? [{ id: 'dashboard', label: 'Dash', icon: LayoutDashboard }] : []),
         { id: 'registros', label: 'Registros', icon: History },
         { id: 'estoque', label: 'Estoque', icon: Package },
         { id: 'ferramental', label: 'Ferramental', icon: Wrench },
-        { id: 'clientes', label: 'Clientes', icon: Briefcase },
+        ...(role === 'admin' ? [{ id: 'clientes', label: 'Clientes', icon: Briefcase }] : []),
     ];
 
     const kanbanStages = [

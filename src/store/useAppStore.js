@@ -16,6 +16,7 @@ import { ferramentalService } from '../services/ferramentalService';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from './useAuthStore';
 import { statusToColKey, colKeyToStatus } from '../constants/cncProcess';
+import { novoGrupoId } from '../constants/osWorkflow';
 import { isLocalMode } from '../local/mode';
 
 // Normaliza um registro de historico_consumiveis (snake_case → camelCase)
@@ -117,6 +118,18 @@ export const useAppStore = create((set) => ({
 
     kanbanStage: 'aFazer',
     setKanbanStage: (stage) => set({ kanbanStage: stage }),
+
+    destaqueOsId: null,
+    osDeepLinkId: null,
+    setOsDeepLinkId: (id) => set({ osDeepLinkId: id }),
+    irParaKanban: (os) => {
+        const setor = os?.setor || os?.tipo_processo || 'CNC';
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('lean_active_sector', setor);
+        }
+        set({ activeSector: setor, destaqueOsId: os?.id || null });
+    },
+    limparDestaqueOs: () => set({ destaqueOsId: null }),
 
     // Actions Globais (apenas atualiza memória — persistida via salvarConfiguracoes)
     atualizarConfiguracoes: (novasConfigs) => set((state) => ({
@@ -903,6 +916,31 @@ export const useAppStore = create((set) => ({
 
         const novaOsBanco = await doCreate();
         applySuccess(novaOsBanco, null);
+        return novaOsBanco;
+    },
+
+    addGrupoOrdensServico: async (cabecalho, kanbans) => {
+        const { addOrdemServico } = useAppStore.getState();
+        const grupoId = cabecalho.os_grupo_id || novoGrupoId();
+        const criados = [];
+        for (let i = 0; i < kanbans.length; i++) {
+            const k = kanbans[i];
+            const created = await addOrdemServico({
+                ...cabecalho,
+                codigoPeca: k.codigoPeca || cabecalho.codigoPeca,
+                componenteMolde: k.componente || k.componenteMolde || '',
+                setor: k.setor,
+                quantidade: k.quantidade || cabecalho.quantidade || 1,
+                tempoEstimadoCorteHoras: k.tempoEstimadoCorteHoras,
+                tempoEstimadoCorteMinutos: k.tempoEstimadoCorteMinutos,
+                programado: k.setor === 'EXTERNO',
+                os_grupo_id: grupoId,
+                roteiro_ordem: i + 1,
+                status: 'A fazer',
+            }, { optimistic: false });
+            criados.push(created);
+        }
+        return criados;
     },
 
     editOrdemServico: async (id, fields) => {

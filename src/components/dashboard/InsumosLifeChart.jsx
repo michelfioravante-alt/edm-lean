@@ -150,12 +150,12 @@ export default function InsumosLifeChart({ periodo }) {
                 backgroundColor: (context) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                    gradient.addColorStop(0, '#06b6d4'); // Cyan
-                    gradient.addColorStop(1, '#3b82f6'); // Blue
+                    gradient.addColorStop(0, '#D97D3D');
+                    gradient.addColorStop(1, '#8A5A38');
                     return gradient;
                 },
                 borderRadius: 6,
-                hoverBackgroundColor: '#22d3ee',
+                hoverBackgroundColor: '#c46d32',
             }
         ],
     };

@@ -13,8 +13,8 @@ import { Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const COLORS = [
-    '#14b8a6', '#f59e0b', '#3b82f6', '#a855f7', '#22c55e',
-    '#f43f5e', '#fb923c', '#06b6d4'
+    '#4A9D74', '#D97D3D', '#7B808F', '#C99A4A', '#C85558',
+    '#8A5A38', '#9DA2AE', '#565B68'
 ];
 
 export default function ProducaoPorOperadorChart({ concluidas = [] }) {

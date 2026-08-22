@@ -20,7 +20,7 @@ const ColumnIcon = ({ iconType, className }) => {
     }
 };
 
-const Column = ({ id, title, cards, onTransitionRequest, onReorderRequest, onPauseRequest, onViewRequest, theme }) => {
+const Column = ({ id, title, cards, onTransitionRequest, onReorderRequest, onPauseRequest, onViewRequest, onProgramarRequest, theme }) => {
     const sortableRef = useRef(null);
 
     useEffect(() => {
@@ -103,6 +103,7 @@ const Column = ({ id, title, cards, onTransitionRequest, onReorderRequest, onPau
                                 data={card}
                                 onPauseRequest={onPauseRequest}
                                 onViewRequest={onViewRequest}
+                                onProgramarRequest={onProgramarRequest}
                                 onTransitionRequest={onTransitionRequest}
                                 columnId={id}
                             />

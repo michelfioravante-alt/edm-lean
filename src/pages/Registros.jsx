@@ -6,6 +6,8 @@ import { Search, Filter, PlayCircle, PauseCircle, CheckCircle2, ChevronLeft, Che
 import AcompanhamentoModal from '../components/kanban/AcompanhamentoModal';
 import { COLUMN_LABELS } from '../constants/cncProcess';
 import { osService } from '../services/osService';
+import { useAuthStore } from '../store/useAuthStore';
+import { filtrarPorSetorDoPerfil } from '../constants/roles';
 
 
 const PAGE_SIZE = 50;
@@ -26,6 +28,8 @@ function gerarMeses() {
 
 export default function Registros() {
     const { kanban } = useAppStore();
+    const role = useAuthStore((s) => s.role);
+    const activeSector = useAppStore((s) => s.activeSector);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOs, setSelectedOs] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
@@ -57,17 +61,19 @@ export default function Registros() {
         ...(excluidos || []).map(os => ({ ...os, statusLocal: 'Excluído' }))
     ], [kanban, excluidos]);
 
+    const osDoPerfil = useMemo(() => filtrarPorSetorDoPerfil(todasAsOS, role, activeSector), [todasAsOS, role, activeSector]);
+
     // Unique values for filter dropdowns
     const maquinasUnicas = useMemo(() =>
-        [...new Set(todasAsOS.map(os => os.maquina_nome || os.maquina).filter(Boolean))], [todasAsOS]);
+        [...new Set(osDoPerfil.map(os => os.maquina_nome || os.maquina).filter(Boolean))], [osDoPerfil]);
     const operadoresUnicos = useMemo(() =>
-        [...new Set(todasAsOS.map(os => os.operador_atual || os.operadorAtual).filter(Boolean))], [todasAsOS]);
+        [...new Set(osDoPerfil.map(os => os.operador_atual || os.operadorAtual).filter(Boolean))], [osDoPerfil]);
 
     const hasActiveFilters = operadorFilter || maquinaFilter || mesFilter || searchTerm;
 
     // Filtra
     const filteredOS = useMemo(() => {
-        const result = todasAsOS.filter(os => {
+        const result = osDoPerfil.filter(os => {
             const maquina = os.maquina_nome || os.maquina || '';
             const operador = os.operador_atual || os.operadorAtual || '';
             const codigo = os.codigo_peca || os.codigoPeca || '';
@@ -91,7 +97,7 @@ export default function Registros() {
             new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0)
         );
         return result;
-    }, [todasAsOS, searchTerm, operadorFilter, maquinaFilter, mesFilter]);
+    }, [osDoPerfil, searchTerm, operadorFilter, maquinaFilter, mesFilter]);
 
     // Paginação
     const totalPages = Math.max(1, Math.ceil(filteredOS.length / PAGE_SIZE));
@@ -145,7 +151,11 @@ export default function Registros() {
                     </div>
                     <div>
                         <h2 className="text-3xl font-semibold text-white">Histórico e Registros</h2>
-                        <p className="text-[#7B808F] text-sm mt-0.5">Rastreabilidade completa de todas as Ordens de Serviço da fábrica.</p>
+                        <p className="text-sm text-[#7B808F] mt-1">
+                            {role === 'admin'
+                                ? 'Todas as O.S. da fábrica.'
+                                : `Somente o setor ${activeSector === 'EDM_FIO' ? 'eletrofio' : 'CNC'}. O histórico completo fica com o gerente.`}
+                        </p>
                     </div>
                 </div>
             </div>

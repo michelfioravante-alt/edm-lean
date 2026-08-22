@@ -40,7 +40,7 @@ export const perfisService = {
         if (isLocalMode()) return localApi.perfis.detachUser(userId);
         const { error } = await supabase
             .from('perfis')
-            .update({ empresa_id: null, funcao: 'operador' })
+            .update({ empresa_id: null, funcao: 'programmer' })
             .eq('id', userId);
 
         if (error) throw error;

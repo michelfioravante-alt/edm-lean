@@ -1,9 +1,9 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
 import { useAppStore } from './store/useAppStore'
 import { useAuthStore } from './store/useAuthStore'
-import { isLocalMode } from './local/mode'
+import { parseOsHash } from './utils/folhaProcesso'
 
 // Carregamento dinâmico das views (Lazy Loading) para otimização de performance
 const Board = lazy(() => import('./components/kanban/Board'))
@@ -13,6 +13,7 @@ const Estoque = lazy(() => import('./pages/Estoque'))
 const Registros = lazy(() => import('./pages/Registros'))
 const Clientes = lazy(() => import('./pages/Clientes'))
 const Ferramental = lazy(() => import('./pages/Ferramental'))
+const Carteira = lazy(() => import('./pages/Carteira'))
 const JoinCompany = lazy(() => import('./pages/JoinCompany'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 
@@ -55,6 +56,25 @@ function App() {
             return () => clearTimeout(timer);
         }
     }, [user]);
+
+    const prevRoleRef = useRef(null);
+    useEffect(() => {
+        if (!user || !role) return;
+        const prev = prevRoleRef.current;
+        if (prev !== role) {
+            setActiveView(role === 'admin' ? 'carteira' : 'kanban');
+            prevRoleRef.current = role;
+        }
+    }, [user, role]);
+
+    useEffect(() => {
+        if (!user) return;
+        const osId = parseOsHash(currentHash);
+        if (osId) {
+            useAppStore.getState().setOsDeepLinkId(osId);
+            setActiveView('kanban');
+        }
+    }, [user, currentHash]);
 
     // Intercepta rota de Onboarding (JOIN) antes de qualquer bloqueio
     const path = window.location.pathname;
@@ -144,7 +164,7 @@ function App() {
                             href="https://wa.me/5551982710396?text=Olá! Meu período de teste do CNC Lean expirou para a empresa e gostaria de reativar."
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer"
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-[#4A9D74] hover:bg-[#3d8763] text-white font-bold rounded-xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer"
                         >
                             <svg className="w-5.5 h-5.5 fill-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.859 0c3.166.001 6.141 1.233 8.377 3.469 2.235 2.237 3.465 5.212 3.464 8.379-.003 6.535-5.328 11.859-11.859 11.859-.001 0-.002 0-.003 0-2.001-.001-3.97-.508-5.73-1.472L0 24zm6.59-4.846c1.6.95 3.18 1.449 4.725 1.45h.005c5.379 0 9.75-4.37 9.754-9.754.002-2.607-1.012-5.059-2.859-6.905C16.37 2.099 13.92 1.08 11.861 1.08c-5.38 0-9.75 4.37-9.754 9.75-.001 1.706.444 3.376 1.288 4.881l-.996 3.633 3.658-.96zm11.365-5.462c-.29-.145-1.716-.848-1.98-.942-.266-.096-.46-.145-.652.145-.192.29-.74.942-.907 1.135-.166.19-.33.21-.62.065-.29-.147-1.226-.452-2.336-1.442-.864-.77-1.447-1.722-1.616-2.012-.17-.29-.018-.447.127-.59.13-.13.29-.338.435-.508.145-.17.193-.29.29-.483.097-.19.048-.36-.024-.508-.072-.145-.652-1.573-.894-2.152-.236-.569-.495-.49-.678-.5l-.578-.01c-.198 0-.52.073-.79.37-.27.295-1.03 1.01-1.03 2.46 0 1.45 1.056 2.852 1.2 3.047.145.195 2.08 3.175 5.04 4.455.703.305 1.253.487 1.68.625.706.223 1.348.19 1.858.115.567-.085 1.717-.7 1.96-1.378.24-.678.24-1.257.17-1.378-.07-.122-.26-.19-.55-.337z"/>
@@ -198,17 +218,17 @@ function App() {
                     <div className="w-8 h-8 border-4 border-kanban-amber/20 border-t-kanban-amber rounded-full animate-spin"></div>
                 </div>
             }>
+                {activeView === 'carteira' && role === 'admin' && <Carteira onNavigate={setActiveView} />}
                 {activeView === 'dashboard' && role === 'admin' && <Dashboard />}
                 {activeView === 'kanban' && <Board />}
                 {activeView === 'estoque' && <Estoque />}
                 {activeView === 'registros' && <Registros />}
                 {activeView === 'configuracoes' && role === 'admin' && <ConfigSettings />}
-                {activeView === 'clientes' && <Clientes />}
+                {activeView === 'clientes' && role === 'admin' && <Clientes />}
                 {activeView === 'ferramental' && <Ferramental />}
 
-                {/* Fallback caso Operador tente acessar URL restrita */}
-                {(activeView === 'dashboard' || activeView === 'configuracoes') && role !== 'admin' && (
-                    <Board /> // Força volta pro Kanban
+                {(activeView === 'dashboard' || activeView === 'configuracoes' || activeView === 'clientes' || activeView === 'carteira') && role !== 'admin' && (
+                    <Board />
                 )}
             </Suspense>
         </Layout>

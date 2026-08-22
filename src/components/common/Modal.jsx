@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export default function Modal({
@@ -20,14 +21,14 @@ export default function Modal({
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+    return createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-6 bg-black/70 backdrop-blur-sm">
             <div
-                className="fixed inset-0 -z-10"
+                className="absolute inset-0"
                 onClick={onClose}
             />
 
-            <div className={`relative bg-[#181B22] border border-[#262A33] rounded-[10px] shadow-[0_20px_50px_rgba(0,0,0,0.7)] w-full ${maxWidth} flex flex-col max-h-[90dvh] sm:max-h-[85vh] shrink-0 overflow-hidden animate-modal-in`}>
+            <div className={`relative z-10 bg-[#181B22] border border-[#262A33] rounded-[10px] shadow-[0_20px_50px_rgba(0,0,0,0.7)] w-full ${maxWidth} flex flex-col max-h-[90dvh] sm:max-h-[85vh] shrink-0 overflow-hidden animate-modal-in`}>
                 {title && (
                     <div className="flex justify-between items-center px-4 py-3 sm:px-5 sm:py-3.5 border-b border-[#262A33] bg-[#1F232B] shrink-0">
                         <h3 className="font-['Space_Grotesk'] text-base sm:text-lg font-semibold text-[#E7E9ED] pr-2 leading-tight truncate">{title}</h3>
@@ -45,6 +46,7 @@ export default function Modal({
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

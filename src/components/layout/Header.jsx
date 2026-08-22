@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
-import { Briefcase, LogOut, ShieldCheck, Cpu, Zap, RotateCw, Factory, Menu } from 'lucide-react';
+import { Briefcase, LogOut, ShieldCheck, Cpu, Zap, Menu } from 'lucide-react';
 import { isLocalMode } from '../../local/mode';
+import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import ManagerPinModal from '../common/ManagerPinModal';
 
 export default function Header({ onMenuToggle }) {
-    const { nomeEmpresa, logout, role, setorPadrao, enterLocalStudyMode } = useAuthStore();
+    const { nomeEmpresa, logout, role, setorPadrao, enterLocalStudyMode, setSetorPadrao } = useAuthStore();
     const demoMode = isLocalMode();
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
 
-    const handleGerenteClick = () => {
+    const entrarProgramador = (setor) => {
+        if (role === 'programmer') {
+            setSetorPadrao(setor);
+            useAppStore.getState().setActiveSector(setor);
+            return;
+        }
+        enterLocalStudyMode('programmer', setor);
+    };
         if (role === 'admin' && setorPadrao === 'TODOS') return;
         setIsPinModalOpen(true);
     };
 
-    const getRoleLabel = () => {
-        if (role === 'admin') return 'Gerente';
-        if (role === 'programmer') return 'Programador';
-        return 'Operador';
-    };
+    const getRoleLabel = () => (role === 'admin' ? 'Gerente' : 'Programador');
 
     return (
         <header className="bg-[#111318] border-b border-[#262A33] sticky top-0 z-50 h-[52px] flex items-center px-4 md:px-6">
@@ -86,7 +90,7 @@ export default function Header({ onMenuToggle }) {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => enterLocalStudyMode('programador', 'CNC')}
+                                    onClick={() => entrarProgramador('CNC')}
                                     className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                     title="Programador CNC"
                                 >
@@ -94,19 +98,11 @@ export default function Header({ onMenuToggle }) {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => enterLocalStudyMode('programador', 'EDM_FIO')}
+                                    onClick={() => entrarProgramador('EDM_FIO')}
                                     className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                     title="Programador EDM Fio"
                                 >
                                     <Zap className="w-3 h-3" /> EDM Fio
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => enterLocalStudyMode('programador', 'TORNO')}
-                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'TORNO' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Programador Torno"
-                                >
-                                    <RotateCw className="w-3 h-3" /> Torno
                                 </button>
                             </div>
                         </>

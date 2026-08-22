@@ -12,7 +12,7 @@ export function isLocalMode() {
     //    enterLocalStudyMode() salva 'cnc-lean-session' no localStorage
     try {
         const session = localStorage.getItem('cnc-lean-session');
-        if (session === 'admin' || session === 'operador' || session === 'programador') return true;
+        if (session === 'admin' || session === 'operador' || session === 'programador' || session === 'programmer') return true;
     } catch (_) {
         // localStorage pode estar bloqueado (ex: iframe privado)
     }

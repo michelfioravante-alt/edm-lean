@@ -82,7 +82,7 @@ export const osService = {
             link_desenho: osData.link_desenho || osData.linkDesenho || null,
             is_prioridade: osData.is_prioridade !== undefined ? osData.is_prioridade : (osData.isPrioridade || false),
             is_retrabalho: osData.is_retrabalho !== undefined ? osData.is_retrabalho : (osData.isRetrabalho || false),
-            setor: osData.setor || null,  // Setor produtivo: 'CNC' | 'EDM_FIO' | 'TORNO'
+            setor: osData.setor || null,  // Setor produtivo: 'CNC' | 'EDM_FIO' | 'TORNO' | 'RETIFICA' | 'EXTERNO'
             status: osData.status || 'A fazer',
             tempo_estimado_corte_horas: parseInt(osData.tempo_estimado_corte_horas || osData.tempoEstimadoCorteHoras) || 0,
             tempo_estimado_corte_minutos: parseInt(osData.tempo_estimado_corte_minutos || osData.tempoEstimadoCorteMinutos) || 0,
@@ -94,6 +94,10 @@ export const osService = {
             quantidade_concluida: parseInt(osData.quantidade_concluida || osData.quantidadeConcluida) || 0,
             posicao: osData.posicao || null, // Otimização: recebe a posição já calculada do front
             parent_id: osData.parent_id || null,
+            programado: osData.programado ?? false,
+            valor_orcado: osData.valor_orcado != null ? parseFloat(osData.valor_orcado) : (osData.valorOrcado != null ? parseFloat(osData.valorOrcado) : null),
+            os_grupo_id: osData.os_grupo_id || osData.osGrupoId || null,
+            roteiro_ordem: parseInt(osData.roteiro_ordem || osData.roteiroOrdem) || 1,
 
             // Campos do módulo CNC (requer supabase_cnc_campos.sql aplicado)
             total_setups: parseInt(osData.total_setups || osData.totalSetups) || 1,
@@ -106,7 +110,9 @@ export const osService = {
             nx_import: osData.nx_import || osData.nxImport || null,
             estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
             aguardando_tt: osData.aguardando_tt ?? false,
-            observacao_tt: osData.observacao_tt || null
+            observacao_tt: osData.observacao_tt || null,
+            observacoes: osData.observacoes || osData.observacao || null,
+            folha_imagem: osData.folha_imagem || osData.folhaImagem || null,
         };
 
         try {
@@ -117,6 +123,14 @@ export const osService = {
                 .single();
 
             if (error) {
+                const msg = `${error.message || ''} ${error.details || ''}`;
+                if (msg.includes('observacoes') || msg.includes('folha_imagem')) {
+                    delete payload.observacoes;
+                    delete payload.folha_imagem;
+                    const retry = await supabase.from('ordens_servico').insert(payload).select().single();
+                    if (retry.error) throw retry.error;
+                    return retry.data;
+                }
                 console.error('ERRO RETORNADO PELO SUPABASE:', error);
                 throw error;
             }
@@ -280,6 +294,11 @@ export const osService = {
         if (fields.setupAtual !== undefined) payload.setup_atual = parseInt(fields.setupAtual) || 1;
         if (fields.nomesSetups !== undefined) payload.nomes_setups = fields.nomesSetups;
         if (fields.detalhesSetups !== undefined) payload.detalhes_setups = fields.detalhesSetups;
+        if (fields.programado !== undefined) payload.programado = fields.programado;
+        if (fields.valorOrcado !== undefined) payload.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
+        if (fields.nxImport !== undefined) payload.nx_import = fields.nxImport;
+        if (fields.observacoes !== undefined) payload.observacoes = fields.observacoes || null;
+        if (fields.folhaImagem !== undefined || fields.folha_imagem !== undefined) payload.folha_imagem = fields.folhaImagem ?? fields.folha_imagem ?? null;
 
         const { data, error } = await supabase
             .from('ordens_servico')

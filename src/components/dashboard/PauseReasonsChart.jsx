@@ -13,8 +13,8 @@ import { Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const COLORS = [
-    '#f59e0b', '#3b82f6', '#a855f7', '#22c55e', '#f43f5e',
-    '#fb923c', '#06b6d4', '#14b8a6', '#94a3b8'
+    '#D97D3D', '#4A9D74', '#C85558', '#C99A4A', '#7B808F',
+    '#9DA2AE', '#8A5A38', '#565B68', '#C99A4A'
 ];
 
 export default function PauseReasonsChart({ concluidas = [], kanban = {} }) {

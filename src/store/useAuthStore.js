@@ -3,13 +3,14 @@ import { supabase } from '../services/supabase';
 import { isLocalMode } from '../local/mode';
 import { loadDb, resetDb } from '../local/localDatabase';
 import { LOCAL_EMPRESA_ID, LOCAL_USER_ID } from '../local/seedData';
+import { normalizarRole, SETORES_PROGRAMADOR } from '../constants/roles';
 
 // Evita registrar vários listeners (React Strict Mode monta o App duas vezes no dev)
 let authStateSubscription = null;
 
 export const useAuthStore = create((set, get) => ({
     user: null, // Objeto de usuário do Supabase Auth
-    role: null, // Papel ('admin' ou 'operador') vindo da tabela perfis
+    role: null, // 'admin' (gerente) | 'programmer'
     empresaId: null, // ID da empresa atrelada ao usuário
     nomeEmpresa: null, // Nome da empresa (nome_fantasia)
     codigoConvite: null,
@@ -32,8 +33,8 @@ export const useAuthStore = create((set, get) => ({
 
         if (isLocalMode()) {
             const saved = localStorage.getItem('cnc-lean-session');
-            if (saved === 'admin' || saved === 'operador') {
-                get().enterLocalStudyMode(saved);
+            if (saved === 'admin' || saved === 'operador' || saved === 'programmer' || saved === 'programador') {
+                get().enterLocalStudyMode(saved === 'admin' ? 'admin' : 'programmer');
             } else {
                 set({ isInitialized: true, user: null, role: null, empresaId: null });
             }
@@ -103,7 +104,7 @@ export const useAuthStore = create((set, get) => ({
 
             set({
                 user: authUser,
-                role: data?.funcao || 'operador',
+                role: normalizarRole(data?.funcao),
                 setorPadrao: data?.setor_padrao || (data?.funcao === 'admin' ? 'TODOS' : 'CNC'),
                 empresaId: data?.empresa_id,
                 nomeEmpresa: companyData?.nome_fantasia || 'Fábrica',
@@ -130,15 +131,16 @@ export const useAuthStore = create((set, get) => ({
     },
 
     enterLocalStudyMode: (role = 'admin', setor = null) => {
-        const db = resetDb(); // Sempre recria dados frescos ao entrar no demo
-        localStorage.setItem('cnc-lean-session', role);
-        // Garante que o Kanban abre no setor CNC (evita herdar setor anterior do localStorage)
-        localStorage.setItem('lean_active_sector', 'CNC');
-        const savedSetor = setor || localStorage.getItem('cnc-lean-setor-padrao') || (role === 'admin' ? 'TODOS' : 'CNC');
+        const db = resetDb();
+        const roleNorm = normalizarRole(role);
+        localStorage.setItem('cnc-lean-session', roleNorm);
+        const savedSetor = setor
+            || (roleNorm === 'admin' ? 'TODOS' : (SETORES_PROGRAMADOR.includes(localStorage.getItem('cnc-lean-setor-padrao')) ? localStorage.getItem('cnc-lean-setor-padrao') : 'CNC'));
         localStorage.setItem('cnc-lean-setor-padrao', savedSetor);
+        localStorage.setItem('lean_active_sector', roleNorm === 'admin' ? (localStorage.getItem('lean_active_sector') || 'CNC') : savedSetor);
         set({
             user: { id: LOCAL_USER_ID, email: 'demo@edmlean.local' },
-            role,
+            role: roleNorm,
             setorPadrao: savedSetor,
             empresaId: LOCAL_EMPRESA_ID,
             nomeEmpresa: db.empresa.nome_fantasia,
@@ -292,7 +294,8 @@ export const useAuthStore = create((set, get) => ({
             // 3. Define estado IMEDIATAMENTE com os dados seguros retornados pelo servidor
             set({
                 user: anonUser,
-                role: 'operador',
+                role: 'programmer',
+                setorPadrao: 'CNC',
                 empresaId: company.empresa_id || company.id,
                 nomeEmpresa: company.nome_fantasia || 'Fábrica',
                 codigoConvite: company.codigo_convite || normalizedCode,

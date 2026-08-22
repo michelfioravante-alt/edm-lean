@@ -4,9 +4,19 @@ import { isLocalMode } from '../../local/mode';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const RECURSOS_POR_VISAO = {
+    carteira: {
+        titulo: 'Carteira de O.S. (gestor)',
+        descricao: 'Home do gerente: moldes, gargalo, fila de terceiro e ficha do roteiro.',
+        destaques: [
+            'Cada linha é a O.S. mãe, não o cartão de máquina.',
+            'Clique na linha para o roteiro completo do molde.',
+            'Filtro Em terceiro: TT / fornecedor, sem copiar o Kanban de usinagem.',
+            'Ver no quadro abre o Kanban daquele setor no gargalo.'
+        ]
+    },
     kanban: {
-        titulo: 'Quadro Kanban Multisetor',
-        descricao: 'Gestão visual em tempo real para Usinagem CNC, Eletroerosão a Fio (WEDM) e Tornos.',
+        titulo: 'Quadro Kanban por setor',
+        descricao: 'Chão de fábrica: programar no A fazer e operar set-up / usinagem.',
         destaques: [
             'Calculadora de Perímetros WEDM integrada na abertura de novas O.S. de EDM.',
             'Importação automática de Folhas de Processo CAM (UG NX, Mastercam) para CNC e Torno.',
@@ -123,7 +133,7 @@ export default function DemoGuideWidget({ activeView }) {
                     <div className="pt-2 border-t border-[#262A33] flex items-center justify-between text-[11px] text-[#7B808F] font-semibold">
                         <span className="flex items-center gap-1.5 text-[#9DA2AE]">
                             <ShieldCheck className="w-3.5 h-3.5 text-[#4A9D74]" />
-                            Perfil Ativo: <strong className="text-[#D97D3D]">{role === 'admin' ? 'Gerente (Visão Total)' : `Prog. ${setorPadrao}`}</strong>
+                            Perfil Ativo: <strong className="text-[#D97D3D]">{role === 'admin' ? 'Gerente' : `Programador ${setorPadrao === 'EDM_FIO' ? 'EDM' : 'CNC'}`}</strong>
                         </span>
                         <button
                             onClick={() => setIsExpanded(false)}

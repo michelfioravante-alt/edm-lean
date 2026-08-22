@@ -63,7 +63,7 @@ export default function MachineHoursChart({ concluidas = [] }) {
             x: {
                 beginAtZero: true,
                 grid: {
-                    color: '#e2e8f0',
+                    color: '#262A33',
                 },
                 ticks: {
                     callback: function (value) {
@@ -85,7 +85,7 @@ export default function MachineHoursChart({ concluidas = [] }) {
             {
                 label: 'Horas reais',
                 data: sortedData.map(item => item[1]),
-                backgroundColor: '#f59e0b', // amber-500
+                backgroundColor: '#D97D3D',
                 borderRadius: 4,
             }
         ],

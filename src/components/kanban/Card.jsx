@@ -7,6 +7,8 @@ import {
 import { calcularTempoFaseAtual } from '../../utils/manufacturingMath';
 import { formatarHoras } from '../../utils/formatters';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { kanbanPrecisaProgramar, labelSetor, custoHoraKanban, listarKanbansDoGrupo } from '../../constants/osWorkflow';
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function observacaoLegivel(obs, maquinas) {
@@ -18,7 +20,9 @@ function observacaoLegivel(obs, maquinas) {
     });
 }
 
-const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseRequest }) => {
+const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseRequest, onProgramarRequest }) => {
+    const destaqueOsId = useAppStore((s) => s.destaqueOsId);
+    const isDestaque = destaqueOsId && data.id === destaqueOsId;
     const {
         status,
         codigo_peca,
@@ -54,6 +58,13 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
 
     const updateOrdemServico = useAppStore(state => state.updateOrdemServico);
     const maquinas = useAppStore(state => state.maquinas);
+    const kanban = useAppStore(state => state.kanban);
+    const configuracoesGlobais = useAppStore(state => state.configuracoesGlobais);
+    const precisaProgramar = kanbanPrecisaProgramar(data);
+    const irmaos = listarKanbansDoGrupo(kanban, data);
+    const custoInfo = custoHoraKanban(data, configuracoesGlobais || {});
+    const role = useAuthStore((s) => s.role);
+    const isGestor = role === 'admin';
 
     const maquina = maquina_nome || maqLocal;
     const operador = operador_atual || opLocal;
@@ -101,11 +112,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     };
     const MachineIcon = getMachineIcon();
 
-    const getMachineLabel = () => {
-        if (osSetor === 'EDM_FIO') return 'EDM Fio';
-        if (osSetor === 'TORNO') return 'Torno CNC';
-        return 'Centro CNC';
-    };
+    const getMachineLabel = () => labelSetor(osSetor);
 
     // Status tag no canto superior direito
     const getStatusTag = () => {
@@ -148,9 +155,9 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
 
     return (
         <div
-            className={`bg-[#181B22] border border-[#262A33] rounded-[10px] overflow-hidden transition-all duration-150 hover:border-[#333844] group ${
-                isOptimistic ? 'opacity-80 cursor-wait' : 'cursor-grab active:cursor-grabbing'
-            }`}
+            className={`bg-[#181B22] border rounded-[10px] overflow-hidden transition-all duration-150 hover:border-[#333844] group ${
+                isDestaque ? 'border-[#D97D3D] ring-1 ring-[#D97D3D]/40' : (isPrioridadeFinal ? 'border-[#C85558]/50' : 'border-[#262A33]')
+            } ${isPrioridadeFinal ? 'border-l-[3px] border-l-[#C85558]' : ''} ${isOptimistic ? 'opacity-80 cursor-wait' : 'cursor-grab active:cursor-grabbing'}`}
             onDoubleClick={() => !isOptimistic && onViewRequest?.(data)}
             onClick={(e) => {
                 if (window.innerWidth < 768 && !isOptimistic && !e.target.closest('button') && !e.target.closest('a')) {
@@ -180,14 +187,31 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                 <h4 className="font-['Space_Grotesk'] font-semibold text-[14.5px] text-[#E7E9ED] leading-tight mb-1 truncate" title={cliente}>
                     {cliente || 'Cliente não informado'}
                 </h4>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#333844] text-[#9DA2AE]">{labelSetor(osSetor)}</span>
+                    {precisaProgramar && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C99A4A]/40 text-[#C99A4A]">A programar</span>
+                    )}
+                    {irmaos.length > 1 && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#262A33] text-[#7B808F]">{irmaos.length} kanbans nesta O.S.</span>
+                    )}
+                    {isGestor && custoInfo.custo > 0 && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#262A33] text-[#D97D3D]">
+                            R$ {custoInfo.custo.toFixed(0)} ({custoInfo.horas.toFixed(1)}h)
+                        </span>
+                    )}
+                </div>
 
                 {/* Descrição da Peça / Componente */}
                 {pecaDesc ? (
-                    <div className="text-[12px] text-[#7B808F] mb-3 line-clamp-2">
+                    <div className="text-[12px] text-[#7B808F] mb-2 line-clamp-2">
                         {pecaDesc}
                     </div>
                 ) : (
                     <div className="h-1 mb-2"></div>
+                )}
+                {(data.observacoes) && (
+                    <p className="text-[11px] text-[#9DA2AE] mb-2 line-clamp-2 italic">{data.observacoes}</p>
                 )}
 
                 {/* Mini-tabela de dados técnicos */}
@@ -346,6 +370,19 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                         <Eye className="w-3.5 h-3.5" />
                         <span>Detalhes</span>
                     </button>
+
+                    {precisaProgramar && onProgramarRequest && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onProgramarRequest(data);
+                            }}
+                            className="flex-1 py-1.5 px-3 bg-[#1F232B] text-[#C99A4A] border border-[#C99A4A]/40 rounded-[7px] text-[12px] font-semibold cursor-pointer"
+                        >
+                            Programar
+                        </button>
+                    )}
 
                     {nextStage && (
                         <button

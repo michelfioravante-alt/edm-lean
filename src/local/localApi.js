@@ -372,7 +372,7 @@ export const localApi = {
     perfis: {
         async fetchEquipe() { return loadDb().perfis; },
         async updateRole(userId, newRole) { mutateDb((db) => { const p = db.perfis.find((x) => x.id === userId); if (p) p.funcao = newRole; }); },
-        async detachUser(userId) { mutateDb((db) => { const p = db.perfis.find((x) => x.id === userId); if (p) { p.empresa_id = null; p.funcao = 'operador'; } }); },
+        async detachUser(userId) { mutateDb((db) => { const p = db.perfis.find((x) => x.id === userId); if (p) { p.empresa_id = null; p.funcao = 'programmer'; } }); },
     },
     os: {
         async fetchAllAtivas() { return loadDb().ordens_servico.filter((o) => o.status !== 'Excluído' && o.status !== 'Excluido'); },
@@ -396,6 +396,11 @@ export const localApi = {
                     quantidade: parseInt(osData.quantidade) || 1,
                     quantidade_concluida: parseInt(osData.quantidade_concluida || osData.quantidadeConcluida) || 0,
                     posicao: osData.posicao || null, parent_id: osData.parent_id || null,
+                    setor: osData.setor || 'CNC',
+                    programado: osData.programado ?? false,
+                    valor_orcado: osData.valor_orcado != null ? parseFloat(osData.valor_orcado) : (osData.valorOrcado != null ? parseFloat(osData.valorOrcado) : null),
+                    os_grupo_id: osData.os_grupo_id || osData.osGrupoId || null,
+                    roteiro_ordem: parseInt(osData.roteiro_ordem || osData.roteiroOrdem) || 1,
 
                     total_setups: parseInt(osData.total_setups || osData.totalSetups) || 1,
                     setup_atual: parseInt(osData.setup_atual || osData.setupAtual) || 1,
@@ -408,6 +413,8 @@ export const localApi = {
                     estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
                     aguardando_tt: osData.aguardando_tt ?? false,
                     observacao_tt: osData.observacao_tt || null,
+                    observacoes: osData.observacoes || osData.observacao || null,
+                    folha_imagem: osData.folha_imagem || osData.folhaImagem || null,
 
                     is_pausado: false, historico_pausas: [], tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },
                     created_at: new Date().toISOString(),
@@ -431,7 +438,7 @@ export const localApi = {
             mutateDb((db) => {
                 const os = findOs(db, id);
                 if (!os) throw new Error('OS não encontrada');
-                const map = { isPausado: 'is_pausado', is_pausado: 'is_pausado', historicoPausas: 'historico_pausas', historico_pausas: 'historico_pausas', temposFases: 'tempos_fases', tempos_fases: 'tempos_fases', resultadoAfericao: 'resultado_afericao', resultado_afericao: 'resultado_afericao', motivoRefugo: 'motivo_refugo', motivo_refugo: 'motivo_refugo', dataPausa: 'data_pausa', data_pausa: 'data_pausa', motivoPausa: 'motivo_pausa', motivo_pausa: 'motivo_pausa', observacaoPausa: 'observacao_pausa', observacao_pausa: 'observacao_pausa', quantidade: 'quantidade', quantidade_concluida: 'quantidade_concluida', quantidadeConcluida: 'quantidade_concluida', estrategiaFerramental: 'estrategia_ferramental', estrategia_ferramental: 'estrategia_ferramental' };
+                const map = { isPausado: 'is_pausado', is_pausado: 'is_pausado', historicoPausas: 'historico_pausas', historico_pausas: 'historico_pausas', temposFases: 'tempos_fases', tempos_fases: 'tempos_fases', resultadoAfericao: 'resultado_afericao', resultado_afericao: 'resultado_afericao', motivoRefugo: 'motivo_refugo', motivo_refugo: 'motivo_refugo', dataPausa: 'data_pausa', data_pausa: 'data_pausa', motivoPausa: 'motivo_pausa', motivo_pausa: 'motivo_pausa', observacaoPausa: 'observacao_pausa', observacao_pausa: 'observacao_pausa', quantidade: 'quantidade', quantidade_concluida: 'quantidade_concluida', quantidadeConcluida: 'quantidade_concluida', estrategiaFerramental: 'estrategia_ferramental', estrategia_ferramental: 'estrategia_ferramental', programado: 'programado' };
                 Object.entries(updateData).forEach(([k, v]) => { if (map[k]) os[map[k]] = v; });
                 updated = { ...os };
             });
@@ -461,6 +468,12 @@ export const localApi = {
                 if (fields.setupAtual !== undefined) os.setup_atual = parseInt(fields.setupAtual) || 1;
                 if (fields.nomesSetups !== undefined) os.nomes_setups = fields.nomesSetups;
                 if (fields.detalhesSetups !== undefined) os.detalhes_setups = fields.detalhesSetups;
+                if (fields.programado !== undefined) os.programado = fields.programado;
+                if (fields.valorOrcado !== undefined) os.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
+                if (fields.nxImport !== undefined) os.nx_import = fields.nxImport;
+                if (fields.observacoes !== undefined) os.observacoes = fields.observacoes;
+                if (fields.folhaImagem !== undefined) os.folha_imagem = fields.folhaImagem;
+                if (fields.folha_imagem !== undefined) os.folha_imagem = fields.folha_imagem;
 
                 updated = { ...os };
             });

@@ -66,7 +66,7 @@ export default function MachineConsumptionChart({ periodo }) {
             {
                 data: sortedData.map(([, qtd]) => qtd),
                 backgroundColor: [
-                    '#f59e0b', '#3b82f6', '#10b981', '#d946ef', '#f43f5e', '#6366f1'
+                    '#D97D3D', '#4A9D74', '#C85558', '#C99A4A', '#7B808F', '#8A5A38'
                 ],
                 borderWidth: 0,
                 hoverOffset: 15,

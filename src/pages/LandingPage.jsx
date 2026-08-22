@@ -63,7 +63,7 @@ export default function LandingPage({ onLogin, onRegister }) {
         <div className="min-h-screen bg-[#111318] text-white font-sans overflow-x-hidden relative w-full selection:bg-amber-500/30">
             {/* BACKGROUND GLOWS */}
             <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[650px] h-[650px] bg-cyan-500/10 rounded-full blur-[140px] animate-pulse"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[650px] h-[650px] bg-[#7B808F]/10 rounded-full blur-[140px] animate-pulse"></div>
                 <div className="absolute top-[35%] right-[-10%] w-[550px] h-[550px] bg-[rgba(74,157,116,0.1)] rounded-full blur-[120px]"></div>
                 <div className="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] bg-[rgba(217,125,61,0.1)] rounded-full blur-[140px]"></div>
             </div>
@@ -72,7 +72,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             <header className="relative z-10 border-b border-[#262A33] bg-[#111318]/80 backdrop-blur-md sticky top-0">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-amber-400 via-cyan-400 to-emerald-400 rounded-xl flex items-center justify-center border border-amber-300/30 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+                        <div className="w-10 h-10 bg-[#D97D3D] rounded-xl flex items-center justify-center border border-[#D97D3D] shadow-[0_0_20px_rgba(217,125,61,0.25)]">
                             <Cpu className="w-6 h-6 text-[#111318] font-semibold" />
                         </div>
                         <div>
@@ -93,7 +93,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         {isLocalMode() ? (
                             <button 
                                 onClick={() => enterLocalStudyMode('admin')}
-                                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-[#111318] font-semibold rounded-xl text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 cursor-pointer animate-bounce-subtle"
+                                className="px-5 py-2.5 bg-[#4A9D74] hover:bg-[#3d8763] text-[#111318] font-semibold rounded-xl text-sm transition-all shadow-[0_0_20px_rgba(217,125,61,0.25)] flex items-center gap-2 cursor-pointer animate-bounce-subtle"
                             >
                                 <span>Explorar Modo Demonstração (Sem Cadastro)</span>
                                 <ArrowRight size={16} />
@@ -119,7 +119,7 @@ export default function LandingPage({ onLogin, onRegister }) {
 
                     <h1 className="text-4xl sm:text-6xl font-semibold text-white leading-tight tracking-tight">
                         O Kanban Lean Especializado para <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-amber-400 to-emerald-400">
+                        <span className="text-[#D97D3D]">
                             Centros de Usinagem, Eletroerosão e Tornos CNC
                         </span>
                     </h1>
@@ -132,7 +132,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
                         <button
                             onClick={() => enterLocalStudyMode('admin')}
-                            className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-[#111318] font-semibold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.03] active:scale-95 transition-all shadow-[0_10px_35px_rgba(16,185,129,0.3)] text-base cursor-pointer"
+                            className="px-8 py-4 bg-[#D97D3D] hover:bg-[#c46d32] text-[#111318] font-semibold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.03] active:scale-95 transition-all shadow-[0_10px_35px_rgba(217,125,61,0.25)] text-base cursor-pointer"
                         >
                             <CheckCircle2 size={22} />
                             <span>Abrir Modo Demonstração Interativo (1-Clique)</span>
@@ -150,11 +150,11 @@ export default function LandingPage({ onLogin, onRegister }) {
                     {/* BADGES DA APLICAÇÃO */}
                     <div className="flex flex-wrap items-center justify-center gap-6 mt-8 pt-6 border-t border-[#262A33] text-xs font-semibold uppercase tracking-widest text-[#7B808F]">
                         <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                            <span className="w-2 h-2 rounded-full bg-[#9DA2AE]"></span>
                             <span>Centros de Usinagem (3 / 5 Eixos)</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span className="w-2 h-2 rounded-full bg-[#4A9D74]"></span>
                             <span>Eletroerosão a Fio (WEDM)</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -176,25 +176,25 @@ export default function LandingPage({ onLogin, onRegister }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     
                     {/* CARD 1: CENTRO DE USINAGEM */}
-                    <div className="bg-[#181B22]/80 border border-[#262A33] rounded-[14px] p-8 flex flex-col justify-between hover:border-cyan-500/50 transition-all hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] group">
+                    <div className="bg-[#181B22]/80 border border-[#262A33] rounded-[14px] p-8 flex flex-col justify-between hover:border-[#7B808F]/50 transition-all group">
                         <div>
-                            <div className="w-14 h-14 bg-cyan-950 border border-cyan-500/40 rounded-2xl flex items-center justify-center text-cyan-400 mb-6 group-hover:scale-110 transition-transform">
+                            <div className="w-14 h-14 bg-[#1F232B] border border-[#333844] rounded-2xl flex items-center justify-center text-[#9DA2AE] mb-6 group-hover:scale-110 transition-transform">
                                 <Cpu size={32} />
                             </div>
-                            <span className="text-xs font-semibold text-cyan-400 uppercase tracking-widest">Setor 1</span>
+                            <span className="text-xs font-semibold text-[#9DA2AE] uppercase tracking-widest">Setor 1</span>
                             <h4 className="text-2xl font-semibold text-white mt-1 mb-4">Centros de Usinagem CNC</h4>
                             <p className="text-[#7B808F] text-sm font-medium leading-relaxed mb-6">
                                 Suporte a operações de 3, 4 e 5 eixos. Gestão completa de multi-setup (viradas de peça) e magazining de ferramentas.
                             </p>
                             <ul className="space-y-3 text-sm font-semibold text-[#E7E9ED]">
-                                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-cyan-400" /> Importação de folhas CAM (NX, Mastercam, SolidCAM)</li>
-                                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-cyan-400" /> Controle de vida útil de fresas, brocas e inserts</li>
-                                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-cyan-400" /> Motivos de parada por quebra de ferramenta e offset</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-[#9DA2AE]" /> Importação de folhas CAM (NX, Mastercam, SolidCAM)</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-[#9DA2AE]" /> Controle de vida útil de fresas, brocas e inserts</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-[#9DA2AE]" /> Motivos de parada por quebra de ferramenta e offset</li>
                             </ul>
                         </div>
                         <button
                             onClick={() => enterLocalStudyMode('admin')}
-                            className="mt-8 w-full py-3 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/30 text-cyan-300 font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                            className="mt-8 w-full py-3 bg-[#1F232B] hover:bg-[#262A33] border border-[#333844] text-[#9DA2AE] font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <span>Explorar Kanban CNC</span>
                             <ArrowRight size={14} />
@@ -202,9 +202,9 @@ export default function LandingPage({ onLogin, onRegister }) {
                     </div>
 
                     {/* CARD 2: ELETROEROSÃO A FIO */}
-                    <div className="bg-[#181B22]/80 border border-[#262A33] rounded-[14px] p-8 flex flex-col justify-between hover:border-emerald-500/50 transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] group">
+                    <div className="bg-[#181B22]/80 border border-[#262A33] rounded-[14px] p-8 flex flex-col justify-between hover:border-[#4A9D74]/50 transition-all group">
                         <div>
-                            <div className="w-14 h-14 bg-emerald-950 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-[#4A9D74] mb-6 group-hover:scale-110 transition-transform">
+                            <div className="w-14 h-14 bg-[rgba(74,157,116,0.1)] border border-[#4A9D74]/40 rounded-2xl flex items-center justify-center text-[#4A9D74] mb-6 group-hover:scale-110 transition-transform">
                                 <Zap size={32} />
                             </div>
                             <span className="text-xs font-semibold text-[#4A9D74] uppercase tracking-widest">Setor 2</span>
@@ -220,7 +220,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         </div>
                         <button
                             onClick={() => enterLocalStudyMode('admin')}
-                            className="mt-8 w-full py-3 bg-emerald-950 hover:bg-emerald-900 border border-[#4A9D74]/30 text-emerald-300 font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                            className="mt-8 w-full py-3 bg-[rgba(74,157,116,0.1)] hover:bg-[rgba(74,157,116,0.18)] border border-[#4A9D74]/30 text-[#4A9D74] font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <span>Explorar Kanban EDM</span>
                             <ArrowRight size={14} />
@@ -228,9 +228,9 @@ export default function LandingPage({ onLogin, onRegister }) {
                     </div>
 
                     {/* CARD 3: TORNOS CNC */}
-                    <div className="bg-[#181B22]/80 border border-[#262A33] rounded-[14px] p-8 flex flex-col justify-between hover:border-amber-500/50 transition-all hover:shadow-[0_0_30px_rgba(245,158,11,0.15)] group">
+                    <div className="bg-[#181B22]/80 border border-[#262A33] rounded-[14px] p-8 flex flex-col justify-between hover:border-[#D97D3D]/50 transition-all group">
                         <div>
-                            <div className="w-14 h-14 bg-amber-950 border border-amber-500/40 rounded-2xl flex items-center justify-center text-[#D97D3D] mb-6 group-hover:scale-110 transition-transform">
+                            <div className="w-14 h-14 bg-[rgba(217,125,61,0.12)] border border-[#D97D3D]/40 rounded-2xl flex items-center justify-center text-[#D97D3D] mb-6 group-hover:scale-110 transition-transform">
                                 <Cog size={32} />
                             </div>
                             <span className="text-xs font-semibold text-[#D97D3D] uppercase tracking-widest">Setor 3</span>
@@ -246,7 +246,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         </div>
                         <button
                             onClick={() => enterLocalStudyMode('admin')}
-                            className="mt-8 w-full py-3 bg-amber-950 hover:bg-amber-900 border border-amber-500/30 text-amber-300 font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                            className="mt-8 w-full py-3 bg-[rgba(217,125,61,0.12)] hover:bg-[rgba(217,125,61,0.2)] border border-[#D97D3D]/30 text-[#D97D3D] font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <span>Explorar Kanban Torno</span>
                             <ArrowRight size={14} />
@@ -274,7 +274,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 </div>
                             </div>
                             <div className="flex items-start gap-4 p-4 bg-[#181B22] rounded-2xl border border-[#262A33]">
-                                <Wrench className="w-6 h-6 text-cyan-400 shrink-0 mt-1" />
+                                <Wrench className="w-6 h-6 text-[#9DA2AE] shrink-0 mt-1" />
                                 <div>
                                     <h4 className="font-semibold text-white">Controle de Ferramental & Estoque</h4>
                                     <p className="text-xs text-[#7B808F] mt-1">Saiba a vida útil restante de cada fresa e receba alertas de estoque de inserts antes da peça parar.</p>

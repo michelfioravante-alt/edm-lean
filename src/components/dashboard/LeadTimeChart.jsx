@@ -108,7 +108,7 @@ export default function LeadTimeChart({ concluidas }) {
             {
                 label: 'Tempo Real (h)',
                 data: realData,
-                backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                backgroundColor: 'rgba(217, 125, 61, 0.85)',
                 borderRadius: 4,
                 borderSkipped: false,
             },

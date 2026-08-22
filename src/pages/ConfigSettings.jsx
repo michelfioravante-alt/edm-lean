@@ -327,7 +327,7 @@ export default function ConfigSettings() {
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
-                                <DollarSign className="text-emerald-500 w-5 h-5" />
+                                <DollarSign className="text-[#4A9D74] w-5 h-5" />
                                 <h3 className="text-lg font-bold text-white">Taxas Horárias por Setor (R$/h)</h3>
                             </div>
                             <span className="text-[10px] font-mono bg-[rgba(74,157,116,0.1)] text-[#4A9D74] px-2.5 py-1 rounded-full border border-[#4A9D74]/30 font-semibold">
@@ -340,14 +340,14 @@ export default function ConfigSettings() {
                                     <div className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33]/80">
                                         <label className={titleClasses}>Usinagem CNC (R$/h)</label>
                                         <div className="relative mt-2">
-                                            <span className="absolute left-3.5 top-3 text-cyan-400 font-semibold text-sm">R$</span>
+                                            <span className="absolute left-3.5 top-3 text-[#9DA2AE] font-semibold text-sm">R$</span>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 step="0.01"
                                                 value={custoHoraCncLocal}
                                                 onChange={e => setCustoHoraCncLocal(e.target.value)}
-                                                className={`${inputClasses} pl-10 border-cyan-500/30 focus:border-cyan-400`}
+                                                className={`${inputClasses} pl-10 border-[#7B808F]/30 focus:border-[#D97D3D]`}
                                             />
                                         </div>
                                         <span className="block text-[10px] text-[#565B68] mt-2">Centro de Usinagem 3, 4 e 5 eixos.</span>
@@ -363,7 +363,7 @@ export default function ConfigSettings() {
                                                 step="0.01"
                                                 value={custoHoraEdmLocal}
                                                 onChange={e => setCustoHoraEdmLocal(e.target.value)}
-                                                className={`${inputClasses} pl-10 border-[#4A9D74]/30 focus:border-emerald-400`}
+                                                className={`${inputClasses} pl-10 border-[#4A9D74]/30 focus:border-[#4A9D74]`}
                                             />
                                         </div>
                                         <span className="block text-[10px] text-[#565B68] mt-2">Inclui fio de latão + desionizador.</span>
@@ -372,7 +372,7 @@ export default function ConfigSettings() {
                                     <div className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33]/80">
                                         <label className={titleClasses}>Custo Padrão / Geral (R$/h)</label>
                                         <div className="relative mt-2">
-                                            <span className="absolute left-3.5 top-3 text-indigo-400 font-semibold text-sm">R$</span>
+                                            <span className="absolute left-3.5 top-3 text-[#7B808F] font-semibold text-sm">R$</span>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -545,7 +545,7 @@ export default function ConfigSettings() {
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
-                                <Monitor className="text-cyan-400 w-5 h-5" />
+                                <Monitor className="text-[#9DA2AE] w-5 h-5" />
                                 <div>
                                     <h3 className="text-lg font-bold text-white">Máquinas do Parque Fabril</h3>
                                     <p className="text-xs font-bold text-[#565B68]">
@@ -599,10 +599,10 @@ export default function ConfigSettings() {
                                                 <p className="font-bold text-sm text-white">{m.nome}</p>
                                                 <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border ${
                                                     m.setor === 'EDM_FIO' 
-                                                        ? 'bg-emerald-950/80 border-emerald-500/50 text-[#4A9D74]' 
+                                                        ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]' 
                                                         : m.setor === 'TORNO'
                                                         ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
-                                                        : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
+                                                        : 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
                                                 }`}>
                                                     {m.setor === 'EDM_FIO' ? 'EDM Fio' : m.setor === 'TORNO' ? 'Torno' : 'CNC'}
                                                 </span>
@@ -678,12 +678,12 @@ export default function ConfigSettings() {
                                                 <span className="font-bold text-sm text-white">{prog.nome}</span>
                                                 <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border ${
                                                     prog.setor === 'EDM_FIO' 
-                                                        ? 'bg-emerald-950/80 border-emerald-500/50 text-[#4A9D74]' 
+                                                        ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]' 
                                                         : prog.setor === 'TORNO'
                                                         ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
                                                         : prog.setor === 'CNC'
-                                                        ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
-                                                        : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
+                                                        ? 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
+                                                        : 'bg-[#1F232B] border-[#333844] text-[#7B808F]'
                                                 }`}>
                                                     {prog.setor === 'EDM_FIO' ? 'EDM Fio' : prog.setor === 'TORNO' ? 'Torno' : prog.setor === 'CNC' ? 'CNC' : 'Toda Fábrica'}
                                                 </span>
@@ -767,12 +767,12 @@ export default function ConfigSettings() {
                                                     <span className="font-bold text-sm text-[#E7E9ED]">{op.nome}</span>
                                                     <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border ${
                                                         op.setor === 'EDM_FIO' 
-                                                            ? 'bg-emerald-950/80 border-emerald-500/50 text-[#4A9D74]' 
+                                                            ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]' 
                                                             : op.setor === 'TORNO'
                                                             ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
                                                             : op.setor === 'CNC'
-                                                            ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
-                                                            : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-400'
+                                                            ? 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
+                                                            : 'bg-[#1F232B] border-[#333844] text-[#7B808F]'
                                                     }`}>
                                                         {op.setor === 'EDM_FIO' ? 'EDM Fio' : op.setor === 'TORNO' ? 'Torno' : op.setor === 'CNC' ? 'CNC' : 'Toda Fábrica'}
                                                     </span>
@@ -873,7 +873,7 @@ export default function ConfigSettings() {
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
-                                <ShieldCheck className="text-emerald-500 w-5 h-5" />
+                                <ShieldCheck className="text-[#4A9D74] w-5 h-5" />
                                 <h3 className="text-lg font-bold text-white">Contas de Acesso (Login com E-mail)</h3>
                             </div>
                         </div>
@@ -888,7 +888,7 @@ export default function ConfigSettings() {
                                             </div>
                                             <div className="overflow-hidden">
                                                 <p className="text-xs font-bold text-white truncate max-w-[140px]">{u.email || 'Usuário'}</p>
-                                                <p className="text-[9px] font-semibold text-[#565B68] uppercase tracking-widest">{u.funcao === 'admin' ? 'Admin Master' : 'Acesso Padrão'}</p>
+                                                <p className="text-[9px] font-semibold text-[#565B68] uppercase tracking-widest">{u.funcao === 'admin' ? 'Gerente' : 'Programador'}</p>
                                             </div>
                                         </div>
 
@@ -925,7 +925,7 @@ export default function ConfigSettings() {
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
-                                <Bot className="text-kanban-teal w-5 h-5" />
+                                <Bot className="text-[#4A9D74] w-5 h-5" />
                                 <div>
                                     <h3 className="text-lg font-bold text-white">Nova Rotina Periódica Automática</h3>
                                     <p className="text-xs font-bold text-[#565B68]">O sistema criará automaticamente cartões no Kanban no ciclo programado</p>
@@ -1012,7 +1012,7 @@ export default function ConfigSettings() {
                                 <div key={kb.id} className="flex flex-col justify-between bg-[#181B22]/90 p-5 border border-[#262A33]/80 rounded-xl hover:border-[#333844] transition-colors group">
                                     <div>
                                         <div className="flex items-start justify-between mb-3">
-                                            <span className="inline-flex items-center gap-1.5 bg-kanban-teal/10 text-kanban-teal border border-kanban-teal/20 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                            <span className="inline-flex items-center gap-1.5 bg-kanban-teal/10 text-[#4A9D74] border border-[#4A9D74]/20 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
                                                 <RefreshCw className="w-3 h-3" /> A cada {kb.diasIntervalo} dias
                                             </span>
                                             <button
@@ -1044,7 +1044,7 @@ export default function ConfigSettings() {
 
             {/* Toast Feedback */}
             {toastMsg && (
-                <div className={`fixed bottom-6 right-6 ${toastMsg.startsWith('Erro') ? 'bg-[#C85558] border-red-500' : 'bg-emerald-600 border-emerald-500'} text-white border px-5 py-3 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-2.5 z-[300] animate-modal-in`}>
+                <div className={`fixed bottom-6 right-6 ${toastMsg.startsWith('Erro') ? 'bg-[#C85558] border-red-500' : 'bg-[#4A9D74] border-[#4A9D74]'} text-white border px-5 py-3 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-2.5 z-[300] animate-modal-in`}>
                     <Zap className="w-4 h-4 text-white/80" />
                     {toastMsg}
                 </div>

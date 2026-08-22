@@ -24,12 +24,12 @@ export default function QualityPieChart({ concluidas = [] }) {
             {
                 data: [aprovadas, refugo],
                 backgroundColor: [
-                    '#10b981', // emerald-500
-                    '#ef4444', // red-500
+                    '#4A9D74',
+                    '#C85558',
                 ],
                 borderColor: [
-                    '#059669', // emerald-600
-                    '#dc2626', // red-600
+                    '#3d8763',
+                    '#b04548',
                 ],
                 borderWidth: 1,
             },
