@@ -234,79 +234,75 @@ export default function Dashboard() {
             <div className="min-h-full flex flex-col gap-6 w-full pb-8">
                 
                 {/* HEADER COM FILTROS (SETOR, PERÍODO, TURNO) */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-[#181B22] p-5 rounded-[10px] border border-[#262A33]">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-400">
-                            <LayoutDashboard className="w-7 h-7" />
+                        <div className="p-2.5 bg-[rgba(217,125,61,0.1)] rounded-[8px] border border-[#D97D3D]/20 text-[#D97D3D] shrink-0">
+                            <LayoutDashboard className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black text-white">Indicadores de Produção (MES & Eficiência Operacional)</h2>
-                            <p className="text-slate-400 mt-0.5 text-sm font-medium">
-                                Análise de performance por setor produtivo (CNC, Eletroerosão a Fio e Tornos).
+                            <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Indicadores de Produção</h2>
+                            <p className="text-[#565B68] mt-0.5 text-xs">
+                                Eficiência operacional por setor (CNC, EDM Fio e Tornos).
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         
                         {/* FILTRO DE SETOR PRODUTIVO */}
                         {isProgrammerLocked ? (
-                            <div className="flex items-center gap-2 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800 text-xs font-bold text-slate-200 shadow-inner">
-                                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                                <span>KPIs Exclusivos: {setorFilter === 'EDM_FIO' ? '⚡ Eletroerosão a Fio' : setorFilter === 'TORNO' ? '⚙️ Torno CNC' : '🌀 Centro de Usinagem CNC'}</span>
+                            <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33] text-xs font-medium text-[#9DA2AE]">
+                                <Lock className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
+                                <span>KPIs: {setorFilter === 'EDM_FIO' ? 'Eletroerosão a Fio' : setorFilter === 'TORNO' ? 'Torno CNC' : 'Centro CNC'}</span>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800 min-w-[200px]">
-                                <Factory className="w-4 h-4 text-amber-400 shrink-0" />
+                            <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
+                                <Factory className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
                                 <select
-                                    className="bg-slate-950 text-sm text-white font-bold outline-none border-none focus:ring-0 cursor-pointer w-full appearance-none pr-4"
-                                    style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                                    className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
                                     value={setorFilter}
                                     onChange={(e) => setSetorFilter(e.target.value)}
                                 >
-                                    <option value="TODOS" className="bg-slate-900 text-white font-bold">🏭 Toda a Fábrica</option>
-                                    <option value="CNC" className="bg-slate-900 text-cyan-400 font-bold">🌀 Centro de Usinagem CNC</option>
-                                    <option value="EDM_FIO" className="bg-slate-900 text-emerald-400 font-bold">⚡ Eletroerosão a Fio (EDM)</option>
-                                    <option value="TORNO" className="bg-slate-900 text-amber-400 font-bold">⚙️ Torno CNC</option>
+                                    <option value="TODOS">Toda a Fábrica</option>
+                                    <option value="CNC">Centro de Usinagem CNC</option>
+                                    <option value="EDM_FIO">Eletroerosão a Fio (EDM)</option>
+                                    <option value="TORNO">Torno CNC</option>
                                 </select>
                             </div>
                         )}
 
-
                         {/* FILTRO TEMPORAL */}
-                        <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
-                            <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+                        <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
+                            <Filter className="w-3.5 h-3.5 text-[#565B68] shrink-0" />
                             <select
-                                className="bg-slate-950 text-sm text-white font-bold outline-none border-none focus:ring-0 cursor-pointer min-w-[140px] appearance-none pr-4"
-                                style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                                className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
                                 value={periodo}
                                 onChange={(e) => setPeriodo(e.target.value)}
                             >
                                 <optgroup label="Período atual">
-                                    <option value="hoje" className="bg-slate-900 text-white">Hoje</option>
-                                    <option value="semana" className="bg-slate-900 text-white">Esta Semana</option>
-                                    <option value="mes" className="bg-slate-900 text-white">Este Mês</option>
+                                    <option value="hoje">Hoje</option>
+                                    <option value="semana">Esta Semana</option>
+                                    <option value="mes">Este Mês</option>
                                 </optgroup>
                                 <optgroup label="Meses passados">
                                     {gerarMesesPassados().map(({ value, label }) => (
-                                        <option key={value} value={value} className="bg-slate-900 text-white">{label}</option>
+                                        <option key={value} value={value}>{label}</option>
                                     ))}
                                 </optgroup>
                             </select>
                         </div>
 
                         {/* FILTRO DE TURNO */}
-                        <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
-                            <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                        <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
+                            <Clock className="w-3.5 h-3.5 text-[#565B68] shrink-0" />
                             <select
-                                className="bg-slate-950 text-sm text-white font-bold outline-none border-none focus:ring-0 cursor-pointer w-full appearance-none pr-4"
-                                style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                                className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
                                 value={turno}
                                 onChange={(e) => setTurno(e.target.value)}
                             >
-                                <option value="todos" className="bg-slate-900 text-white">Todos os Turnos</option>
+                                <option value="todos">Todos os Turnos</option>
                                 {configuracoesGlobais?.turnos?.map(t => (
-                                    <option key={t.id} value={t.id} className="bg-slate-900 text-white">
+                                    <option key={t.id} value={t.id}>
                                         {t.nome} ({t.inicio} - {t.fim})
                                     </option>
                                 ))}
@@ -322,96 +318,96 @@ export default function Dashboard() {
                     const isEdmProg = setorFilter === 'EDM_FIO';
 
                     return (
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                                <h3 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
-                                    {isGerente && <span className="text-amber-400">👑 Visão Executiva & Financeira (Diretoria)</span>}
-                                    {isCncProg && <span className="text-cyan-400">🌀 KPIs Técnicos — Centro de Usinagem CNC</span>}
-                                    {isEdmProg && <span className="text-emerald-400">⚡ KPIs Técnicos — Eletroerosão a Fio (EDM)</span>}
-                                    {!isGerente && !isCncProg && !isEdmProg && <span className="text-slate-300">📊 Indicadores Gerais da Fábrica</span>}
+                        <div className="space-y-5">
+                            <div className="flex items-center justify-between border-b border-[#262A33] pb-3">
+                                <h3 className="text-sm font-semibold text-[#E7E9ED] uppercase tracking-wider flex items-center gap-2">
+                                    {isGerente && <span className="text-[#D97D3D]">Visão Executiva & Financeira</span>}
+                                    {isCncProg && <span className="text-[#9DA2AE]">KPIs — Centro de Usinagem CNC</span>}
+                                    {isEdmProg && <span className="text-[#9DA2AE]">KPIs — Eletroerosão a Fio (EDM)</span>}
+                                    {!isGerente && !isCncProg && !isEdmProg && <span className="text-[#9DA2AE]">Indicadores Gerais da Fábrica</span>}
                                 </h3>
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-950 px-3 py-1 rounded-md border border-slate-800">
-                                    {isGerente ? 'Foco: Retorno Financeiro & Eficiência Global' : 'Foco: Eficiência Operacional, FPY & Tempos de Ciclo'}
+                                <span className="text-[10px] font-medium text-[#565B68] uppercase tracking-widest bg-[#111318] px-3 py-1 rounded-[5px] border border-[#262A33]">
+                                    {isGerente ? 'Retorno Financeiro & Eficiência Global' : 'Eficiência Operacional, FPY & Tempos'}
                                 </span>
                             </div>
 
                             {/* Linha 1: Métricas Principais (Adaptadas ao perfil) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <KpiCard
-                                    title={isEdmProg ? "Eficiência Eletroerosão Fio" : isCncProg ? "Eficiência Usinagem CNC" : "Eficiência Operacional Global"}
+                                    title={isEdmProg ? "Eficiência EDM Fio" : isCncProg ? "Eficiência CNC" : "Eficiência Operacional"}
                                     value={`${oeeEfficiency}%`}
                                     icon={Zap}
                                     trend={parseFloat(oeeEfficiency) > 85 ? "up" : "down"}
-                                    colorClass={parseFloat(oeeEfficiency) > 85 ? "bg-emerald-600" : "bg-amber-600"}
+                                    colorClass={parseFloat(oeeEfficiency) > 85 ? "bg-[#4A9D74]" : "bg-[#C99A4A]"}
                                     tooltipContent="Compara o Tempo Planejado (cadastro) vs Tempo Real (cronometrado no Kanban)."
                                 />
                                 <KpiCard
                                     title={isEdmProg ? "FPY Precisão Fio" : isCncProg ? "FPY 1ª Usinagem" : "Peças Aprovadas FPY"}
                                     value={`${fpy}%`}
                                     icon={Target}
-                                    colorClass="bg-cyan-600"
+                                    colorClass="bg-[#4A9D74]"
                                     trend="up"
-                                    tooltipContent="First Pass Yield: Porcentagem de peças totalmente aprovadas na inspeção dimensional."
+                                    tooltipContent="First Pass Yield: Porcentagem de peças aprovadas na inspeção dimensional."
                                 />
                                 <KpiCard
                                     title="Lead Time Médio"
                                     value={leadTimesHoras.length > 0 ? leadTimeMedioStr : '--'}
                                     icon={Timer}
-                                    colorClass="bg-violet-600"
+                                    colorClass="bg-[#D97D3D]"
                                     tooltipContent="Tempo médio desde a abertura da O.S até a conclusão final."
                                 />
                                 <KpiCard
                                     title={isEdmProg ? "Carga WIP (EDM Fio)" : isCncProg ? "Carga WIP (CNC)" : "Fila WIP (Ativas)"}
                                     value={ativasCount.toString()}
                                     icon={Activity}
-                                    colorClass="bg-blue-600"
-                                    tooltipContent="Quantidade de Ordens de Serviço atualmente ativas no setor."
+                                    colorClass="bg-[#9DA2AE]"
+                                    tooltipContent="Quantidade de Ordens de Serviço ativas no setor."
                                 />
                                 <KpiCard
                                     title="Concluídas (Período)"
                                     value={concluidas.length.toString()}
                                     icon={Clock}
-                                    colorClass="bg-emerald-600"
-                                    tooltipContent="Volume total de Peças dadas como Concluídas para o setor e período selecionados."
+                                    colorClass="bg-[#4A9D74]"
+                                    tooltipContent="Volume total de Peças Concluídas para o setor e período."
                                 />
                                 <KpiCard
                                     title="O.S em Atraso"
                                     value={emAtraso.toString()}
                                     icon={AlertTriangle}
-                                    colorClass={emAtraso > 0 ? "bg-red-600" : "bg-slate-700"}
+                                    colorClass={emAtraso > 0 ? "bg-[#C85558]" : "bg-[#333844]"}
                                     trend={emAtraso > 0 ? "down" : null}
                                     tooltipContent="Peças ativas que passaram do prazo prometido de entrega."
                                 />
                             </div>
 
                             {/* Linha 2: Métricas Financeiras / Custo Operacional */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <KpiCard
                                     title={isEdmProg ? "Valor Corte de Fio" : isCncProg ? "Valor Usinagem CNC" : "Valor Usinagem / Ciclo"}
                                     value={valorGeradoCorte}
                                     icon={DollarSign}
-                                    colorClass="bg-emerald-500"
+                                    colorClass="bg-[#4A9D74]"
                                     tooltipContent={`Horas de usinagem/corte × taxa horária do setor (CNC: R$ ${custoHoraCnc}/h | Fio: R$ ${custoHoraEdm}/h).`}
                                 />
                                 <KpiCard
                                     title="Valor Trabalho Total"
                                     value={valorGeradoTotais}
                                     icon={DollarSign}
-                                    colorClass="bg-emerald-600"
+                                    colorClass="bg-[#4A9D74]"
                                     tooltipContent={`Horas de Setup + Ciclo das peças aprovadas × taxa horária específica do setor.`}
                                 />
                                 <KpiCard
                                     title="Perda por Refugo"
                                     value={valorPerdido}
                                     icon={TrendingDown}
-                                    colorClass="bg-red-500"
-                                    tooltipContent={`Horas desperdiçadas em peças refugadas × taxa horária do setor correspondente.`}
+                                    colorClass="bg-[#C85558]"
+                                    tooltipContent={`Horas desperdiçadas em peças refugadas × taxa horária do setor.`}
                                 />
                                 <KpiCard
-                                    title="Custo de Pausas / Tempo Morto"
+                                    title="Custo Pausas / Tempo Morto"
                                     value={valorTempoMorto}
                                     icon={PauseCircle}
-                                    colorClass="bg-amber-500"
+                                    colorClass="bg-[#C99A4A]"
                                     tooltipContent={`Horas em pausas acumuladas × taxa horária do setor produtivo.`}
                                 />
                             </div>
@@ -484,155 +480,109 @@ export default function Dashboard() {
                                 const tornoStats = calcularMetricasSetor('TORNO', 80);
 
                                 return (
-                                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                                                    <TrendingUp className="w-5 h-5 text-amber-400" />
-                                                    Comparativo Executivo de Eficiência por Setor
-                                                </h3>
-                                                <p className="text-xs text-slate-400">
-                                                    Desempenho comparado entre Usinagem CNC, Eletroerosão a Fio e Torno CNC
-                                                </p>
+                                    <div className="kpi-strip rounded-[10px] overflow-hidden border border-[#262A33]">
+                                        <div className="col-span-full flex items-center justify-between px-4 py-3 bg-[#181B22] border-b border-[#262A33]">
+                                            <div className="flex items-center gap-2">
+                                                <TrendingUp className="w-4 h-4 text-[#D97D3D]" />
+                                                <h3 className="text-xs font-semibold text-[#E7E9ED] uppercase tracking-wider">Comparativo por Setor</h3>
                                             </div>
+                                            <span className="text-[10px] text-[#565B68]">Eficiência operacional & faturamento</span>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-3">
                                             {/* CNC Card */}
-                                            <div className="bg-slate-950 border border-cyan-500/30 rounded-xl p-4 space-y-3 relative overflow-hidden">
+                                            <div className="kpi-cell space-y-3">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                                                        <Cpu className="w-4 h-4" /> Centro de Usinagem CNC
+                                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
+                                                        <Cpu className="w-3.5 h-3.5" /> Centro CNC
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-slate-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/30">
+                                                    <span className="text-[10px] font-mono text-[#565B68] bg-[#111318] px-2 py-0.5 rounded-[4px] border border-[#262A33]">
                                                         R$ {custoHoraCnc}/h
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-baseline justify-between pt-1">
+                                                <div className="flex items-baseline justify-between">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência Operacional</span>
-                                                        <span className="text-3xl font-black text-white">{cncStats.oee}%</span>
+                                                        <span className="kpi-label">Eficiência</span>
+                                                        <span className="kpi-value">{cncStats.oee}%</span>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Faturamento</span>
-                                                        <span className="text-base font-extrabold text-cyan-400">{cncStats.valorFaturamento}</span>
+                                                        <span className="kpi-label">Faturamento</span>
+                                                        <span className="text-sm font-semibold text-[#4A9D74]">{cncStats.valorFaturamento}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                                                    <div className="bg-cyan-500 h-full transition-all duration-500" style={{ width: `${cncStats.oee}%` }}></div>
-                                                </div>
+                                                <div className="progress-track"><div className="progress-fill" style={{ width: `${cncStats.oee}%` }}></div></div>
 
-                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-900">
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Peças Concluídas:</span>
-                                                        <strong className="text-slate-200">{cncStats.concluidasCount} peças</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Aprovação FPY:</span>
-                                                        <strong className="text-emerald-400">{cncStats.fpy}%</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Horas Usinadas:</span>
-                                                        <strong className="text-slate-200">{cncStats.realH}h</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Custo Pausas:</span>
-                                                        <strong className="text-amber-400">{cncStats.valorPausas}</strong>
-                                                    </div>
+                                                <div className="data-table">
+                                                    <div className="data-row"><span className="data-key">Concluídas</span><span className="data-val">{cncStats.concluidasCount} peças</span></div>
+                                                    <div className="data-row"><span className="data-key">FPY</span><span className="data-val text-[#4A9D74]">{cncStats.fpy}%</span></div>
+                                                    <div className="data-row"><span className="data-key">Horas</span><span className="data-val">{cncStats.realH}h</span></div>
+                                                    <div className="data-row"><span className="data-key">Custo Pausas</span><span className="data-val text-[#C99A4A]">{cncStats.valorPausas}</span></div>
                                                 </div>
                                             </div>
 
                                             {/* EDM Card */}
-                                            <div className="bg-slate-950 border border-emerald-500/30 rounded-xl p-4 space-y-3 relative overflow-hidden">
+                                            <div className="kpi-cell space-y-3">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                                                        <Zap className="w-4 h-4" /> Eletroerosão a Fio (EDM)
+                                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
+                                                        <Zap className="w-3.5 h-3.5" /> EDM Fio
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-slate-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                                                    <span className="text-[10px] font-mono text-[#565B68] bg-[#111318] px-2 py-0.5 rounded-[4px] border border-[#262A33]">
                                                         R$ {custoHoraEdm}/h
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-baseline justify-between pt-1">
+                                                <div className="flex items-baseline justify-between">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência Operacional</span>
-                                                        <span className="text-3xl font-black text-white">{edmStats.oee}%</span>
+                                                        <span className="kpi-label">Eficiência</span>
+                                                        <span className="kpi-value">{edmStats.oee}%</span>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Faturamento</span>
-                                                        <span className="text-base font-extrabold text-emerald-400">{edmStats.valorFaturamento}</span>
+                                                        <span className="kpi-label">Faturamento</span>
+                                                        <span className="text-sm font-semibold text-[#4A9D74]">{edmStats.valorFaturamento}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                                                    <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${edmStats.oee}%` }}></div>
-                                                </div>
+                                                <div className="progress-track"><div className="progress-fill" style={{ width: `${edmStats.oee}%` }}></div></div>
 
-                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-900">
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Peças Concluídas:</span>
-                                                        <strong className="text-slate-200">{edmStats.concluidasCount} peças</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Aprovação FPY:</span>
-                                                        <strong className="text-emerald-400">{edmStats.fpy}%</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Horas Cortadas:</span>
-                                                        <strong className="text-slate-200">{edmStats.realH}h</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Custo Pausas:</span>
-                                                        <strong className="text-amber-400">{edmStats.valorPausas}</strong>
-                                                    </div>
+                                                <div className="data-table">
+                                                    <div className="data-row"><span className="data-key">Concluídas</span><span className="data-val">{edmStats.concluidasCount} peças</span></div>
+                                                    <div className="data-row"><span className="data-key">FPY</span><span className="data-val text-[#4A9D74]">{edmStats.fpy}%</span></div>
+                                                    <div className="data-row"><span className="data-key">Horas</span><span className="data-val">{edmStats.realH}h</span></div>
+                                                    <div className="data-row"><span className="data-key">Custo Pausas</span><span className="data-val text-[#C99A4A]">{edmStats.valorPausas}</span></div>
                                                 </div>
                                             </div>
 
                                             {/* TORNO Card */}
-                                            <div className="bg-slate-950 border border-amber-500/30 rounded-xl p-4 space-y-3 relative overflow-hidden">
+                                            <div className="kpi-cell space-y-3" style={{ borderRight: 'none' }}>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                                                        <RotateCw className="w-4 h-4" /> Torno CNC
+                                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
+                                                        <RotateCw className="w-3.5 h-3.5" /> Torno CNC
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-slate-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-500/30">
+                                                    <span className="text-[10px] font-mono text-[#565B68] bg-[#111318] px-2 py-0.5 rounded-[4px] border border-[#262A33]">
                                                         R$ {custoHoraPadrao}/h
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-baseline justify-between pt-1">
+                                                <div className="flex items-baseline justify-between">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Eficiência Operacional</span>
-                                                        <span className="text-3xl font-black text-white">{tornoStats.oee}%</span>
+                                                        <span className="kpi-label">Eficiência</span>
+                                                        <span className="kpi-value">{tornoStats.oee}%</span>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="text-xs text-slate-500 font-bold uppercase block">Faturamento</span>
-                                                        <span className="text-base font-extrabold text-amber-400">{tornoStats.valorFaturamento}</span>
+                                                        <span className="kpi-label">Faturamento</span>
+                                                        <span className="text-sm font-semibold text-[#4A9D74]">{tornoStats.valorFaturamento}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                                                    <div className="bg-amber-500 h-full transition-all duration-500" style={{ width: `${tornoStats.oee}%` }}></div>
-                                                </div>
+                                                <div className="progress-track"><div className="progress-fill" style={{ width: `${tornoStats.oee}%` }}></div></div>
 
-                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-900">
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Peças Concluídas:</span>
-                                                        <strong className="text-slate-200">{tornoStats.concluidasCount} peças</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Aprovação FPY:</span>
-                                                        <strong className="text-emerald-400">{tornoStats.fpy}%</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Horas Torneadas:</span>
-                                                        <strong className="text-slate-200">{tornoStats.realH}h</strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-500 block text-[10px]">Custo Pausas:</span>
-                                                        <strong className="text-amber-400">{tornoStats.valorPausas}</strong>
-                                                    </div>
+                                                <div className="data-table">
+                                                    <div className="data-row"><span className="data-key">Concluídas</span><span className="data-val">{tornoStats.concluidasCount} peças</span></div>
+                                                    <div className="data-row"><span className="data-key">FPY</span><span className="data-val text-[#4A9D74]">{tornoStats.fpy}%</span></div>
+                                                    <div className="data-row"><span className="data-key">Horas</span><span className="data-val">{tornoStats.realH}h</span></div>
+                                                    <div className="data-row"><span className="data-key">Custo Pausas</span><span className="data-val text-[#C99A4A]">{tornoStats.valorPausas}</span></div>
                                                 </div>
                                             </div>
                                         </div>

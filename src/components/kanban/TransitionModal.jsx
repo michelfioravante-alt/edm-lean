@@ -133,22 +133,22 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
             <form onSubmit={handleSubmit} className="space-y-4">
                 {isEmCorte ? (
                     <>
-                        <p className="text-base text-slate-400 mb-6 font-medium">
+                        <p className="text-sm text-[#7B808F] mb-5 font-medium">
                             Antes de iniciar a usinagem, confirme as etapas:
                         </p>
-                        <div className="space-y-4 bg-slate-900 p-4 rounded-xl border border-slate-800">
-                            <label className="flex items-center gap-4 cursor-pointer text-lg font-bold text-slate-100 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800/50">
-                                <input type="checkbox" className="rounded-md border-2 border-slate-700 text-kanban-teal focus:ring-kanban-teal w-6 h-6 bg-slate-950"
+                        <div className="space-y-3 bg-[#111318] p-4 rounded-[8px] border border-[#262A33]">
+                            <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-[#E7E9ED] hover:text-white transition-colors p-2 rounded-[7px] hover:bg-[#1F232B]">
+                                <input type="checkbox" className="w-5 h-5 rounded border-[#333844] bg-[#111318] focus:ring-0 cursor-pointer accent-[#4A9D74]"
                                     checked={checkFixacao} onChange={(e) => setCheckFixacao(e.target.checked)} />
                                 Fixação correta na máquina
                             </label>
-                            <label className="flex items-center gap-4 cursor-pointer text-lg font-bold text-slate-100 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800/50">
-                                <input type="checkbox" className="rounded-md border-2 border-slate-700 text-kanban-teal focus:ring-kanban-teal w-6 h-6 bg-slate-950"
+                            <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-[#E7E9ED] hover:text-white transition-colors p-2 rounded-[7px] hover:bg-[#1F232B]">
+                                <input type="checkbox" className="w-5 h-5 rounded border-[#333844] bg-[#111318] focus:ring-0 cursor-pointer accent-[#4A9D74]"
                                     checked={checkZerar} onChange={(e) => setCheckZerar(e.target.checked)} />
                                 Referências zeradas e prontas
                             </label>
-                            <label className="flex items-center gap-4 cursor-pointer text-lg font-bold text-slate-100 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800/50">
-                                <input type="checkbox" className="rounded-md border-2 border-slate-700 text-kanban-teal focus:ring-kanban-teal w-6 h-6 bg-slate-950"
+                            <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-[#E7E9ED] hover:text-white transition-colors p-2 rounded-[7px] hover:bg-[#1F232B]">
+                                <input type="checkbox" className="w-5 h-5 rounded border-[#333844] bg-[#111318] focus:ring-0 cursor-pointer accent-[#4A9D74]"
                                     checked={checkPrograma} onChange={(e) => setCheckPrograma(e.target.checked)} />
                                 Programa carregado corretamente
                             </label>
@@ -156,18 +156,18 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                     </>
                 ) : (
                     <>
-                        <p className="text-base text-slate-400 mb-4 font-medium">
+                        <p className="text-sm text-[#7B808F] mb-4 font-medium">
                             Direcione máquina e operador{codigoPeca ? ` para ${codigoPeca}` : ''}.
                         </p>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div>
-                                <label className="block text-sm font-bold text-slate-100 mb-2">Máquina</label>
+                                <label className="block text-xs font-semibold text-[#9DA2AE] mb-1.5 uppercase tracking-wider">Máquina</label>
                                 <select
                                     value={selectedMaquina}
                                     onChange={(e) => setSelectedMaquina(e.target.value)}
                                     required
-                                    className="w-full min-h-[48px] p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber bg-slate-950 text-slate-100 font-bold [color-scheme:dark]"
+                                    className="w-full min-h-[44px] p-3 border border-[#262A33] rounded-[7px] focus:outline-none focus:border-[#D97D3D] bg-[#111318] text-[#E7E9ED] font-medium [color-scheme:dark] transition-colors"
                                 >
                                     <option value="" disabled>Escolha na lista...</option>
                                     {filteredMaquinas.map((m) => (
@@ -177,32 +177,31 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-slate-100 mb-2">Operador</label>
+                                <label className="block text-xs font-semibold text-[#9DA2AE] mb-1.5 uppercase tracking-wider">Operador</label>
                                 <select
                                     value={selectedOperador}
                                     onChange={(e) => setSelectedOperador(e.target.value)}
                                     required
-                                    className="w-full min-h-[48px] p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber bg-slate-950 text-slate-100 font-bold [color-scheme:dark]"
+                                    className="w-full min-h-[44px] p-3 border border-[#262A33] rounded-[7px] focus:outline-none focus:border-[#D97D3D] bg-[#111318] text-[#E7E9ED] font-medium [color-scheme:dark] transition-colors"
                                 >
                                     <option value="" disabled>Escolha na lista...</option>
                                     {filteredOperadores.map((op) => (
                                         <option key={op.id} value={op.nome}>{op.nome}</option>
                                     ))}
                                 </select>
-
                             </div>
                         </div>
 
                         {isSetup && osData?.setor !== 'EDM_FIO' && (
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4 mt-4">
-                                <h4 className="font-extrabold text-white text-sm uppercase tracking-wider">Estratégia de ferramentas</h4>
-                                <p className="text-xs text-slate-500">Escolha por O.S. — ex.: peça longa noturna = magazine completo.</p>
+                            <div className="bg-[#111318] border border-[#262A33] rounded-[8px] p-4 space-y-4 mt-4">
+                                <h4 className="font-semibold text-[#E7E9ED] text-xs uppercase tracking-wider">Estratégia de ferramentas</h4>
+                                <p className="text-xs text-[#565B68]">Escolha por O.S. — ex.: peça longa noturna = magazine completo.</p>
 
                                 <div className="space-y-2">
                                     {ESTRATEGIA_FERRAMENTAL_OPTIONS.map((opt) => (
                                         <label
                                             key={opt.key}
-                                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${estrategiaFerramental === opt.key ? 'border-kanban-amber bg-kanban-amber/10' : 'border-slate-800 hover:border-slate-700'}`}
+                                            className={`flex items-start gap-3 p-3 rounded-[7px] border cursor-pointer transition-colors ${estrategiaFerramental === opt.key ? 'border-[#D97D3D] bg-[rgba(217,125,61,0.08)]' : 'border-[#262A33] hover:border-[#333844]'}`}
                                         >
                                             <input
                                                 type="radio"
@@ -210,36 +209,36 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                                                 value={opt.key}
                                                 checked={estrategiaFerramental === opt.key}
                                                 onChange={() => setEstrategiaFerramental(opt.key)}
-                                                className="mt-1"
+                                                className="mt-1 accent-[#D97D3D]"
                                             />
                                             <div>
-                                                <span className="font-bold text-slate-200 text-sm">{opt.label}</span>
-                                                <p className="text-[11px] text-slate-500 mt-0.5">{opt.hint}</p>
+                                                <span className="font-semibold text-[#E7E9ED] text-sm">{opt.label}</span>
+                                                <p className="text-[11px] text-[#565B68] mt-0.5">{opt.hint}</p>
                                             </div>
                                         </label>
                                     ))}
                                 </div>
 
                                 {ferramentasCam.length > 0 && (
-                                    <div className="bg-slate-950 border border-kanban-amber/40 rounded-xl p-3.5 space-y-2 mt-3 animate-in fade-in duration-200">
+                                    <div className="bg-[#0e1014] border border-[#D97D3D]/30 rounded-[8px] p-3.5 space-y-2 mt-3 animate-in fade-in duration-200">
                                         <div className="flex items-center justify-between">
-                                            <h5 className="font-extrabold text-kanban-amber text-xs uppercase tracking-wider flex items-center gap-1.5">
-                                                <CheckCircle2 className="w-4 h-4 text-kanban-amber" />
+                                            <h5 className="font-semibold text-[#D97D3D] text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                                <CheckCircle2 className="w-3.5 h-3.5" />
                                                 Ferramentas Exigidas pelo CAM ({ferramentasCam.length})
                                             </h5>
                                         </div>
-                                        <p className="text-[11px] text-slate-400">Marque as ferramentas conforme for conferindo a presença no magazine da máquina:</p>
+                                        <p className="text-[11px] text-[#7B808F]">Marque as ferramentas conforme for conferindo a presença no magazine da máquina:</p>
                                         <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                                             {ferramentasCam.map((f, i) => (
-                                                <label key={i} className="flex items-center gap-2.5 bg-slate-900/80 p-2 rounded-lg border border-slate-800 text-xs text-slate-200 cursor-pointer hover:border-slate-700 transition-colors">
+                                                <label key={i} className="flex items-center gap-2.5 bg-[#1F232B] p-2 rounded-[6px] border border-[#262A33] text-xs text-[#E7E9ED] cursor-pointer hover:border-[#333844] transition-colors">
                                                     <input
                                                         type="checkbox"
                                                         checked={!!checkedCamTools[i]}
                                                         onChange={(e) => setCheckedCamTools(prev => ({ ...prev, [i]: e.target.checked }))}
-                                                        className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-kanban-amber focus:ring-0 cursor-pointer"
+                                                        className="w-4 h-4 rounded border-[#333844] focus:ring-0 cursor-pointer accent-[#D97D3D]"
                                                     />
-                                                    <span className="font-mono text-kanban-amber font-bold">{f.codigoT || `T${String(i + 1).padStart(2, '0')}`}</span>
-                                                    <span className="font-medium text-slate-200 truncate">{f.nome || 'Ferramenta de usinagem'}</span>
+                                                    <span className="font-['IBM_Plex_Mono'] text-[#D97D3D] font-bold">{f.codigoT || `T${String(i + 1).padStart(2, '0')}`}</span>
+                                                    <span className="font-medium text-[#9DA2AE] truncate">{f.nome || 'Ferramenta de usinagem'}</span>
                                                 </label>
                                             ))}
                                         </div>
@@ -247,10 +246,10 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                                 )}
 
                                 {estrategiaFerramental === 'lote' && (
-                                    <div className="space-y-3 pt-2 border-t border-slate-800">
+                                    <div className="space-y-3 pt-2 border-t border-[#262A33]">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold text-slate-400 uppercase">Magazine desta O.S.</span>
-                                            <button type="button" onClick={addLinhaMagazine} className="text-kanban-amber text-xs font-bold flex items-center gap-1">
+                                            <span className="text-xs font-semibold text-[#7B808F] uppercase tracking-wider">Magazine desta O.S.</span>
+                                            <button type="button" onClick={addLinhaMagazine} className="text-[#D97D3D] text-xs font-semibold flex items-center gap-1 cursor-pointer hover:text-[#c46d32] transition-colors">
                                                 <Plus className="w-3 h-3" /> Adicionar
                                             </button>
                                         </div>
@@ -261,7 +260,7 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                                                     <select
                                                         value={row.estoqueItemId}
                                                         onChange={(e) => updateLinhaMagazine(idx, 'estoqueItemId', e.target.value)}
-                                                        className="w-full p-2 text-xs border border-slate-800 rounded-lg bg-slate-950 text-slate-100 [color-scheme:dark]"
+                                                        className="w-full p-2 text-xs border border-[#262A33] rounded-[6px] bg-[#111318] text-[#E7E9ED] [color-scheme:dark] focus:border-[#D97D3D] outline-none"
                                                     >
                                                         <option value="">Ferramenta...</option>
                                                         {estoque.filter((i) => i.quantidade > 0).map((item) => (
@@ -275,7 +274,7 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                                                         min="1"
                                                         value={row.quantidade}
                                                         onChange={(e) => updateLinhaMagazine(idx, 'quantidade', e.target.value)}
-                                                        className="w-full p-2 text-xs border border-slate-800 rounded-lg bg-slate-950 text-slate-100"
+                                                        className="w-full p-2 text-xs border border-[#262A33] rounded-[6px] bg-[#111318] text-[#E7E9ED] focus:border-[#D97D3D] outline-none"
                                                         title="Qtd"
                                                     />
                                                 </div>
@@ -285,23 +284,23 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                                                         placeholder="T01"
                                                         value={row.slot}
                                                         onChange={(e) => updateLinhaMagazine(idx, 'slot', e.target.value)}
-                                                        className="w-full p-2 text-xs border border-slate-800 rounded-lg bg-slate-950 text-slate-100"
+                                                        className="w-full p-2 text-xs border border-[#262A33] rounded-[6px] bg-[#111318] text-[#E7E9ED] font-['IBM_Plex_Mono'] focus:border-[#D97D3D] outline-none"
                                                     />
                                                 </div>
                                                 {itensMagazine.length > 1 && (
-                                                    <button type="button" onClick={() => removeLinhaMagazine(idx)} className="col-span-1 p-2 text-slate-600 hover:text-red-400">
+                                                    <button type="button" onClick={() => removeLinhaMagazine(idx)} className="col-span-1 p-2 text-[#565B68] hover:text-[#C85558] cursor-pointer transition-colors">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
                                             </div>
                                         ))}
 
-                                        <label className="flex items-start gap-2 text-xs text-slate-400">
+                                        <label className="flex items-start gap-2 text-xs text-[#7B808F] cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={baixarEstoqueSetup}
                                                 onChange={(e) => setBaixarEstoqueSetup(e.target.checked)}
-                                                className="mt-0.5"
+                                                className="mt-0.5 accent-[#D97D3D]"
                                             />
                                             <span>Descontar do estoque agora (senão só registra o que está na máquina; quebra desconta depois)</span>
                                         </label>
@@ -312,9 +311,9 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                     </>
                 )}
 
-                <div className="pt-6 flex justify-end gap-3 mt-8 border-t border-slate-800">
-                    <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={isSubmitting} className="w-1/3">Cancelar</Button>
-                    <Button type="submit" variant="primary" size="lg" disabled={(isEmCorte && !isCorteReady) || isSubmitting} className="w-2/3 shadow-md">
+                <div className="pt-4 flex gap-3 border-t border-[#262A33]">
+                    <Button type="button" variant="ghost" size="md" onClick={onClose} disabled={isSubmitting} className="w-1/3">Cancelar</Button>
+                    <Button type="submit" variant="primary" size="md" disabled={(isEmCorte && !isCorteReady) || isSubmitting} className="w-2/3">
                         {isSubmitting ? 'Confirmando...' : 'Confirmar Ação'}
                     </Button>
                 </div>

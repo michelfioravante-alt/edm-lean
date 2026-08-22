@@ -112,7 +112,7 @@ export default function ClientPiecesChart({ concluidas = [] }) {
                         <Bar options={options} data={chartData} />
                     </div>
                 ) : (
-                    <div className="w-full flex flex-col items-center justify-center text-slate-400 gap-2 py-12">
+                    <div className="w-full flex flex-col items-center justify-center text-[#7B808F] gap-2 py-12">
                         <p className="font-bold text-sm">Nenhuma peça concluída no período.</p>
                         <p className="text-xs">Ajuste o filtro temporal para ver os dados.</p>
                     </div>

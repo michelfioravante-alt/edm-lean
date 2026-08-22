@@ -123,7 +123,7 @@ export default function LeadTimeChart({ concluidas }) {
                 {completedOS.length > 0 ? (
                     <Bar options={options} data={chartData} />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#7B808F]">
                         <p>Nenhuma ordem concluída para exibir gráficos.</p>
                     </div>
                 )}

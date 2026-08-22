@@ -128,8 +128,8 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
         setSaving(false);
     };
 
-    const inputCls = 'w-full px-3 py-2.5 border border-slate-700 bg-slate-950 rounded-lg text-slate-100 text-sm placeholder-slate-600 focus:outline-none focus:border-kanban-amber transition-colors';
-    const labelCls = 'block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5';
+    const inputCls = 'w-full px-3 py-2.5 border border-[#333844] bg-[#111318] rounded-lg text-[#E7E9ED] text-sm placeholder-[#565B68] focus:outline-none focus:border-kanban-amber transition-colors';
+    const labelCls = 'block text-xs font-bold text-[#7B808F] uppercase tracking-wider mb-1.5';
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Editar O.S" maxWidth="max-w-2xl">
@@ -196,8 +196,8 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                 </div>
 
                 {/* Tempos estimados */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Tempos Estimados</p>
+                <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
+                    <p className="text-xs font-bold text-[#565B68] uppercase tracking-wider mb-3">Tempos Estimados</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className={labelCls}>Corte — Horas</label>
@@ -251,16 +251,16 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                             className={inputCls}
                         />
                         {osData.quantidade > 0 && parseInt(form.quantidade || '0', 10) !== (osData.quantidade || 1) && (
-                            <div className="mt-2 flex items-start gap-2 bg-slate-950/60 border border-slate-800 rounded-lg p-2.5">
+                            <div className="mt-2 flex items-start gap-2 bg-[#111318]/80 border border-[#262A33] rounded-lg p-2.5">
                                 <input
                                     id="ajustar-tempos-quantidade"
                                     type="checkbox"
                                     checked={ajustarTemposPorQuantidade}
                                     onChange={(e) => setAjustarTemposPorQuantidade(e.target.checked)}
-                                    className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-900 text-kanban-amber focus:ring-kanban-amber"
+                                    className="mt-0.5 w-4 h-4 rounded border-[#333844] bg-[#181B22] text-kanban-amber focus:ring-kanban-amber"
                                 />
-                                <div className="text-[11px] leading-snug text-slate-400">
-                                    <label htmlFor="ajustar-tempos-quantidade" className="font-bold text-slate-200 block">
+                                <div className="text-[11px] leading-snug text-[#7B808F]">
+                                    <label htmlFor="ajustar-tempos-quantidade" className="font-bold text-[#E7E9ED] block">
                                         Ajustar tempos estimados proporcionalmente?
                                     </label>
                                     <span>
@@ -273,8 +273,8 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                 </div>
 
                 {/* Identificação CNC */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Identificação CNC</p>
+                <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-4">
+                    <p className="text-xs font-bold text-[#565B68] uppercase tracking-wider">Identificação CNC</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className={labelCls}>Nº do Programa</label>
@@ -330,7 +330,7 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                         <div className="space-y-2">
                             {form.nomesSetups.map((nome, i) => (
                                 <div key={i} className="flex items-center gap-2">
-                                    <span className="text-[11px] font-bold text-slate-500 w-14 shrink-0">Setup {i + 1}</span>
+                                    <span className="text-[11px] font-bold text-[#565B68] w-14 shrink-0">Setup {i + 1}</span>
                                     <input
                                         type="text"
                                         value={nome}
@@ -344,7 +344,7 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                                     />
                                 </div>
                             ))}
-                            <p className="text-[11px] text-slate-500">
+                            <p className="text-[11px] text-[#565B68]">
                                 Os tempos de cada setup não mudam aqui — o total de set-up é o campo acima.
                             </p>
                         </div>
@@ -355,19 +355,19 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                 <div className="flex items-center pb-1">
                     <label className="flex items-center gap-3 cursor-pointer select-none group">
                         <div
-                            className={`w-11 h-6 rounded-full transition-colors flex items-center ${form.isPrioridade ? 'bg-red-500' : 'bg-slate-700'}`}
+                            className={`w-11 h-6 rounded-full transition-colors flex items-center ${form.isPrioridade ? 'bg-red-500' : 'bg-[#333844]'}`}
                             onClick={() => setForm(p => ({ ...p, isPrioridade: !p.isPrioridade }))}
                         >
                             <div className={`w-4 h-4 rounded-full bg-white shadow mx-1 transition-transform ${form.isPrioridade ? 'translate-x-5' : 'translate-x-0'}`} />
                         </div>
-                        <span className="text-sm font-bold text-slate-300">
-                            {form.isPrioridade ? '🔴 Alta Prioridade' : 'Prioridade Normal'}
+                        <span className="text-sm font-bold text-[#E7E9ED]">
+                            {form.isPrioridade ? 'Alta Prioridade' : 'Prioridade Normal'}
                         </span>
                     </label>
                 </div>
 
                 {error && (
-                    <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 font-bold">
+                    <p className="text-sm text-[#C85558] bg-[rgba(200,85,88,0.1)] border border-[#C85558]/20 rounded-lg px-3 py-2 font-bold">
                         {error}
                     </p>
                 )}
@@ -376,14 +376,14 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-colors"
+                        className="px-5 py-2.5 text-sm font-bold text-[#7B808F] hover:text-[#E7E9ED] border border-[#333844] hover:border-[#424856] rounded-lg transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-6 py-2.5 text-sm font-extrabold bg-kanban-amber hover:bg-yellow-400 text-slate-900 rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
+                        className="px-6 py-2.5 text-sm font-semibold bg-kanban-amber hover:bg-[#c46d32] text-[#111318] rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
                     >
                         <Zap className="w-4 h-4" />
                         {saving ? 'Salvando...' : 'Salvar Alterações'}

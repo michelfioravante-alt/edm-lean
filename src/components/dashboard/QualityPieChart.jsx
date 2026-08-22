@@ -75,12 +75,12 @@ export default function QualityPieChart({ concluidas = [] }) {
                         <Doughnut data={data} options={options} />
                         {/* Overlay Rate Center */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-                            <span className="text-3xl font-black text-core">{fpy}%</span>
+                            <span className="text-3xl font-semibold text-core">{fpy}%</span>
                             <span className="text-xs font-bold text-muted uppercase tracking-widest">Aprovação</span>
                         </div>
                     </>
                 ) : (
-                    <div className="text-slate-400 text-center">
+                    <div className="text-[#7B808F] text-center">
                         <p>Nenhuma peça aferida até o momento.</p>
                     </div>
                 )}

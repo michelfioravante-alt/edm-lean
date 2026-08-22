@@ -204,33 +204,33 @@ export default function Clientes() {
         };
     };
 
-    const inputCls = 'w-full px-3 py-2.5 border border-slate-700 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber text-slate-100 text-sm placeholder-slate-600 transition-colors';
-    const labelCls = 'block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5';
+    const inputCls = 'w-full px-3 py-2.5 border border-[#333844] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber text-[#E7E9ED] text-sm placeholder-[#565B68] transition-colors';
+    const labelCls = 'block text-xs font-bold text-[#7B808F] uppercase tracking-wider mb-1.5';
 
     return (
         <div className="min-h-full flex flex-col gap-6 w-full pb-8 font-sans">
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-5 sm:p-6 rounded-xl border border-slate-800">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181B22] p-5 sm:p-6 rounded-xl border border-[#262A33]">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-kanban-teal/10 rounded-xl border border-kanban-teal/30 shrink-0">
                         <Users className="w-7 h-7 sm:w-8 sm:h-8 text-kanban-teal" />
                     </div>
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-black text-white">Clientes & Contatos</h2>
-                        <p className="text-slate-400 text-xs sm:text-sm mt-0.5">{clientes.length} cliente{clientes.length !== 1 ? 's' : ''} cadastrado{clientes.length !== 1 ? 's' : ''}</p>
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-white">Clientes & Contatos</h2>
+                        <p className="text-[#7B808F] text-xs sm:text-sm mt-0.5">{clientes.length} cliente{clientes.length !== 1 ? 's' : ''} cadastrado{clientes.length !== 1 ? 's' : ''}</p>
                     </div>
                 </div>
 
                 {/* Search */}
                 <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-[#565B68]" />
                     <input
                         type="text"
                         value={busca}
                         onChange={e => setBusca(e.target.value)}
                         placeholder="Buscar cliente ou contato..."
-                        className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-kanban-amber transition-colors"
+                        className="w-full pl-9 pr-4 py-2.5 bg-[#111318] border border-[#333844] rounded-lg text-sm text-[#E7E9ED] placeholder-[#565B68] focus:outline-none focus:border-kanban-amber transition-colors"
                     />
                 </div>
             </div>
@@ -239,11 +239,11 @@ export default function Clientes() {
 
                 {/* Add Client Form */}
                 <div className="xl:col-span-1">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden sticky top-4 shadow-lg">
-                        <div className="px-5 py-4 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
+                    <div className="bg-[#181B22] border border-[#262A33] rounded-xl overflow-hidden sticky top-4 shadow-lg">
+                        <div className="px-5 py-4 border-b border-[#262A33] bg-[#111318]/80 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Plus className="w-4 h-4 text-kanban-amber" />
-                                <h3 className="font-extrabold text-white text-sm uppercase tracking-wider">Novo Cliente</h3>
+                                <h3 className="font-semibold text-white text-sm uppercase tracking-wider">Novo Cliente</h3>
                             </div>
                         </div>
                         <form onSubmit={handleAdd} className="p-4 sm:p-5 space-y-4">
@@ -252,7 +252,7 @@ export default function Clientes() {
                                     Nome da Empresa / Razão Social <span className="text-kanban-amber">*</span>
                                 </label>
                                 <div className="relative">
-                                    <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                                    <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-[#565B68]" />
                                     <input
                                         type="text"
                                         value={nome}
@@ -268,7 +268,7 @@ export default function Clientes() {
                                 <div>
                                     <label className={labelCls}>E-mail Principal</label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                                        <Mail className="absolute left-3 top-2.5 w-4 h-4 text-[#565B68]" />
                                         <input
                                             type="email"
                                             value={email}
@@ -282,7 +282,7 @@ export default function Clientes() {
                                 <div>
                                     <label className={labelCls}>Telefone Principal</label>
                                     <div className="relative">
-                                        <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                                        <Phone className="absolute left-3 top-2.5 w-4 h-4 text-[#565B68]" />
                                         <input
                                             type="tel"
                                             value={telefone}
@@ -295,9 +295,9 @@ export default function Clientes() {
                             </div>
 
                             {/* Seção de Múltiplos Contatos */}
-                            <div className="pt-3 border-t border-slate-800 space-y-3">
+                            <div className="pt-3 border-t border-[#262A33] space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#7B808F] flex items-center gap-1.5">
                                         <UserPlus className="w-4 h-4 text-kanban-teal" /> Contatos Adicionais ({contatos.length})
                                     </span>
                                     {!showAddContatoForm && (
@@ -315,15 +315,15 @@ export default function Clientes() {
                                 {contatos.length > 0 && (
                                     <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                                         {contatos.map(ct => (
-                                            <div key={ct.id} className="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+                                            <div key={ct.id} className="flex items-center justify-between p-2.5 bg-[#111318] border border-[#262A33] rounded-lg text-xs">
                                                 <div>
-                                                    <p className="font-bold text-slate-200">{ct.nome} {ct.cargo && <span className="text-slate-500 font-normal">({ct.cargo})</span>}</p>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">{ct.email || ct.telefone || 'Sem contato direto'}</p>
+                                                    <p className="font-bold text-[#E7E9ED]">{ct.nome} {ct.cargo && <span className="text-[#565B68] font-normal">({ct.cargo})</span>}</p>
+                                                    <p className="text-[11px] text-[#7B808F] mt-0.5">{ct.email || ct.telefone || 'Sem contato direto'}</p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleRemoveContatoFromList(ct.id)}
-                                                    className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                                    className="p-1 text-[#565B68] hover:text-[#C85558] transition-colors"
                                                 >
                                                     <X className="w-4 h-4" />
                                                 </button>
@@ -334,10 +334,10 @@ export default function Clientes() {
 
                                 {/* Formulário de adição rápida de contato secundário */}
                                 {showAddContatoForm && (
-                                    <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2.5 animate-in fade-in duration-150">
+                                    <div className="p-3 bg-[#111318] border border-[#262A33] rounded-xl space-y-2.5 animate-in fade-in duration-150">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold text-amber-400 uppercase">Novo Contato Secundário</span>
-                                            <button type="button" onClick={() => setShowAddContatoForm(false)} className="text-slate-500 hover:text-slate-300">
+                                            <span className="text-xs font-bold text-[#D97D3D] uppercase">Novo Contato Secundário</span>
+                                            <button type="button" onClick={() => setShowAddContatoForm(false)} className="text-[#565B68] hover:text-[#E7E9ED]">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -347,14 +347,14 @@ export default function Clientes() {
                                                 placeholder="Nome (ex: João)"
                                                 value={newContatoNome}
                                                 onChange={e => setNewContatoNome(e.target.value)}
-                                                className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                                className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                             />
                                             <input
                                                 type="text"
                                                 placeholder="Cargo (ex: PCP/Compras)"
                                                 value={newContatoCargo}
                                                 onChange={e => setNewContatoCargo(e.target.value)}
-                                                className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                                className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                             />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
@@ -363,21 +363,21 @@ export default function Clientes() {
                                                 placeholder="E-mail"
                                                 value={newContatoEmail}
                                                 onChange={e => setNewContatoEmail(e.target.value)}
-                                                className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                                className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                             />
                                             <input
                                                 type="tel"
                                                 placeholder="Telefone/WhatsApp"
                                                 value={newContatoTelefone}
                                                 onChange={e => setNewContatoTelefone(e.target.value)}
-                                                className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                                className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                             />
                                         </div>
                                         <button
                                             type="button"
                                             onClick={handleAddContatoToList}
                                             disabled={!newContatoNome.trim()}
-                                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-slate-950 font-black rounded text-xs uppercase"
+                                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#111318] font-semibold rounded text-xs uppercase"
                                         >
                                             Confirmar Contato
                                         </button>
@@ -386,7 +386,7 @@ export default function Clientes() {
                             </div>
 
                             {feedback && !editingCliente && (
-                                <p className={`text-xs font-bold text-center py-2 rounded-lg ${feedback.startsWith('Erro') ? 'text-red-400 bg-red-500/10' : 'text-emerald-400 bg-emerald-500/10'}`}>
+                                <p className={`text-xs font-bold text-center py-2 rounded-lg ${feedback.startsWith('Erro') ? 'text-[#C85558] bg-[rgba(200,85,88,0.1)]' : 'text-[#4A9D74] bg-[rgba(74,157,116,0.1)]'}`}>
                                     {feedback}
                                 </p>
                             )}
@@ -394,7 +394,7 @@ export default function Clientes() {
                             <button
                                 type="submit"
                                 disabled={saving || !nome.trim()}
-                                className="w-full bg-kanban-amber hover:bg-yellow-400 disabled:opacity-50 text-slate-950 font-extrabold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm shadow-md cursor-pointer"
+                                className="w-full bg-kanban-amber hover:bg-[#c46d32] disabled:opacity-50 text-[#111318] font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm shadow-md cursor-pointer"
                             >
                                 <Plus className="w-4 h-4" />
                                 {saving ? 'Salvando...' : 'Cadastrar Cliente'}
@@ -405,9 +405,9 @@ export default function Clientes() {
 
                 {/* Clients List (Cards no Mobile / Tabela no Desktop) */}
                 <div className="xl:col-span-2">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                        <div className="px-5 py-4 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
-                            <h3 className="font-extrabold text-white text-sm uppercase tracking-wider">
+                    <div className="bg-[#181B22] border border-[#262A33] rounded-xl overflow-hidden">
+                        <div className="px-5 py-4 border-b border-[#262A33] bg-[#111318]/80 flex items-center justify-between">
+                            <h3 className="font-semibold text-white text-sm uppercase tracking-wider">
                                 Clientes Cadastrados
                                 {busca && (
                                     <span className="ml-2 text-kanban-amber font-normal normal-case text-xs">
@@ -415,26 +415,26 @@ export default function Clientes() {
                                     </span>
                                 )}
                             </h3>
-                            <span className="text-[10px] text-slate-400 font-bold bg-slate-800 px-2 py-0.5 rounded">
+                            <span className="text-[10px] text-[#7B808F] font-bold bg-[#1F232B] px-2 py-0.5 rounded">
                                 Clique para abrir o histórico
                             </span>
                         </div>
 
                         {clientesFiltrados.length === 0 ? (
-                            <div className="py-16 flex flex-col items-center gap-3 text-slate-500">
+                            <div className="py-16 flex flex-col items-center gap-3 text-[#565B68]">
                                 <Users className="w-10 h-10 opacity-40" />
                                 <p className="font-bold text-sm">
                                     {busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado ainda.'}
                                 </p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-slate-800">
+                            <div className="divide-y divide-[#262A33]">
                                 {clientesFiltrados.map(c => {
                                     const totalContatos = (c.contatos || []).length;
                                     return (
                                         <div
                                             key={c.id}
-                                            className="p-4 sm:p-5 hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                                            className="p-4 sm:p-5 hover:bg-[#1F232B]/40 transition-colors group cursor-pointer"
                                             onClick={() => handleOpenStats(c)}
                                         >
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -442,15 +442,15 @@ export default function Clientes() {
                                                 {/* Nome e Indicador */}
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kanban-teal/20 to-teal-900/30 border border-kanban-teal/30 flex items-center justify-center shrink-0 mt-0.5">
-                                                        <span className="text-kanban-teal font-black text-sm">
+                                                        <span className="text-kanban-teal font-semibold text-sm">
                                                             {c.nome.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <h4 className="font-black text-white text-base group-hover:text-amber-400 transition-colors">{c.nome}</h4>
+                                                            <h4 className="font-semibold text-white text-base group-hover:text-[#D97D3D] transition-colors">{c.nome}</h4>
                                                             {totalContatos > 0 && (
-                                                                <span className="text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                                                                <span className="text-[10px] font-bold bg-[rgba(217,125,61,0.1)] text-[#D97D3D] border border-[#D97D3D]/30 px-2 py-0.5 rounded-full">
                                                                     +{totalContatos} contato{totalContatos > 1 ? 's' : ''}
                                                                 </span>
                                                             )}
@@ -462,26 +462,26 @@ export default function Clientes() {
                                                                 <a
                                                                     href={`mailto:${c.email}`}
                                                                     onClick={e => e.stopPropagation()}
-                                                                    className="text-slate-300 hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                                                                    className="text-[#E7E9ED] hover:text-[#D97D3D] transition-colors flex items-center gap-1.5"
                                                                 >
                                                                     <Mail className="w-3.5 h-3.5 text-kanban-teal shrink-0" />
                                                                     <span>{c.email}</span>
                                                                 </a>
                                                             ) : (
-                                                                <span className="text-slate-500 text-xs italic">Sem e-mail</span>
+                                                                <span className="text-[#565B68] text-xs italic">Sem e-mail</span>
                                                             )}
 
                                                             {c.telefone ? (
                                                                 <a
                                                                     href={`tel:${c.telefone}`}
                                                                     onClick={e => e.stopPropagation()}
-                                                                    className="text-slate-300 hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                                                                    className="text-[#E7E9ED] hover:text-[#D97D3D] transition-colors flex items-center gap-1.5"
                                                                 >
-                                                                    <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                                                    <Phone className="w-3.5 h-3.5 text-[#4A9D74] shrink-0" />
                                                                     <span>{c.telefone}</span>
                                                                 </a>
                                                             ) : (
-                                                                <span className="text-slate-500 text-xs italic">Sem telefone</span>
+                                                                <span className="text-[#565B68] text-xs italic">Sem telefone</span>
                                                             )}
                                                         </div>
 
@@ -489,12 +489,12 @@ export default function Clientes() {
                                                         {totalContatos > 0 && (
                                                             <div className="flex flex-wrap gap-1.5 mt-2">
                                                                 {c.contatos.slice(0, 2).map((ct, i) => (
-                                                                    <span key={i} className="text-[11px] bg-slate-950 border border-slate-800 text-slate-400 px-2 py-0.5 rounded">
-                                                                        👤 {ct.nome} {ct.cargo ? `(${ct.cargo})` : ''}: <strong className="text-slate-300">{ct.telefone || ct.email}</strong>
+                                                                    <span key={i} className="text-[11px] bg-[#111318] border border-[#262A33] text-[#7B808F] px-2 py-0.5 rounded">
+                                                                        👤 {ct.nome} {ct.cargo ? `(${ct.cargo})` : ''}: <strong className="text-[#E7E9ED]">{ct.telefone || ct.email}</strong>
                                                                     </span>
                                                                 ))}
                                                                 {totalContatos > 2 && (
-                                                                    <span className="text-[10px] text-slate-500 italic">+{totalContatos - 2} mais</span>
+                                                                    <span className="text-[10px] text-[#565B68] italic">+{totalContatos - 2} mais</span>
                                                                 )}
                                                             </div>
                                                         )}
@@ -502,14 +502,14 @@ export default function Clientes() {
                                                 </div>
 
                                                 {/* Botões de Ação */}
-                                                <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-950">
-                                                    <span className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1 sm:hidden">
+                                                <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#111318]">
+                                                    <span className="text-xs font-bold text-[#D97D3D] hover:underline flex items-center gap-1 sm:hidden">
                                                         Ver Histórico O.S. <ChevronRight className="w-3.5 h-3.5" />
                                                     </span>
                                                     <div className="flex items-center gap-1.5">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleOpenStats(c); }}
-                                                            className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-kanban-teal rounded-lg border border-slate-800 transition-all flex items-center gap-1 text-xs font-bold"
+                                                            className="p-2 bg-[#111318] hover:bg-[#1F232B] text-[#7B808F] hover:text-kanban-teal rounded-lg border border-[#262A33] transition-all flex items-center gap-1 text-xs font-bold"
                                                             title="Ver histórico de Kanbans"
                                                         >
                                                             <Eye className="w-4 h-4 text-kanban-teal" />
@@ -517,14 +517,14 @@ export default function Clientes() {
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }}
-                                                            className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-amber-400 rounded-lg border border-slate-800 transition-all"
+                                                            className="p-2 bg-[#111318] hover:bg-[#1F232B] text-[#7B808F] hover:text-[#D97D3D] rounded-lg border border-[#262A33] transition-all"
                                                             title="Editar cliente"
                                                         >
                                                             <Pencil className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleRemove(c.id, c.nome); }}
-                                                            className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg border border-slate-800 transition-all"
+                                                            className="p-2 bg-[#111318] hover:bg-[#1F232B] text-[#7B808F] hover:text-[#C85558] rounded-lg border border-[#262A33] transition-all"
                                                             title="Remover cliente"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
@@ -553,7 +553,7 @@ export default function Clientes() {
                     <div>
                         <label className={labelCls}>Nome da Empresa <span className="text-kanban-amber">*</span></label>
                         <div className="relative">
-                            <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                            <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-[#565B68]" />
                             <input
                                 type="text"
                                 value={editNome}
@@ -568,7 +568,7 @@ export default function Clientes() {
                         <div>
                             <label className={labelCls}>E-mail Principal</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                                <Mail className="absolute left-3 top-2.5 w-4 h-4 text-[#565B68]" />
                                 <input
                                     type="email"
                                     value={editEmail}
@@ -582,7 +582,7 @@ export default function Clientes() {
                         <div>
                             <label className={labelCls}>Telefone Principal</label>
                             <div className="relative">
-                                <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                                <Phone className="absolute left-3 top-2.5 w-4 h-4 text-[#565B68]" />
                                 <input
                                     type="tel"
                                     value={editTelefone}
@@ -595,16 +595,16 @@ export default function Clientes() {
                     </div>
 
                     {/* Editar Contatos Secundários */}
-                    <div className="pt-3 border-t border-slate-800 space-y-3">
+                    <div className="pt-3 border-t border-[#262A33] space-y-3">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[#7B808F] flex items-center gap-1.5">
                                 <UserPlus className="w-4 h-4 text-kanban-teal" /> Contatos Adicionais ({editContatos.length})
                             </span>
                             {!showEditContatoForm && (
                                 <button
                                     type="button"
                                     onClick={() => setShowEditContatoForm(true)}
-                                    className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1"
+                                    className="text-xs font-bold text-[#D97D3D] hover:underline flex items-center gap-1"
                                 >
                                     <Plus className="w-3.5 h-3.5" /> Adicionar Contato
                                 </button>
@@ -614,15 +614,15 @@ export default function Clientes() {
                         {editContatos.length > 0 && (
                             <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                                 {editContatos.map(ct => (
-                                    <div key={ct.id} className="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+                                    <div key={ct.id} className="flex items-center justify-between p-2.5 bg-[#111318] border border-[#262A33] rounded-lg text-xs">
                                         <div>
-                                            <p className="font-bold text-slate-200">{ct.nome} {ct.cargo && <span className="text-slate-500 font-normal">({ct.cargo})</span>}</p>
-                                            <p className="text-[11px] text-slate-400 mt-0.5">{ct.email || ct.telefone || 'Sem contato direto'}</p>
+                                            <p className="font-bold text-[#E7E9ED]">{ct.nome} {ct.cargo && <span className="text-[#565B68] font-normal">({ct.cargo})</span>}</p>
+                                            <p className="text-[11px] text-[#7B808F] mt-0.5">{ct.email || ct.telefone || 'Sem contato direto'}</p>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveEditContatoFromList(ct.id)}
-                                            className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                            className="p-1 text-[#565B68] hover:text-[#C85558] transition-colors"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
@@ -632,10 +632,10 @@ export default function Clientes() {
                         )}
 
                         {showEditContatoForm && (
-                            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2.5">
+                            <div className="p-3 bg-[#111318] border border-[#262A33] rounded-xl space-y-2.5">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-amber-400 uppercase">Novo Contato</span>
-                                    <button type="button" onClick={() => setShowEditContatoForm(false)} className="text-slate-500 hover:text-slate-300">
+                                    <span className="text-xs font-bold text-[#D97D3D] uppercase">Novo Contato</span>
+                                    <button type="button" onClick={() => setShowEditContatoForm(false)} className="text-[#565B68] hover:text-[#E7E9ED]">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -645,14 +645,14 @@ export default function Clientes() {
                                         placeholder="Nome"
                                         value={editContatoNome}
                                         onChange={e => setEditContatoNome(e.target.value)}
-                                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                        className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                     />
                                     <input
                                         type="text"
                                         placeholder="Cargo"
                                         value={editContatoCargo}
                                         onChange={e => setEditContatoCargo(e.target.value)}
-                                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                        className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
@@ -661,21 +661,21 @@ export default function Clientes() {
                                         placeholder="E-mail"
                                         value={editContatoEmail}
                                         onChange={e => setEditContatoEmail(e.target.value)}
-                                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                        className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                     />
                                     <input
                                         type="tel"
                                         placeholder="Telefone"
                                         value={editContatoTelefone}
                                         onChange={e => setEditContatoTelefone(e.target.value)}
-                                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                                        className="px-2.5 py-1.5 bg-[#181B22] border border-[#333844] rounded text-xs text-white"
                                     />
                                 </div>
                                 <button
                                     type="button"
                                     onClick={handleAddEditContatoToList}
                                     disabled={!editContatoNome.trim()}
-                                    className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-slate-950 font-black rounded text-xs uppercase"
+                                    className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#111318] font-semibold rounded text-xs uppercase"
                                 >
                                     Incluir na Lista
                                 </button>
@@ -683,18 +683,18 @@ export default function Clientes() {
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-[#262A33]">
                         <button
                             type="button"
                             onClick={() => setEditingCliente(null)}
-                            className="px-4 py-2 text-sm font-bold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-colors"
+                            className="px-4 py-2 text-sm font-bold text-[#7B808F] hover:text-[#E7E9ED] border border-[#333844] hover:border-[#424856] rounded-lg transition-colors"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={updating || !editNome.trim()}
-                            className="px-6 py-2 text-sm font-extrabold bg-kanban-amber hover:bg-yellow-400 text-slate-900 rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
+                            className="px-6 py-2 text-sm font-semibold bg-kanban-amber hover:bg-[#c46d32] text-[#111318] rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
                             {updating ? 'Salvando...' : 'Salvar Alterações'}
@@ -706,14 +706,14 @@ export default function Clientes() {
             {/* Custom Delete Confirmation Modal */}
             {confirmDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm font-sans">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+                    <div className="bg-[#181B22] border border-[#333844] rounded-2xl shadow-2xl p-6 w-full max-w-sm">
                         <div className="flex items-start gap-4 mb-5">
-                            <div className="p-2.5 bg-red-500/10 rounded-xl border border-red-500/20 shrink-0">
-                                <AlertTriangle className="w-6 h-6 text-red-400" />
+                            <div className="p-2.5 bg-[rgba(200,85,88,0.1)] rounded-xl border border-[#C85558]/20 shrink-0">
+                                <AlertTriangle className="w-6 h-6 text-[#C85558]" />
                             </div>
                             <div>
-                                <h3 className="font-extrabold text-white text-lg">Excluir Cliente</h3>
-                                <p className="text-slate-400 text-sm mt-1">
+                                <h3 className="font-semibold text-white text-lg">Excluir Cliente</h3>
+                                <p className="text-[#7B808F] text-sm mt-1">
                                     Tem certeza que deseja excluir <span className="font-bold text-white">"{confirmDelete.nome}"</span>?
                                 </p>
                             </div>
@@ -722,14 +722,14 @@ export default function Clientes() {
                             <button
                                 onClick={() => setConfirmDelete(null)}
                                 disabled={deleting}
-                                className="px-4 py-2 text-sm font-bold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-colors"
+                                className="px-4 py-2 text-sm font-bold text-[#7B808F] hover:text-[#E7E9ED] border border-[#333844] hover:border-[#424856] rounded-lg transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={confirmHandleRemove}
                                 disabled={deleting}
-                                className="px-5 py-2 text-sm font-extrabold bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
+                                className="px-5 py-2 text-sm font-semibold bg-[#C85558] hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
                             >
                                 <Trash2 className="w-4 h-4" />
                                 {deleting ? 'Excluindo...' : 'Confirmar Exclusão'}
@@ -749,36 +749,36 @@ export default function Clientes() {
                 {statsLoading ? (
                     <div className="py-20 flex flex-col items-center gap-4">
                         <div className="w-10 h-10 border-4 border-kanban-teal/20 border-t-kanban-teal rounded-full animate-spin"></div>
-                        <p className="text-slate-400 font-bold text-sm tracking-widest animate-pulse">CARREGANDO HISTÓRICO DE O.S....</p>
+                        <p className="text-[#7B808F] font-bold text-sm tracking-widest animate-pulse">CARREGANDO HISTÓRICO DE O.S....</p>
                     </div>
                 ) : (
                     <div className="space-y-5 font-sans">
                         {/* Banner do Cliente */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
-                                <h3 className="text-lg font-black text-white">{viewingStats?.nome}</h3>
-                                <div className="flex flex-wrap items-center gap-3 mt-1 text-xs font-semibold text-slate-400">
+                                <h3 className="text-lg font-semibold text-white">{viewingStats?.nome}</h3>
+                                <div className="flex flex-wrap items-center gap-3 mt-1 text-xs font-semibold text-[#7B808F]">
                                     {viewingStats?.email && <span>📧 {viewingStats.email}</span>}
                                     {viewingStats?.telefone && <span>📞 {viewingStats.telefone}</span>}
                                 </div>
                             </div>
-                            <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 uppercase">
+                            <span className="text-[10px] font-semibold bg-[rgba(74,157,116,0.1)] text-[#4A9D74] px-3 py-1 rounded-full border border-[#4A9D74]/30 uppercase">
                                 Cliente Ativo
                             </span>
                         </div>
 
                         {/* Contatos Cadastrados do Cliente */}
                         {Array.isArray(viewingStats?.contatos) && viewingStats.contatos.length > 0 && (
-                            <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
-                                <span className="text-xs font-extrabold uppercase text-amber-400 block tracking-wider">
+                            <div className="bg-[#111318] border border-[#262A33] rounded-xl p-3.5 space-y-2">
+                                <span className="text-xs font-semibold uppercase text-[#D97D3D] block tracking-wider">
                                     Contatos Cadastrados ({viewingStats.contatos.length})
                                 </span>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {viewingStats.contatos.map((ct, idx) => (
-                                        <div key={idx} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-xs space-y-0.5">
-                                            <p className="font-bold text-white">{ct.nome} {ct.cargo && <span className="text-slate-400 font-normal">({ct.cargo})</span>}</p>
-                                            {ct.email && <p className="text-[11px] text-slate-300">📧 {ct.email}</p>}
-                                            {ct.telefone && <p className="text-[11px] text-slate-300">📞 {ct.telefone}</p>}
+                                        <div key={idx} className="p-2 bg-[#181B22] border border-[#262A33] rounded-lg text-xs space-y-0.5">
+                                            <p className="font-bold text-white">{ct.nome} {ct.cargo && <span className="text-[#7B808F] font-normal">({ct.cargo})</span>}</p>
+                                            {ct.email && <p className="text-[11px] text-[#E7E9ED]">📧 {ct.email}</p>}
+                                            {ct.telefone && <p className="text-[11px] text-[#E7E9ED]">📞 {ct.telefone}</p>}
                                         </div>
                                     ))}
                                 </div>
@@ -787,49 +787,49 @@ export default function Clientes() {
 
                         {/* Grid de Métricas do Cliente */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
-                                <FileText className="w-5 h-5 text-amber-400 mb-1 opacity-60" />
-                                <p className="text-2xl font-black text-white">{getStatsSummary()?.total || 0}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total de O.S.</p>
+                            <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl">
+                                <FileText className="w-5 h-5 text-[#D97D3D] mb-1 opacity-60" />
+                                <p className="text-2xl font-semibold text-white">{getStatsSummary()?.total || 0}</p>
+                                <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Total de O.S.</p>
                             </div>
-                            <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl border-l-kanban-teal border-l-2">
+                            <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl border-l-kanban-teal border-l-2">
                                 <TrendingUp className="w-5 h-5 text-kanban-teal mb-1 opacity-60" />
-                                <p className="text-2xl font-black text-white">{getStatsSummary()?.last30Days || 0}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Últimos 30 Dias</p>
+                                <p className="text-2xl font-semibold text-white">{getStatsSummary()?.last30Days || 0}</p>
+                                <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Últimos 30 Dias</p>
                             </div>
-                            <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl">
                                 <Clock className="w-5 h-5 text-cyan-400 mb-1 opacity-60" />
-                                <p className="text-2xl font-black text-cyan-400">{getStatsSummary()?.active || 0}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Em Andamento</p>
+                                <p className="text-2xl font-semibold text-cyan-400">{getStatsSummary()?.active || 0}</p>
+                                <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Em Andamento</p>
                             </div>
-                            <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
-                                <CheckCircle2 className="w-5 h-5 text-emerald-400 mb-1 opacity-60" />
-                                <p className="text-2xl font-black text-emerald-400">{getStatsSummary()?.concluded || 0}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Concluídas</p>
+                            <div className="bg-[#111318] border border-[#262A33] p-3.5 rounded-xl">
+                                <CheckCircle2 className="w-5 h-5 text-[#4A9D74] mb-1 opacity-60" />
+                                <p className="text-2xl font-semibold text-[#4A9D74]">{getStatsSummary()?.concluded || 0}</p>
+                                <p className="text-[10px] font-bold text-[#7B808F] uppercase tracking-wider">Concluídas</p>
                             </div>
                         </div>
 
                         {/* Filtros de Abas do Histórico de Kanbans */}
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-2 pt-2">
-                            <h4 className="font-extrabold text-sm text-white uppercase tracking-wider">
+                        <div className="flex items-center justify-between border-b border-[#262A33] pb-2 pt-2">
+                            <h4 className="font-semibold text-sm text-white uppercase tracking-wider">
                                 Ordens de Serviço (Kanbans)
                             </h4>
-                            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+                            <div className="flex items-center gap-1 bg-[#111318] p-1 rounded-lg border border-[#262A33] text-xs">
                                 <button
                                     onClick={() => setActiveTabStats('todas')}
-                                    className={`px-3 py-1 rounded font-bold transition-colors ${activeTabStats === 'todas' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+                                    className={`px-3 py-1 rounded font-bold transition-colors ${activeTabStats === 'todas' ? 'bg-amber-500 text-[#111318] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                 >
                                     Todas ({statsData.length})
                                 </button>
                                 <button
                                     onClick={() => setActiveTabStats('ativas')}
-                                    className={`px-3 py-1 rounded font-bold transition-colors ${activeTabStats === 'ativas' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+                                    className={`px-3 py-1 rounded font-bold transition-colors ${activeTabStats === 'ativas' ? 'bg-amber-500 text-[#111318] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                 >
                                     Ativas ({getStatsSummary().active})
                                 </button>
                                 <button
                                     onClick={() => setActiveTabStats('concluidas')}
-                                    className={`px-3 py-1 rounded font-bold transition-colors ${activeTabStats === 'concluidas' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+                                    className={`px-3 py-1 rounded font-bold transition-colors ${activeTabStats === 'concluidas' ? 'bg-amber-500 text-[#111318] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                 >
                                     Concluídas ({getStatsSummary().concluded})
                                 </button>
@@ -838,7 +838,7 @@ export default function Clientes() {
 
                         {/* Lista do Histórico de Kanbans */}
                         {statsData.length === 0 ? (
-                            <p className="text-xs font-bold text-slate-500 border border-dashed border-slate-800 p-8 rounded-xl text-center">
+                            <p className="text-xs font-bold text-[#565B68] border border-dashed border-[#262A33] p-8 rounded-xl text-center">
                                 Nenhum Kanban / O.S. localizado para este cliente.
                             </p>
                         ) : (
@@ -852,45 +852,45 @@ export default function Clientes() {
                                     .map(os => {
                                         const setorName = os.setor || 'CNC';
                                         const statusColor = os.status === 'Concluído'
-                                            ? 'bg-emerald-950 border-emerald-500/50 text-emerald-400'
+                                            ? 'bg-emerald-950 border-emerald-500/50 text-[#4A9D74]'
                                             : os.status === 'Em Usinagem' || os.status === 'Em Corte'
                                             ? 'bg-cyan-950 border-cyan-500/50 text-cyan-400'
                                             : os.status === 'Set-up' || os.status === 'Setup'
-                                            ? 'bg-amber-950 border-amber-500/50 text-amber-400'
-                                            : 'bg-slate-900 border-slate-700 text-slate-300';
+                                            ? 'bg-amber-950 border-amber-500/50 text-[#D97D3D]'
+                                            : 'bg-[#181B22] border-[#333844] text-[#E7E9ED]';
 
                                         return (
-                                            <div key={os.id} className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition-colors">
+                                            <div key={os.id} className="p-3.5 bg-[#111318] border border-[#262A33] rounded-xl space-y-2 hover:border-[#333844] transition-colors">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
+                                                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${
                                                             setorName === 'EDM_FIO'
-                                                                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400'
+                                                                ? 'bg-emerald-950/80 border-emerald-500/50 text-[#4A9D74]'
                                                                 : setorName === 'TORNO'
-                                                                ? 'bg-amber-950/80 border-amber-500/50 text-amber-400'
+                                                                ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
                                                                 : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400'
                                                         }`}>
-                                                            {setorName === 'EDM_FIO' ? '⚡ EDM Fio' : setorName === 'TORNO' ? '⚙️ Torno' : '🌀 CNC'}
+                                                            {setorName === 'EDM_FIO' ? 'EDM Fio' : setorName === 'TORNO' ? 'Torno' : 'CNC'}
                                                         </span>
-                                                        <span className="font-extrabold text-white text-sm">{os.codigo_peca || 'Sem código'}</span>
+                                                        <span className="font-semibold text-white text-sm">{os.codigo_peca || 'Sem código'}</span>
                                                         {os.quantidade > 1 && (
-                                                            <span className="text-xs text-slate-400 font-semibold">({os.quantidade_concluida || 0}/{os.quantidade} unid)</span>
+                                                            <span className="text-xs text-[#7B808F] font-semibold">({os.quantidade_concluida || 0}/{os.quantidade} unid)</span>
                                                         )}
                                                     </div>
 
-                                                    <span className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full border ${statusColor}`}>
+                                                    <span className={`text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-full border ${statusColor}`}>
                                                         {os.status}
                                                     </span>
                                                 </div>
 
-                                                <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-900 gap-2">
+                                                <div className="flex flex-wrap items-center justify-between text-xs text-[#7B808F] pt-1 border-t border-[#262A33] gap-2">
                                                     <div>
-                                                        <span>Máquina: <strong className="text-slate-200">{os.maquina_nome || os.maquina || 'Não atribuída'}</strong></span>
+                                                        <span>Máquina: <strong className="text-[#E7E9ED]">{os.maquina_nome || os.maquina || 'Não atribuída'}</strong></span>
                                                     </div>
                                                     <div className="flex items-center gap-3 text-[11px]">
-                                                        <span>Criado: <strong className="text-slate-300">{os.created_at ? format(new Date(os.created_at), 'dd/MM/yyyy') : '-'}</strong></span>
+                                                        <span>Criado: <strong className="text-[#E7E9ED]">{os.created_at ? format(new Date(os.created_at), 'dd/MM/yyyy') : '-'}</strong></span>
                                                         {os.prazo_entrega && (
-                                                            <span>Prazo: <strong className="text-amber-400">{format(new Date(os.prazo_entrega), 'dd/MM/yyyy')}</strong></span>
+                                                            <span>Prazo: <strong className="text-[#D97D3D]">{format(new Date(os.prazo_entrega), 'dd/MM/yyyy')}</strong></span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -900,10 +900,10 @@ export default function Clientes() {
                             </div>
                         )}
 
-                        <div className="pt-3 border-t border-slate-800 flex justify-end">
+                        <div className="pt-3 border-t border-[#262A33] flex justify-end">
                             <button
                                 onClick={() => { setViewingStats(null); setStatsData([]); }}
-                                className="px-5 py-2 text-sm font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
+                                className="px-5 py-2 text-sm font-bold bg-[#1F232B] hover:bg-[#333844] text-white rounded-lg transition-colors border border-[#333844]"
                             >
                                 Fechar Histórico
                             </button>

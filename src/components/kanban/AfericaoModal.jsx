@@ -39,36 +39,36 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
             title={`Inspeção de Qualidade: ${osData.codigoPeca || osData.codigo_peca || 'O.S.'}`}
             maxWidth="max-w-md"
         >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                    {/* Checklist simples de confirmação no estilo EDM Lean */}
-                    <div className="mb-4 bg-slate-900 border border-slate-800 p-3 rounded-xl">
-                        <label className="flex items-center gap-3 text-sm font-bold text-slate-200 cursor-pointer">
+                    {/* Checklist de confirmação */}
+                    <div className="mb-4 bg-[#111318] border border-[#262A33] p-3 rounded-[8px]">
+                        <label className="flex items-center gap-3 text-sm font-medium text-[#E7E9ED] cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={inspecaoConfirmada}
                                 onChange={(e) => setInspecaoConfirmada(e.target.checked)}
-                                className="w-5 h-5 rounded border-slate-700 bg-slate-950 text-kanban-green focus:ring-0 cursor-pointer"
+                                className="w-4 h-4 rounded border-[#333844] bg-[#111318] text-[#4A9D74] focus:ring-0 cursor-pointer accent-[#4A9D74]"
                             />
                             <span>Inspeção dimensional / visual realizada</span>
                         </label>
                     </div>
 
-                    <h3 className="text-center font-bold text-slate-100 text-base mb-4">
+                    <h3 className="text-center font-semibold text-[#E7E9ED] text-sm mb-4">
                         Resultado da inspeção:
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
                             onClick={() => setResultado('Aprovada')}
-                            className={`flex flex-col items-center justify-center p-5 border-2 rounded-xl transition-all ${resultado === 'Aprovada'
-                                ? 'border-kanban-green bg-kanban-green/10'
-                                : 'border-slate-800 bg-slate-900 hover:border-kanban-green/50'
+                            className={`flex flex-col items-center justify-center p-5 border-2 rounded-[10px] transition-all cursor-pointer ${resultado === 'Aprovada'
+                                ? 'border-[#4A9D74] bg-[rgba(74,157,116,0.1)]'
+                                : 'border-[#262A33] bg-[#111318] hover:border-[#4A9D74]/50'
                                 }`}
                         >
-                            <CheckCircle2 className={`w-10 h-10 mb-2 ${resultado === 'Aprovada' ? 'text-kanban-green' : 'text-slate-400'}`} />
-                            <span className={`font-extrabold text-base ${resultado === 'Aprovada' ? 'text-kanban-green' : 'text-slate-400'}`}>
+                            <CheckCircle2 className={`w-10 h-10 mb-2 ${resultado === 'Aprovada' ? 'text-[#4A9D74]' : 'text-[#565B68]'}`} />
+                            <span className={`font-bold text-sm ${resultado === 'Aprovada' ? 'text-[#4A9D74]' : 'text-[#565B68]'}`}>
                                 APROVADA
                             </span>
                         </button>
@@ -76,39 +76,39 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
                         <button
                             type="button"
                             onClick={() => setResultado('Refugo')}
-                            className={`flex flex-col items-center justify-center p-5 border-2 rounded-xl transition-all ${resultado === 'Refugo'
-                                ? 'border-red-500 bg-red-500/10'
-                                : 'border-slate-800 bg-slate-900 hover:border-red-500/50'
+                            className={`flex flex-col items-center justify-center p-5 border-2 rounded-[10px] transition-all cursor-pointer ${resultado === 'Refugo'
+                                ? 'border-[#C85558] bg-[rgba(200,85,88,0.1)]'
+                                : 'border-[#262A33] bg-[#111318] hover:border-[#C85558]/50'
                                 }`}
                         >
-                            <XCircle className={`w-10 h-10 mb-2 ${resultado === 'Refugo' ? 'text-red-500' : 'text-slate-400'}`} />
-                            <span className={`font-extrabold text-base ${resultado === 'Refugo' ? 'text-red-500' : 'text-slate-400'}`}>
+                            <XCircle className={`w-10 h-10 mb-2 ${resultado === 'Refugo' ? 'text-[#C85558]' : 'text-[#565B68]'}`} />
+                            <span className={`font-bold text-sm ${resultado === 'Refugo' ? 'text-[#C85558]' : 'text-[#565B68]'}`}>
                                 REFUGO
                             </span>
                         </button>
                     </div>
 
-                    {/* Caso possua múltiplos setups definidos pelo programador */}
+                    {/* Múltiplos setups */}
                     {resultado === 'Aprovada' && temProximoSetup && (
-                        <div className="mt-4 bg-kanban-amber/10 border border-kanban-amber/30 p-3 rounded-xl animate-in fade-in duration-200">
-                            <label className="flex items-center gap-3 text-xs font-bold text-amber-300 cursor-pointer">
+                        <div className="mt-4 bg-[rgba(201,154,74,0.08)] border border-[#C99A4A]/30 p-3 rounded-[8px] animate-in fade-in duration-200">
+                            <label className="flex items-center gap-3 text-xs font-medium text-[#C99A4A] cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={avancarProximoSetup}
                                     onChange={(e) => setAvancarProximoSetup(e.target.checked)}
-                                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-kanban-amber focus:ring-0 cursor-pointer"
+                                    className="w-4 h-4 rounded border-[#333844] focus:ring-0 cursor-pointer accent-[#C99A4A]"
                                 />
                                 <span>Avançar para o próximo Setup ({proximoSetupNome} - {setupAtual + 1}/{totalSetups})</span>
                             </label>
-                            <p className="text-[11px] text-slate-400 mt-1 pl-7">
+                            <p className="text-[11px] text-[#7B808F] mt-1 pl-7">
                                 Retorna a peça para a coluna Setup para a próxima virada de peça.
                             </p>
                         </div>
                     )}
 
                     {resultado === 'Refugo' && (
-                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <label className="block text-[10px] font-semibold text-[#565B68] mb-2 uppercase tracking-widest">
                                 Motivo do Refugo (Opcional)
                             </label>
                             <textarea
@@ -116,19 +116,19 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
                                 onChange={(e) => setMotivoRefugo(e.target.value)}
                                 placeholder="Descreva brevemente por que a peça foi reprovada..."
                                 rows={3}
-                                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder:text-slate-700 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 outline-none text-sm transition-all"
+                                className="w-full p-3 bg-[#111318] border border-[#262A33] rounded-[7px] text-[#E7E9ED] placeholder:text-[#565B68] focus:border-[#C85558]/50 outline-none text-sm transition-all resize-none"
                             />
                         </div>
                     )}
                 </div>
 
-                <div className="pt-4 flex justify-end gap-3 border-t border-slate-800">
-                    <Button type="button" variant="outline" size="md" onClick={onClose} className="w-1/3">Cancelar</Button>
+                <div className="flex gap-3 border-t border-[#262A33] pt-4">
+                    <Button type="button" variant="ghost" size="md" onClick={onClose} className="w-1/3">Cancelar</Button>
                     <Button
                         type="submit"
                         variant="primary"
                         size="md"
-                        className="w-2/3 shadow-md"
+                        className="w-2/3"
                         disabled={!resultado || !inspecaoConfirmada}
                     >
                         {avancarProximoSetup ? `Ir para ${proximoSetupNome}` : 'Concluir O.S.'}

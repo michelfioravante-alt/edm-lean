@@ -8,23 +8,23 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, osData 
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Excluir Ordem de Serviço">
-            <div className="flex flex-col items-center justify-center p-4">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
-                    <AlertOctagon className="w-8 h-8 text-red-500" />
+            <div className="flex flex-col items-center justify-center py-2">
+                <div className="w-14 h-14 rounded-full bg-[rgba(200,85,88,0.1)] border border-[#C85558]/30 flex items-center justify-center mb-5">
+                    <AlertOctagon className="w-7 h-7 text-[#C85558]" />
                 </div>
 
-                <h4 className="text-xl font-bold text-slate-100 text-center mb-2">
-                    Remover O.S. {osData.codigoPeca || 'S/N'}?
+                <h4 className="text-base font-semibold text-[#E7E9ED] text-center mb-2">
+                    Remover O.S. {osData.codigo_peca || osData.codigoPeca || 'S/N'}?
                 </h4>
 
-                <p className="text-slate-300 text-center text-sm mb-8 leading-relaxed">
-                    Você está prestes a excluir esta Ordem de Serviço da fila de produção.
-                    Ela será movida para o histórico como <span className="font-bold text-red-500">Cancelada / Excluída</span>.
+                <p className="text-[#7B808F] text-center text-sm mb-6 leading-relaxed">
+                    Esta O.S. será removida da fila de produção e movida para o histórico como{' '}
+                    <span className="font-semibold text-[#C85558]">Cancelada / Excluída</span>.
                     <br /><br />
-                    Esta ação <span className="font-bold underline">não</span> apaga os registros da máquina, mas os tira da fábrica. Tem certeza?
+                    Os registros da máquina são mantidos. Tem certeza?
                 </p>
 
-                <div className="flex w-full gap-3 mt-2">
+                <div className="flex w-full gap-3">
                     <Button
                         variant="secondary"
                         className="flex-1"
@@ -32,12 +32,13 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, osData 
                     >
                         Cancelar
                     </Button>
-                    <button
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center justify-center"
+                    <Button
+                        variant="danger"
+                        className="flex-1"
                         onClick={() => onConfirm(osData)}
                     >
                         Sim, Excluir O.S.
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Modal>

@@ -60,15 +60,15 @@ export default function MovimentarEstoqueModal({ isOpen, onClose, item, tipoInic
         setSalvando(false);
     };
 
-    const inputCls = 'w-full px-3 py-2.5 border border-slate-700 bg-slate-950 rounded-lg text-slate-100 text-sm placeholder-slate-600 focus:outline-none focus:border-kanban-amber transition-colors';
-    const labelCls = 'block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5';
+    const inputCls = 'w-full px-3 py-2.5 border border-[#333844] bg-[#111318] rounded-lg text-[#E7E9ED] text-sm placeholder-[#565B68] focus:outline-none focus:border-kanban-amber transition-colors';
+    const labelCls = 'block text-xs font-bold text-[#7B808F] uppercase tracking-wider mb-1.5';
 
     const botaoTipo = (valor, rotulo, Icone, cor) => (
         <button
             type="button"
             onClick={() => trocarTipo(valor)}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border font-bold text-sm transition-colors ${
-                tipo === valor ? cor : 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300'
+                tipo === valor ? cor : 'bg-[#111318] border-[#262A33] text-[#565B68] hover:text-[#E7E9ED]'
             }`}
         >
             <Icone className="w-4 h-4" />
@@ -81,7 +81,7 @@ export default function MovimentarEstoqueModal({ isOpen, onClose, item, tipoInic
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="flex gap-2">
                     {botaoTipo('entrada', 'Entrada', ArrowDownCircle, 'bg-kanban-green/10 border-kanban-green/40 text-kanban-green')}
-                    {botaoTipo('saida', 'Saída', ArrowUpCircle, 'bg-red-500/10 border-red-500/40 text-red-400')}
+                    {botaoTipo('saida', 'Saída', ArrowUpCircle, 'bg-[rgba(200,85,88,0.1)] border-[#C85558]/40 text-[#C85558]')}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -100,10 +100,10 @@ export default function MovimentarEstoqueModal({ isOpen, onClose, item, tipoInic
                     </div>
                     <div>
                         <label className={labelCls}>Saldo após</label>
-                        <div className="px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                            <span className="text-slate-500 text-sm">{item.quantidade}</span>
-                            <span className="text-slate-600 text-sm mx-2">→</span>
-                            <span className="text-slate-100 font-bold">{saldoFinal}</span>
+                        <div className="px-3 py-2.5 bg-[#111318] border border-[#262A33] rounded-lg">
+                            <span className="text-[#565B68] text-sm">{item.quantidade}</span>
+                            <span className="text-[#565B68] text-sm mx-2">→</span>
+                            <span className="text-[#E7E9ED] font-bold">{saldoFinal}</span>
                         </div>
                     </div>
                 </div>
@@ -139,7 +139,7 @@ export default function MovimentarEstoqueModal({ isOpen, onClose, item, tipoInic
                 </div>
 
                 {erro && (
-                    <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 font-bold">
+                    <p className="text-sm text-[#C85558] bg-[rgba(200,85,88,0.1)] border border-[#C85558]/20 rounded-lg px-3 py-2 font-bold">
                         {erro}
                     </p>
                 )}
@@ -148,14 +148,14 @@ export default function MovimentarEstoqueModal({ isOpen, onClose, item, tipoInic
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-colors"
+                        className="px-5 py-2.5 text-sm font-bold text-[#7B808F] hover:text-[#E7E9ED] border border-[#333844] hover:border-[#424856] rounded-lg transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
                         disabled={salvando || qtd <= 0}
-                        className="px-6 py-2.5 text-sm font-extrabold bg-kanban-amber hover:bg-yellow-400 text-slate-900 rounded-lg transition-colors disabled:opacity-50"
+                        className="px-6 py-2.5 text-sm font-semibold bg-kanban-amber hover:bg-[#c46d32] text-[#111318] rounded-lg transition-colors disabled:opacity-50"
                     >
                         {salvando ? 'Registrando...' : 'Registrar movimento'}
                     </button>

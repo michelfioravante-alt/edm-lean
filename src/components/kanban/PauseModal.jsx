@@ -226,15 +226,15 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 {isAlreadyPaused ? (
-                    <div className="bg-slate-900 border border-emerald-500/30 p-8 rounded-xl text-slate-300 shadow-xl relative overflow-hidden text-center">
+                    <div className="bg-[#181B22] border border-[#4A9D74]/30 p-8 rounded-xl text-[#E7E9ED] shadow-xl relative overflow-hidden text-center">
                         <div className="absolute top-0 left-0 w-full h-1.5 bg-kanban-green"></div>
                         <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">Deseja Retomar Produção?</h3>
-                        <p className="text-slate-400 text-sm">A workstation será reativada e o cronômetro voltará a contar.</p>
+                        <p className="text-[#7B808F] text-sm">A workstation será reativada e o cronômetro voltará a contar.</p>
                     </div>
                 ) : (
                     <>
                         <div>
-                            <label className="block text-sm font-bold text-slate-300 mb-2">Atalhos Rápidos de Usinagem</label>
+                            <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Atalhos Rápidos de Usinagem</label>
                             <div className="flex flex-wrap gap-1.5 mb-3">
                                 {[
                                     'Envio Tratamento Térmico (Ext.)',
@@ -248,28 +248,28 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                         key={quickReason}
                                         type="button"
                                         onClick={() => setMotivo(quickReason)}
-                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                                             motivo === quickReason
-                                                ? 'bg-kanban-amber text-slate-950 shadow-md scale-105'
+                                                ? 'bg-kanban-amber text-[#111318] shadow-md scale-105'
                                                 : quickReason.includes('Térmico')
-                                                ? 'bg-purple-950/80 text-purple-200 border border-purple-800 hover:border-purple-500'
-                                                : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-kanban-amber/60 hover:text-white'
+                                                ? 'bg-[rgba(201,154,74,0.12)] text-[#C99A4A] border border-[#C99A4A]/40 hover:border-[#C99A4A]'
+                                                : 'bg-[#181B22] text-[#E7E9ED] border border-[#262A33] hover:border-kanban-amber/60 hover:text-[#E7E9ED]'
                                         }`}
                                     >
-                                        {quickReason.includes('Térmico') ? '🔥 ' : '⚡ '}{quickReason}
+                                        {quickReason}
                                     </button>
                                 ))}
                             </div>
 
-                            <label className="block text-sm font-bold text-slate-300 mb-2">Motivo da Pausa *</label>
+                            <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Motivo da Pausa *</label>
                             <select
                                 value={motivo}
                                 onChange={(e) => setMotivo(e.target.value)}
                                 required
-                                className="w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-slate-950 text-slate-100 font-bold text-lg [color-scheme:dark]"
+                                className="w-full p-3 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-[#111318] text-[#E7E9ED] font-bold text-lg [color-scheme:dark]"
                             >
                                 <option value="" disabled>Selecione um motivo...</option>
-                                <option value="Envio Tratamento Térmico (Ext.)">🔥 Envio Tratamento Térmico (Externo)</option>
+                                <option value="Envio Tratamento Térmico (Ext.)">Envio Tratamento Térmico (Externo)</option>
                                 {MOTIVOS_PAUSA.map(m => (
                                     <option key={m} value={m}>{m}</option>
                                 ))}
@@ -277,14 +277,14 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                         </div>
 
                         {motivo === 'Envio Tratamento Térmico (Ext.)' && (
-                            <div className="bg-purple-950/40 border border-purple-500/40 p-4 rounded-xl space-y-2 text-xs text-purple-200 animate-in fade-in duration-200">
-                                <strong className="text-purple-300 flex items-center gap-1.5 font-bold uppercase text-xs">
-                                    🔥 Devolução para Fila Inicial (A Fazer)
+                            <div className="bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/40 p-4 rounded-xl space-y-2 text-xs text-[#C99A4A] animate-in fade-in duration-200">
+                                <strong className="text-[#C99A4A] flex items-center gap-1.5 font-bold uppercase text-xs">
+                                    Devolução para Fila Inicial (A Fazer)
                                 </strong>
                                 <p className="leading-relaxed">
-                                    Ao confirmar o envio para Tratamento Térmico externo, esta peça sairá da máquina atual e voltará para a coluna **&quot;A fazer&quot;** com a etiqueta <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold border border-red-500/40">[Aguardando Retorno T.T.]</span>.
+                                    Ao confirmar o envio para Tratamento Térmico externo, esta peça sairá da máquina atual e voltará para a coluna **&quot;A fazer&quot;** com a etiqueta <span className="px-1.5 py-0.5 rounded bg-[rgba(200,85,88,0.12)] text-[#C85558] font-bold border border-[#C85558]/40">[Aguardando Retorno T.T.]</span>.
                                 </p>
-                                <p className="text-slate-400 text-[11px]">
+                                <p className="text-[#7B808F] text-[11px]">
                                     Isso libera a máquina para receber outros componentes e não polui o fluxo ativo de corte da oficina.
                                 </p>
                             </div>
@@ -292,34 +292,34 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
 
                         {motivo === 'Outros' && (
                             <div>
-                                <label className="block text-sm font-bold text-slate-300 mb-2">Observação Adicional *</label>
+                                <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Observação Adicional *</label>
                                 <textarea
                                     value={observacao}
                                     onChange={(e) => setObservacao(e.target.value)}
                                     required
                                     rows={3}
                                     placeholder="Detalhe o motivo da pausa..."
-                                    className="w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-lg bg-slate-950 placeholder-slate-600"
+                                    className="w-full p-3 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-lg bg-[#111318] placeholder-[#565B68]"
                                 />
                             </div>
                         )}
 
                         {motivo === 'Quebra de Ferramenta' && (
-                            <div className="bg-slate-900 border border-red-500/30 p-4 rounded-xl space-y-4">
-                                <h4 className="font-extrabold text-slate-100 flex items-center gap-2">
+                            <div className="bg-[#181B22] border border-[#C85558]/30 p-4 rounded-xl space-y-4">
+                                <h4 className="font-semibold text-[#E7E9ED] flex items-center gap-2">
                                     <span className="bg-red-500 text-white px-2 py-1 rounded text-xs uppercase tracking-widest">Quebra</span>
                                     Ferramenta + estoque
                                 </h4>
-                                <p className="text-[11px] text-slate-500 leading-relaxed">
-                                    Registra operador, máquina e peça <strong className="text-slate-400">{codigoPeca}</strong> e desconta 1 unidade do estoque.
+                                <p className="text-[11px] text-[#565B68] leading-relaxed">
+                                    Registra operador, máquina e peça <strong className="text-[#7B808F]">{codigoPeca}</strong> e desconta 1 unidade do estoque.
                                 </p>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Ferramenta que quebrou *</label>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Ferramenta que quebrou *</label>
                                     <select
                                         value={ferramentaEstoqueId}
                                         onChange={(e) => setFerramentaEstoqueId(e.target.value)}
-                                        className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber [color-scheme:dark]"
+                                        className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]"
                                         required
                                     >
                                         <option value="" disabled>Selecione no estoque...</option>
@@ -332,11 +332,11 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Máquina *</label>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Máquina *</label>
                                     <select
                                         value={ferramentaMaquina}
                                         onChange={(e) => setFerramentaMaquina(e.target.value)}
-                                        className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber [color-scheme:dark]"
+                                        className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]"
                                         required
                                     >
                                         <option value="" disabled>Selecione...</option>
@@ -347,11 +347,11 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Operador *</label>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Operador *</label>
                                     <select
                                         value={ferramentaOperador}
                                         onChange={(e) => setFerramentaOperador(e.target.value)}
-                                        className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber [color-scheme:dark]"
+                                        className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]"
                                         required
                                     >
                                         <option value="" disabled>Quem estava na máquina...</option>
@@ -362,19 +362,19 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
 
                                 </div>
 
-                                <div className="flex items-start gap-2 bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+                                <div className="flex items-start gap-2 bg-[#111318]/80 border border-[#262A33] rounded-lg p-3">
                                     <input
                                         id="quebraRetroativo"
                                         type="checkbox"
                                         checked={quebraRetroativo}
                                         onChange={(e) => setQuebraRetroativo(e.target.checked)}
-                                        className="mt-1 w-4 h-4 rounded border-slate-700 bg-slate-900 text-kanban-amber focus:ring-kanban-amber"
+                                        className="mt-1 w-4 h-4 rounded border-[#333844] bg-[#181B22] text-kanban-amber focus:ring-kanban-amber"
                                     />
                                     <div>
-                                        <label htmlFor="quebraRetroativo" className="text-xs font-bold text-slate-200">
+                                        <label htmlFor="quebraRetroativo" className="text-xs font-bold text-[#E7E9ED]">
                                             Registrar tempo retroativo (operador registrou depois)
                                         </label>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                        <p className="text-[11px] text-[#565B68] mt-0.5">
                                             Desconta o período da parada sem deixar a O.S. pausada agora — útil quando o operador foi direto à máquina.
                                         </p>
                                     </div>
@@ -383,23 +383,23 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                 {quebraRetroativo && (
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-400 mb-1">Início da parada</label>
+                                            <label className="block text-sm font-bold text-[#7B808F] mb-1">Início da parada</label>
                                             <input
                                                 type="time"
                                                 value={horaInicioQuebra}
                                                 onChange={(e) => setHoraInicioQuebra(e.target.value)}
                                                 required
-                                                className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber"
+                                                className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-400 mb-1">Retorno à usinagem</label>
+                                            <label className="block text-sm font-bold text-[#7B808F] mb-1">Retorno à usinagem</label>
                                             <input
                                                 type="time"
                                                 value={horaFimQuebra}
                                                 onChange={(e) => setHoraFimQuebra(e.target.value)}
                                                 required
-                                                className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber"
+                                                className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber"
                                             />
                                         </div>
                                     </div>
@@ -408,22 +408,22 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                         )}
 
                         {motivo === 'Troca de Ferramenta' && (
-                            <div className="bg-slate-900 border border-kanban-amber/30 p-4 rounded-xl space-y-4">
-                                <h4 className="font-extrabold text-slate-100 flex items-center gap-2">
-                                    <span className="bg-kanban-amber text-slate-900 px-2 py-1 rounded text-xs uppercase tracking-widest">Setup</span>
+                            <div className="bg-[#181B22] border border-kanban-amber/30 p-4 rounded-xl space-y-4">
+                                <h4 className="font-semibold text-[#E7E9ED] flex items-center gap-2">
+                                    <span className="bg-kanban-amber text-[#111318] px-2 py-1 rounded text-xs uppercase tracking-widest">Setup</span>
                                     Nova ferramenta na máquina
                                 </h4>
-                                <p className="text-[11px] text-slate-500">
+                                <p className="text-[11px] text-[#565B68]">
                                     Setup físico no torno (fim de ciclo ou nova OP). Troca automática do magazine não entra aqui — leva segundos e não vale pausar.
                                 </p>
 
                                 {ferramentasNaMaquina.length > 0 && (
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-400 mb-1">Ferramenta que saiu (fim de ciclo)</label>
+                                        <label className="block text-sm font-bold text-[#7B808F] mb-1">Ferramenta que saiu (fim de ciclo)</label>
                                         <select
                                             value={ferramentaSaiuId}
                                             onChange={(e) => setFerramentaSaiuId(e.target.value)}
-                                            className="w-full p-2 border border-slate-800 rounded-lg text-slate-100 bg-slate-950 [color-scheme:dark]"
+                                            className="w-full p-2 border border-[#262A33] rounded-lg text-[#E7E9ED] bg-[#111318] [color-scheme:dark]"
                                         >
                                             <option value="">Não informar</option>
                                             {ferramentasNaMaquina.map((f) => (
@@ -436,11 +436,11 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Nova ferramenta (estoque) *</label>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Nova ferramenta (estoque) *</label>
                                     <select
                                         value={ferramentaEstoqueId}
                                         onChange={(e) => setFerramentaEstoqueId(e.target.value)}
-                                        className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 [color-scheme:dark]"
+                                        className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] [color-scheme:dark]"
                                         required
                                     >
                                         <option value="" disabled>Selecione no estoque...</option>
@@ -451,20 +451,20 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-400 mb-1">Posição / T</label>
-                                        <input type="text" placeholder="T02" value={trocaSlot} onChange={(e) => setTrocaSlot(e.target.value)} className="w-full p-2 border border-slate-800 rounded-lg text-slate-100 bg-slate-950" />
+                                        <label className="block text-sm font-bold text-[#7B808F] mb-1">Posição / T</label>
+                                        <input type="text" placeholder="T02" value={trocaSlot} onChange={(e) => setTrocaSlot(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg text-[#E7E9ED] bg-[#111318]" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-400 mb-1">Máquina *</label>
-                                        <select value={ferramentaMaquina} onChange={(e) => setFerramentaMaquina(e.target.value)} className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 [color-scheme:dark]" required>
+                                        <label className="block text-sm font-bold text-[#7B808F] mb-1">Máquina *</label>
+                                        <select value={ferramentaMaquina} onChange={(e) => setFerramentaMaquina(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] [color-scheme:dark]" required>
                                             <option value="" disabled>Selecione...</option>
                                             {maquinas.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
                                         </select>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Operador *</label>
-                                    <select value={ferramentaOperador} onChange={(e) => setFerramentaOperador(e.target.value)} className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 [color-scheme:dark]" required>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Operador *</label>
+                                    <select value={ferramentaOperador} onChange={(e) => setFerramentaOperador(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] [color-scheme:dark]" required>
                                         <option value="" disabled>Quem montou...</option>
                                         {operadores.map((o) => <option key={o.id} value={o.nome}>{o.nome}</option>)}
                                     </select>
@@ -473,47 +473,47 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                         )}
 
                         {motivo === 'Falta de Energia' && (
-                            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4">
-                                <h4 className="font-extrabold text-slate-100 flex items-center gap-2">
-                                    <span className="bg-kanban-red text-white px-2 py-1 rounded text-xs uppercase tracking-widest">Atenção</span>
+                            <div className="bg-[#181B22] border border-[#262A33] p-4 rounded-xl space-y-4">
+                                <h4 className="font-semibold text-[#E7E9ED] flex items-center gap-2">
+                                    <span className="bg-[#C85558] text-white px-2 py-1 rounded text-xs uppercase tracking-widest">Atenção</span>
                                     Registro de Horário Retrospectivo
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-400 mb-1">Hora Inicial</label>
+                                        <label className="block text-sm font-bold text-[#7B808F] mb-1">Hora Inicial</label>
                                         <input
                                             type="time"
                                             value={horaInicioEnergia}
                                             onChange={(e) => setHoraInicioEnergia(e.target.value)}
                                             required
-                                            className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber"
+                                            className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-400 mb-1">Hora de Retorno</label>
+                                        <label className="block text-sm font-bold text-[#7B808F] mb-1">Hora de Retorno</label>
                                         <input
                                             type="time"
                                             value={horaFimEnergia}
                                             onChange={(e) => setHoraFimEnergia(e.target.value)}
                                             required
-                                            className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber"
+                                            className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="mt-3 flex items-start gap-2 bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+                                <div className="mt-3 flex items-start gap-2 bg-[#111318]/80 border border-[#262A33] rounded-lg p-3">
                                     <input
                                         id="aplicarGlobalEnergia"
                                         type="checkbox"
                                         checked={aplicarGlobal}
                                         onChange={(e) => setAplicarGlobal(e.target.checked)}
-                                        className="mt-1 w-4 h-4 rounded border-slate-700 bg-slate-900 text-kanban-amber focus:ring-kanban-amber"
+                                        className="mt-1 w-4 h-4 rounded border-[#333844] bg-[#181B22] text-kanban-amber focus:ring-kanban-amber"
                                     />
                                     <div>
-                                        <label htmlFor="aplicarGlobalEnergia" className="text-xs font-bold text-slate-200">
+                                        <label htmlFor="aplicarGlobalEnergia" className="text-xs font-bold text-[#E7E9ED]">
                                             Deseja registrar esta falta de energia para todo o sistema?
                                         </label>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                        <p className="text-[11px] text-[#565B68] mt-0.5">
                                             Aplica este mesmo período de parada a todas as O.S. ativas em Set-up, Corte e Aferição.
                                         </p>
                                     </div>
@@ -522,23 +522,23 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                         )}
 
                         {motivo === 'Troca de Insumo' && (
-                            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4">
-                                <h4 className="font-extrabold text-kanban-amber flex items-center gap-2">
-                                    <span className="bg-kanban-amber text-slate-900 px-2 py-1 rounded text-xs uppercase tracking-widest">Estoque</span>
+                            <div className="bg-[#181B22] border border-[#262A33] p-4 rounded-xl space-y-4">
+                                <h4 className="font-semibold text-kanban-amber flex items-center gap-2">
+                                    <span className="bg-kanban-amber text-[#111318] px-2 py-1 rounded text-xs uppercase tracking-widest">Estoque</span>
                                     Registro de Retirada
                                 </h4>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Máquina Parada Onde Ocorreu a Troca</label>
-                                    <select value={trocaMaquina} onChange={e => setTrocaMaquina(e.target.value)} className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber [color-scheme:dark]" required>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Máquina Parada Onde Ocorreu a Troca</label>
+                                    <select value={trocaMaquina} onChange={e => setTrocaMaquina(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]" required>
                                         <option value="" disabled>Selecione...</option>
                                         {maquinas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Insumo Utilizado</label>
-                                    <select value={trocaInsumo} onChange={e => setTrocaInsumo(e.target.value)} className="w-full p-2 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber [color-scheme:dark]" required>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Insumo Utilizado</label>
+                                    <select value={trocaInsumo} onChange={e => setTrocaInsumo(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]" required>
                                         <option value="" disabled>Selecione o insumo...</option>
                                         {estoque.filter(i => i.quantidade > 0).map(item => (
                                             <option key={item.id} value={item.nome}>{item.nome} (Disp: {item.quantidade})</option>
@@ -547,8 +547,8 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-1">Operador Responsável</label>
-                                    <select value={trocaOperador} onChange={e => setTrocaOperador(e.target.value)} className="w-full min-h-[48px] p-3 border border-slate-800 rounded-lg font-bold text-slate-100 bg-slate-950 focus:outline-none focus:border-kanban-amber [color-scheme:dark] touch-manipulation" required>
+                                    <label className="block text-sm font-bold text-[#7B808F] mb-1">Operador Responsável</label>
+                                    <select value={trocaOperador} onChange={e => setTrocaOperador(e.target.value)} className="w-full min-h-[48px] p-3 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark] touch-manipulation" required>
                                         <option value="" disabled>Quem efetuou a troca...</option>
                                         {operadores.map(o => <option key={o.id} value={o.nome}>{o.nome}</option>)}
                                     </select>
@@ -558,33 +558,33 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
 
                         {(motivo !== '' && motivo !== 'Outros' && motivo !== 'Quebra de Ferramenta' && motivo !== 'Troca de Ferramenta') && (
                             <div>
-                                <label className="block text-sm font-bold text-slate-300 mb-2">Observação Extra (Opcional)</label>
+                                <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Observação Extra (Opcional)</label>
                                 <input
                                     type="text"
                                     value={observacao}
                                     onChange={(e) => setObservacao(e.target.value)}
                                     placeholder="Alguma nota sobre a parada de máquina?"
-                                    className="w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-lg bg-slate-950 placeholder-slate-600"
+                                    className="w-full p-3 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-lg bg-[#111318] placeholder-[#565B68]"
                                 />
                             </div>
                         )}
 
                         {(motivo === 'Quebra de Ferramenta' || motivo === 'Troca de Ferramenta') && (
                             <div>
-                                <label className="block text-sm font-bold text-slate-300 mb-2">Observação (opcional)</label>
+                                <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Observação (opcional)</label>
                                 <input
                                     type="text"
                                     value={observacao}
                                     onChange={(e) => setObservacao(e.target.value)}
                                     placeholder={motivo === 'Quebra de Ferramenta' ? 'Ex: quebrou no acabamento OP20...' : 'Ex: montou T03 broca Ø6...'}
-                                    className="w-full p-3 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-lg bg-slate-950 placeholder-slate-600"
+                                    className="w-full p-3 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-lg bg-[#111318] placeholder-[#565B68]"
                                 />
                             </div>
                         )}
                     </>
                 )}
 
-                <div className="pt-6 flex justify-end gap-3 border-t border-slate-800 mt-8">
+                <div className="pt-6 flex justify-end gap-3 border-t border-[#262A33] mt-8">
                     <Button type="button" variant="outline" size="lg" onClick={onClose} className="w-1/3">Cancelar</Button>
                     <Button
                         type="submit"

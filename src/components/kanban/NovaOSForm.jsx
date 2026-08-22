@@ -254,16 +254,16 @@ export default function NovaOSForm({ onClose }) {
             <form onSubmit={handleSubmit} className="space-y-5">
 
                 {/* Seleção do Setor Produtivo */}
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
-                    <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Setor Produtivo da O.S.</label>
+                <div className="bg-[#181B22] border border-[#262A33] p-3.5 rounded-xl">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#7B808F] mb-2">Setor Produtivo da O.S.</label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, setor: 'CNC' }))}
-                            className={`px-3 py-3 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`px-3 py-3 rounded-xl border font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
                                 formData.setor === 'CNC'
                                     ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-md ring-1 ring-cyan-500'
-                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    : 'bg-[#111318] border-[#262A33] text-[#7B808F] hover:border-[#333844]'
                             }`}
                         >
                             <Cpu className="w-4 h-4 shrink-0" />
@@ -272,10 +272,10 @@ export default function NovaOSForm({ onClose }) {
                         <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, setor: 'EDM_FIO' }))}
-                            className={`px-3 py-3 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`px-3 py-3 rounded-xl border font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
                                 formData.setor === 'EDM_FIO'
-                                    ? 'bg-emerald-950/80 border-emerald-500 text-emerald-400 shadow-md ring-1 ring-emerald-500'
-                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    ? 'bg-emerald-950/80 border-emerald-500 text-[#4A9D74] shadow-md ring-1 ring-emerald-500'
+                                    : 'bg-[#111318] border-[#262A33] text-[#7B808F] hover:border-[#333844]'
                             }`}
                         >
                             <Zap className="w-4 h-4 shrink-0" />
@@ -284,10 +284,10 @@ export default function NovaOSForm({ onClose }) {
                         <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, setor: 'TORNO' }))}
-                            className={`px-3 py-3 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`px-3 py-3 rounded-xl border font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
                                 formData.setor === 'TORNO'
-                                    ? 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-md ring-1 ring-amber-500'
-                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    ? 'bg-amber-950/80 border-amber-500 text-[#D97D3D] shadow-md ring-1 ring-amber-500'
+                                    : 'bg-[#111318] border-[#262A33] text-[#7B808F] hover:border-[#333844]'
                             }`}
                         >
                             <RotateCw className="w-4 h-4 shrink-0" />
@@ -301,11 +301,11 @@ export default function NovaOSForm({ onClose }) {
                         <ImportNxSheet onImport={handleNxImport} disabled={isSubmitting} />
 
                         {/* Cadastro Manual / Edição de Ferramentas */}
-                        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <div className="bg-[#181B22] border border-[#262A33] p-4 rounded-xl space-y-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Wrench className="w-4 h-4 text-kanban-amber" />
-                                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[#E7E9ED]">
                                         Lista de Ferramentas / Magazine Previsto
                                     </h4>
                                     {ferramentasList.length > 0 && (
@@ -317,7 +317,7 @@ export default function NovaOSForm({ onClose }) {
                                 <button
                                     type="button"
                                     onClick={handleAddFerramenta}
-                                    className="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-kanban-amber px-3 py-1.5 rounded-lg border border-slate-700 hover:border-kanban-amber/50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                                    className="text-xs font-semibold bg-[#1F232B] hover:bg-[#333844] text-kanban-amber px-3 py-1.5 rounded-lg border border-[#333844] hover:border-kanban-amber/50 transition-colors flex items-center gap-1.5 cursor-pointer"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
                                     <span>Adicionar Ferramenta</span>
@@ -325,20 +325,20 @@ export default function NovaOSForm({ onClose }) {
                             </div>
 
                             {ferramentasList.length === 0 ? (
-                                <p className="text-xs text-slate-500 italic py-1">
+                                <p className="text-xs text-[#565B68] italic py-1">
                                     Nenhuma ferramenta adicionada. Importe a folha CAM acima ou clique em "Adicionar Ferramenta" para especificar o magazine manualmente.
                                 </p>
                             ) : (
                                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                                     {ferramentasList.map((f, idx) => (
-                                        <div key={idx} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                                        <div key={idx} className="flex items-center gap-2 bg-[#111318] p-2 rounded-lg border border-[#262A33]">
                                             <div className="w-20 shrink-0">
                                                 <input
                                                     type="text"
                                                     value={f.codigoT || ''}
                                                     onChange={(e) => handleUpdateFerramenta(idx, 'codigoT', e.target.value)}
                                                     placeholder="T01"
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-center font-mono text-kanban-amber font-bold outline-none focus:border-kanban-amber"
+                                                    className="w-full bg-[#181B22] border border-[#333844] rounded-md px-2 py-1 text-xs text-center font-mono text-kanban-amber font-bold outline-none focus:border-kanban-amber"
                                                 />
                                             </div>
                                             <div className="flex-1">
@@ -348,7 +348,7 @@ export default function NovaOSForm({ onClose }) {
                                                     value={f.nome || ''}
                                                     onChange={(e) => handleUpdateFerramenta(idx, 'nome', e.target.value)}
                                                     placeholder="Nome ou especificação da ferramenta (ex: Fresa MD D10 4F)"
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-1 text-xs text-slate-100 placeholder-slate-600 outline-none focus:border-kanban-amber"
+                                                    className="w-full bg-[#181B22] border border-[#333844] rounded-md px-3 py-1 text-xs text-[#E7E9ED] placeholder-[#565B68] outline-none focus:border-kanban-amber"
                                                 />
                                                 {estoque.length > 0 && (
                                                     <datalist id={`estoque-lista-${idx}`}>
@@ -363,7 +363,7 @@ export default function NovaOSForm({ onClose }) {
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveFerramenta(idx)}
-                                                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-md transition-colors cursor-pointer"
+                                                className="p-1.5 text-[#565B68] hover:text-[#C85558] hover:bg-[#181B22] rounded-md transition-colors cursor-pointer"
                                                 title="Remover ferramenta"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -381,15 +381,15 @@ export default function NovaOSForm({ onClose }) {
                     <div className="bg-emerald-950/30 border border-emerald-500/40 p-3.5 sm:p-4 rounded-xl space-y-3">
                         <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                                <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
-                                <h4 className="text-xs font-extrabold uppercase tracking-wider text-emerald-300">
+                                <Calculator className="w-4 h-4 text-[#4A9D74] shrink-0" />
+                                <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
                                     Calculadora de Tempo de Corte WEDM
                                 </h4>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setShowEdmCalculator(prev => !prev)}
-                                className="text-xs font-extrabold bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-600 hover:border-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+                                className="text-xs font-semibold bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-600 hover:border-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
                             >
                                 <Calculator className="w-3.5 h-3.5" />
                                 <span>{showEdmCalculator ? 'Ocultar Calculadora' : 'Abrir Calculadora'}</span>
@@ -397,20 +397,20 @@ export default function NovaOSForm({ onClose }) {
                         </div>
 
                         {!showEdmCalculator && (
-                            <p className="text-xs text-slate-400 leading-relaxed">
+                            <p className="text-xs text-[#7B808F] leading-relaxed">
                                 Informe o <strong className="text-emerald-300">perímetro de corte (mm)</strong>, a <strong className="text-emerald-300">velocidade de cada passada (mm/min)</strong> e a quantidade de peças para calcular o tempo total estimado.
                             </p>
                         )}
 
                         {(formData.tempoEstimadoCorteHoras || formData.tempoEstimadoCorteMinutos) && (
-                            <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-950/60 p-2 rounded-lg border border-emerald-500/30">
+                            <div className="flex items-center gap-2 text-xs text-[#4A9D74] font-bold bg-emerald-950/60 p-2 rounded-lg border border-[#4A9D74]/30">
                                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                                 <span>Tempo de corte aplicado: {formData.tempoEstimadoCorteHoras || 0}h {formData.tempoEstimadoCorteMinutos || '00'}m</span>
                             </div>
                         )}
 
                         {showEdmCalculator && (
-                            <div className="pt-2 border-t border-emerald-500/30 animate-in fade-in duration-150">
+                            <div className="pt-2 border-t border-[#4A9D74]/30 animate-in fade-in duration-150">
                                 <CalculadoraTempoModal
                                     onCalculate={(h, m, qtd) => {
                                         setFormData(prev => ({
@@ -433,7 +433,7 @@ export default function NovaOSForm({ onClose }) {
                 {/* Informações Básicas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-1.5">Cliente</label>
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Cliente</label>
                         <input
                             type="text"
                             name="cliente"
@@ -443,7 +443,7 @@ export default function NovaOSForm({ onClose }) {
                             onBlur={handleClienteBlur}
                             required
                             placeholder="Selecione ou digite o nome"
-                            className={`w-full px-3 py-2 border bg-slate-950 rounded-lg focus:outline-none focus:ring-0 text-slate-100 text-base placeholder-slate-600 transition-colors ${clienteWarning ? 'border-amber-500' : 'border-slate-800 focus:border-kanban-amber'
+                            className={`w-full px-3 py-2 border bg-[#111318] rounded-lg focus:outline-none focus:ring-0 text-[#E7E9ED] text-base placeholder-[#565B68] transition-colors ${clienteWarning ? 'border-amber-500' : 'border-[#262A33] focus:border-kanban-amber'
                                 }`}
                         />
                         <datalist id="clientes-lista">
@@ -455,65 +455,65 @@ export default function NovaOSForm({ onClose }) {
                         {/* Warning: unregistered client */}
                         {clienteWarning === 'ask' && (
                             <div className="mt-2 flex items-center gap-3 bg-amber-950/40 border border-amber-500/50 rounded-lg px-3 py-2">
-                                <span className="text-amber-400 text-sm font-bold flex-1">
-                                    ⚠️ Cliente não cadastrado. Deseja cadastrar?
+                                <span className="text-[#D97D3D] text-sm font-bold flex-1">
+                                    Cliente não cadastrado. Deseja cadastrar?
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => setClienteWarning('register')}
-                                    className="text-xs font-extrabold bg-kanban-amber text-slate-900 px-3 py-1.5 rounded-md hover:bg-yellow-400 transition-colors"
+                                    className="text-xs font-semibold bg-kanban-amber text-[#111318] px-3 py-1.5 rounded-md hover:bg-[#c46d32] transition-colors"
                                 >Sim</button>
                                 <button
                                     type="button"
                                     onClick={() => setClienteWarning(false)}
-                                    className="text-xs font-bold text-slate-400 hover:text-white transition-colors"
+                                    className="text-xs font-bold text-[#7B808F] hover:text-[#E7E9ED] transition-colors"
                                 >Não</button>
                             </div>
                         )}
 
                         {/* Inline quick-register form */}
                         {clienteWarning === 'register' && (
-                            <div className="mt-3 bg-slate-900 border border-kanban-amber/40 rounded-xl p-4 space-y-3">
-                                <p className="text-xs font-extrabold text-kanban-amber uppercase tracking-wider">Cadastro Rápido de Cliente</p>
+                            <div className="mt-3 bg-[#181B22] border border-kanban-amber/40 rounded-xl p-4 space-y-3">
+                                <p className="text-xs font-semibold text-kanban-amber uppercase tracking-wider">Cadastro Rápido de Cliente</p>
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                         type="email"
                                         value={quickEmail}
                                         onChange={e => setQuickEmail(e.target.value)}
                                         placeholder="E-mail (opcional)"
-                                        className="flex-1 min-h-[44px] px-3 py-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-kanban-amber touch-manipulation"
+                                        className="flex-1 min-h-[44px] px-3 py-2 border border-[#333844] bg-[#111318] rounded-lg text-sm text-[#E7E9ED] placeholder-[#565B68] focus:outline-none focus:border-kanban-amber touch-manipulation"
                                     />
                                     <input
                                         type="tel"
                                         value={quickTelefone}
                                         onChange={e => setQuickTelefone(e.target.value)}
                                         placeholder="Telefone (opcional)"
-                                        className="flex-1 min-h-[44px] px-3 py-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-kanban-amber touch-manipulation"
+                                        className="flex-1 min-h-[44px] px-3 py-2 border border-[#333844] bg-[#111318] rounded-lg text-sm text-[#E7E9ED] placeholder-[#565B68] focus:outline-none focus:border-kanban-amber touch-manipulation"
                                     />
                                 </div>
                                 <div className="flex gap-2 justify-end">
                                     <button
                                         type="button"
                                         onClick={() => setClienteWarning(false)}
-                                        className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-md border border-slate-700 hover:border-slate-500 transition-colors"
+                                        className="text-xs font-bold text-[#7B808F] hover:text-[#E7E9ED] px-3 py-1.5 rounded-md border border-[#333844] hover:border-[#424856] transition-colors"
                                     >Cancelar</button>
                                     <button
                                         type="button"
                                         onClick={handleQuickRegister}
                                         disabled={quickSaving}
-                                        className="text-xs font-extrabold bg-kanban-amber text-slate-900 px-4 py-2.5 min-h-[44px] rounded-md hover:bg-yellow-400 transition-colors disabled:opacity-60 touch-manipulation"
+                                        className="text-xs font-semibold bg-kanban-amber text-[#111318] px-4 py-2.5 min-h-[44px] rounded-md hover:bg-[#c46d32] transition-colors disabled:opacity-60 touch-manipulation"
                                     >{quickSaving ? 'Salvando...' : 'Salvar Cliente'}</button>
                                 </div>
                                 {/* Name preview */}
-                                <p className="text-[10px] text-slate-500">
-                                    Nome: <span className="font-bold text-slate-300">{formData.cliente.trim()}</span>
+                                <p className="text-[10px] text-[#565B68]">
+                                    Nome: <span className="font-bold text-[#E7E9ED]">{formData.cliente.trim()}</span>
                                 </p>
                             </div>
                         )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-bold text-slate-300 mb-1.5">Código da Peça *</label>
+                            <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Código da Peça *</label>
                             <input
                                 type="text"
                                 name="codigoPeca"
@@ -521,11 +521,11 @@ export default function NovaOSForm({ onClose }) {
                                 onChange={handleChange}
                                 required
                                 placeholder="Ex: PN-12345"
-                                className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-base uppercase placeholder-slate-600"
+                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-base uppercase placeholder-[#565B68]"
                             />
                         </div>
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                            <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5 flex items-center gap-1.5">
                                 Programa CNC (G-Code)
                             </label>
                             <input
@@ -534,11 +534,11 @@ export default function NovaOSForm({ onClose }) {
                                 value={formData.numeroPrograma}
                                 onChange={handleChange}
                                 placeholder="Ex: O1001 / O1001.NC"
-                                className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-base font-mono uppercase placeholder-slate-600"
+                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-base font-mono uppercase placeholder-[#565B68]"
                             />
                         </div>
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-bold text-slate-300 mb-1.5">Quantidade</label>
+                            <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Quantidade</label>
                             <input
                                 type="number"
                                 name="quantidade"
@@ -546,7 +546,7 @@ export default function NovaOSForm({ onClose }) {
                                 onChange={handleChange}
                                 min="1"
                                 required
-                                className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-base font-bold text-center"
+                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-base font-bold text-center"
                             />
                         </div>
                     </div>
@@ -554,9 +554,9 @@ export default function NovaOSForm({ onClose }) {
                     {/* Identificação de Molde e Componente (Opcional) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1.5">
+                            <label className="block text-xs font-bold text-[#7B808F] mb-1 flex items-center gap-1.5">
                                 Código do Molde / Projeto
-                                <span className="text-[9px] font-extrabold text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 uppercase">OPCIONAL</span>
+                                <span className="text-[9px] font-semibold text-[#565B68] bg-[#181B22] px-1.5 py-0.5 rounded border border-[#262A33] uppercase">OPCIONAL</span>
                             </label>
                             <input
                                 type="text"
@@ -564,13 +564,13 @@ export default function NovaOSForm({ onClose }) {
                                 value={formData.codigoMolde}
                                 onChange={handleChange}
                                 placeholder="Ex: Molde M-2024 ou Proj 804"
-                                className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-sm font-medium placeholder-slate-600"
+                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-sm font-medium placeholder-[#565B68]"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1.5">
+                            <label className="block text-xs font-bold text-[#7B808F] mb-1 flex items-center gap-1.5">
                                 Componente do Molde
-                                <span className="text-[9px] font-extrabold text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 uppercase">OPCIONAL</span>
+                                <span className="text-[9px] font-semibold text-[#565B68] bg-[#181B22] px-1.5 py-0.5 rounded border border-[#262A33] uppercase">OPCIONAL</span>
                             </label>
                             <input
                                 type="text"
@@ -578,7 +578,7 @@ export default function NovaOSForm({ onClose }) {
                                 value={formData.componenteMolde}
                                 onChange={handleChange}
                                 placeholder="Ex: Postiço Macho / Gaveta A"
-                                className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-sm font-medium placeholder-slate-600"
+                                className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-sm font-medium placeholder-[#565B68]"
                             />
                         </div>
                     </div>
@@ -586,40 +586,40 @@ export default function NovaOSForm({ onClose }) {
 
                 {/* Switches: Prioridade e Retrabalho */}
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 cursor-pointer group hover:bg-slate-900 transition-colors" onClick={() => setFormData(p => ({ ...p, isPrioridade: !p.isPrioridade }))}>
+                    <div className="flex items-center gap-3 bg-[#181B22]/80 p-3 rounded-lg border border-[#262A33] cursor-pointer group hover:bg-[#181B22] transition-colors" onClick={() => setFormData(p => ({ ...p, isPrioridade: !p.isPrioridade }))}>
                         <input
                             type="checkbox"
                             name="isPrioridade"
                             checked={formData.isPrioridade}
                             onChange={handleChange}
-                            className="w-5 h-5 rounded border-2 border-slate-700 bg-slate-950 text-red-500 focus:ring-red-500 focus:ring-offset-slate-900 cursor-pointer"
+                            className="w-5 h-5 rounded border-2 border-[#333844] bg-[#111318] text-[#C85558] focus:ring-[#C85558] focus:ring-offset-[#111318] cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                         />
-                        <label className="text-sm font-bold text-slate-300 cursor-pointer group-hover:text-white transition-colors flex items-center gap-2 relative">
+                        <label className="text-sm font-bold text-[#E7E9ED] cursor-pointer group-hover:text-[#E7E9ED] transition-colors flex items-center gap-2 relative">
                             💥 Marcar como Prioridade
                         </label>
                     </div>
 
-                    <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 cursor-pointer group hover:bg-slate-900 transition-colors" onClick={() => setFormData(p => ({ ...p, isRetrabalho: !p.isRetrabalho }))}>
+                    <div className="flex items-center gap-3 bg-[#181B22]/80 p-3 rounded-lg border border-[#262A33] cursor-pointer group hover:bg-[#181B22] transition-colors" onClick={() => setFormData(p => ({ ...p, isRetrabalho: !p.isRetrabalho }))}>
                         <input
                             type="checkbox"
                             name="isRetrabalho"
                             checked={formData.isRetrabalho}
                             onChange={handleChange}
-                            className="w-5 h-5 rounded border-2 border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900 cursor-pointer"
+                            className="w-5 h-5 rounded border-2 border-[#333844] bg-[#111318] text-amber-500 focus:ring-amber-500 focus:ring-offset-[#111318] cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                         />
                         <label className="text-sm font-bold text-amber-300 cursor-pointer group-hover:text-amber-200 transition-colors flex items-center gap-2 relative">
-                            🛠️ Retrabalho / Ajuste Fino de Bancada
+                            Retrabalho / Ajuste Fino de Bancada
                         </label>
                     </div>
                 </div>
 
                 {/* Endereço do Desenho Técnico */}
                 <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-1.5 flex items-center gap-2">
+                    <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5 flex items-center gap-2">
                         Link / Caminho do Desenho (DXF/DWG)
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-800 px-2 py-0.5 rounded tracking-widest uppercase">OPCIONAL</span>
+                        <span className="text-[10px] font-bold text-[#565B68] bg-[#1F232B] px-2 py-0.5 rounded tracking-widest uppercase">OPCIONAL</span>
                     </label>
                     <input
                         type="text"
@@ -627,13 +627,13 @@ export default function NovaOSForm({ onClose }) {
                         value={formData.linkDesenho}
                         onChange={handleChange}
                         placeholder="Ex: Z:\Engenharia\Projetos\Peca_123.dxf ou link do Google Drive"
-                        className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 text-sm font-medium placeholder-slate-600"
+                        className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] text-sm font-medium placeholder-[#565B68]"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                        <label className="block text-sm font-bold text-slate-300 mb-2">Tempo Est. de Usinagem</label>
+                    <div className="bg-[#181B22] p-3 rounded-xl border border-[#262A33]">
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-2">Tempo Est. de Usinagem</label>
                         <div className="flex gap-2 items-center mt-1">
                             <div className="relative flex-1">
                                 <input
@@ -643,11 +643,11 @@ export default function NovaOSForm({ onClose }) {
                                     onChange={handleChange}
                                     placeholder="0"
                                     min="0"
-                                    className="w-full px-3 py-2 pr-7 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-slate-100 placeholder-slate-600"
+                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
                                 />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-500">h</span>
+                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">h</span>
                             </div>
-                            <span className="text-slate-400 font-extrabold text-xl">:</span>
+                            <span className="text-[#7B808F] font-semibold text-xl">:</span>
                             <div className="relative flex-1">
                                 <input
                                     type="number"
@@ -656,15 +656,15 @@ export default function NovaOSForm({ onClose }) {
                                     onChange={handleChange}
                                     placeholder="00"
                                     min="0" max="59"
-                                    className="w-full px-3 py-2 pr-7 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-slate-100 placeholder-slate-600"
+                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
                                 />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-500">m</span>
+                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">m</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                        <label className="block text-sm font-bold text-slate-300 mb-2 mt-1">Tempo Est. de Setup</label>
+                    <div className="bg-[#181B22] p-3 rounded-xl border border-[#262A33]">
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-2 mt-1">Tempo Est. de Setup</label>
                         <div className="flex gap-2 items-center">
                             <div className="relative flex-1">
                                 <input
@@ -674,11 +674,11 @@ export default function NovaOSForm({ onClose }) {
                                     onChange={handleChange}
                                     placeholder="0"
                                     min="0"
-                                    className="w-full px-3 py-2 pr-7 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-slate-100 placeholder-slate-600"
+                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
                                 />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-500">h</span>
+                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">h</span>
                             </div>
-                            <span className="text-slate-400 font-extrabold text-xl">:</span>
+                            <span className="text-[#7B808F] font-semibold text-xl">:</span>
                             <div className="relative flex-1">
                                 <input
                                     type="number"
@@ -687,9 +687,9 @@ export default function NovaOSForm({ onClose }) {
                                     onChange={handleChange}
                                     placeholder="00"
                                     min="0" max="59"
-                                    className="w-full px-3 py-2 pr-7 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-slate-100 placeholder-slate-600"
+                                    className="w-full px-3 py-2 pr-7 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-center text-lg font-bold text-[#E7E9ED] placeholder-[#565B68]"
                                 />
-                                <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-500">m</span>
+                                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#565B68]">m</span>
                             </div>
                         </div>
                     </div>
@@ -698,84 +698,84 @@ export default function NovaOSForm({ onClose }) {
                 {/* Datas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-1.5">Data de Criação</label>
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Data de Criação</label>
                         <input
                             type="date"
                             name="dataCriacao"
                             value={formData.dataCriacao}
                             disabled
-                            className="w-full px-3 py-2 border border-slate-800 rounded-lg bg-slate-900 text-slate-500 cursor-not-allowed font-medium text-base [color-scheme:dark]"
+                            className="w-full px-3 py-2 border border-[#262A33] rounded-lg bg-[#181B22] text-[#565B68] cursor-not-allowed font-medium text-base [color-scheme:dark]"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-1.5">Prazo de Entrega (Deadline)</label>
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Prazo de Entrega (Deadline)</label>
                         <input
                             type="date"
                             name="prazoEntrega"
                             value={formData.prazoEntrega}
                             onChange={handleChange}
                             required
-                            className="w-full px-3 py-2 border border-slate-800 bg-slate-950 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-slate-100 font-semibold text-base [color-scheme:dark]"
+                            className="w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 text-[#E7E9ED] font-semibold text-base [color-scheme:dark]"
                         />
                     </div>
                 </div>
 
-                <hr className="border-t border-slate-800 border-dashed my-1" />
+                <hr className="border-t border-[#262A33] border-dashed my-1" />
 
                 {/* Programador e Configuração de Setups */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-1.5">Programador Responsável</label>
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Programador Responsável</label>
                         <select
                             name="programador"
                             value={formData.programador}
                             onChange={handleChange}
                             required
-                            className="w-full px-3 py-2 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-slate-950 text-slate-100 text-base font-bold [color-scheme:dark]"
+                            className="w-full px-3 py-2 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-[#111318] text-[#E7E9ED] text-base font-bold [color-scheme:dark]"
                         >
-                            <option value="" disabled className="bg-slate-900 text-slate-400">Selecione um profissional...</option>
+                            <option value="" disabled className="bg-[#181B22] text-[#7B808F]">Selecione um profissional...</option>
                             {programadores.map(p => (
-                                <option key={p.id} value={p.nome} className="bg-slate-900 text-slate-100 hover:bg-slate-800">{p.nome}</option>
+                                <option key={p.id} value={p.nome} className="bg-[#181B22] text-[#E7E9ED] hover:bg-[#1F232B]">{p.nome}</option>
                             ))}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-1.5">Nº de Setups / Viradas de Peça</label>
+                        <label className="block text-sm font-bold text-[#E7E9ED] mb-1.5">Nº de Setups / Viradas de Peça</label>
                         <input
                             type="number"
                             min="1"
                             max="10"
                             value={formData.totalSetups}
                             onChange={(e) => handleTotalSetupsChange(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-800 rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-slate-950 text-slate-100 text-base font-bold"
+                            className="w-full px-3 py-2 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-0 bg-[#111318] text-[#E7E9ED] text-base font-bold"
                             placeholder="1"
                         />
                     </div>
                 </div>
 
                 {formData.totalSetups > 1 && (
-                    <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl space-y-3 animate-in fade-in duration-200">
+                    <div className="p-4 bg-[#181B22]/80 border border-[#262A33] rounded-xl space-y-3 animate-in fade-in duration-200">
                         <div className="flex items-center justify-between">
-                            <label className="block text-xs font-extrabold text-kanban-amber uppercase tracking-wider">
+                            <label className="block text-xs font-semibold text-kanban-amber uppercase tracking-wider">
                                 Tempos e Nome de cada Setup ({formData.totalSetups} viradas)
                             </label>
-                            <span className="text-xs text-slate-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                            <span className="text-xs text-[#7B808F] font-bold bg-[#111318] px-2 py-1 rounded border border-[#262A33]">
                                 Soma Total: <strong className="text-kanban-amber">{formData.tempoEstimadoSetupHoras || 0}h {formData.tempoEstimadoSetupMinutos || 0}m</strong>
                             </span>
                         </div>
                         <div className="space-y-2">
                             {formData.setupsList?.map((setupItem, idx) => (
-                                <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-                                    <span className="text-xs font-mono text-slate-500 w-6 font-bold">{idx + 1}º:</span>
+                                <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#111318]/80 p-2 rounded-lg border border-[#262A33]/80">
+                                    <span className="text-xs font-mono text-[#565B68] w-6 font-bold">{idx + 1}º:</span>
                                     <input
                                         type="text"
                                         value={setupItem.nome}
                                         onChange={(e) => handleSetupItemChange(idx, 'nome', e.target.value)}
-                                        className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-kanban-amber outline-none"
+                                        className="flex-1 bg-[#111318] border border-[#333844] rounded-lg px-3 py-1.5 text-xs text-white focus:border-kanban-amber outline-none"
                                         placeholder={`OP${(idx + 1) * 10}`}
                                     />
                                     <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                                        <span className="text-xs text-slate-400 font-semibold">Tempo:</span>
+                                        <span className="text-xs text-[#7B808F] font-semibold">Tempo:</span>
                                         <div className="relative w-16">
                                             <input
                                                 type="number"
@@ -783,11 +783,11 @@ export default function NovaOSForm({ onClose }) {
                                                 value={setupItem.horas}
                                                 onChange={(e) => handleSetupItemChange(idx, 'horas', e.target.value)}
                                                 placeholder="0"
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 pr-5 text-xs text-center text-white focus:border-kanban-amber outline-none font-bold"
+                                                className="w-full bg-[#111318] border border-[#333844] rounded-lg px-2 py-1 pr-5 text-xs text-center text-white focus:border-kanban-amber outline-none font-bold"
                                             />
-                                            <span className="absolute right-1.5 top-1 text-[10px] font-bold text-slate-500">h</span>
+                                            <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[#565B68]">h</span>
                                         </div>
-                                        <span className="text-slate-500 font-bold">:</span>
+                                        <span className="text-[#565B68] font-bold">:</span>
                                         <div className="relative w-16">
                                             <input
                                                 type="number"
@@ -796,9 +796,9 @@ export default function NovaOSForm({ onClose }) {
                                                 value={setupItem.minutos}
                                                 onChange={(e) => handleSetupItemChange(idx, 'minutos', e.target.value)}
                                                 placeholder="00"
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 pr-5 text-xs text-center text-white focus:border-kanban-amber outline-none font-bold"
+                                                className="w-full bg-[#111318] border border-[#333844] rounded-lg px-2 py-1 pr-5 text-xs text-center text-white focus:border-kanban-amber outline-none font-bold"
                                             />
-                                            <span className="absolute right-1.5 top-1 text-[10px] font-bold text-slate-500">m</span>
+                                            <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[#565B68]">m</span>
                                         </div>
                                     </div>
                                 </div>
@@ -807,7 +807,7 @@ export default function NovaOSForm({ onClose }) {
                     </div>
                 )}
 
-                <div className="pt-4 flex items-center justify-end gap-3 mt-4 border-t border-slate-800">
+                <div className="pt-4 flex items-center justify-end gap-3 mt-4 border-t border-[#262A33]">
                     <Button type="button" variant="outline" size="lg" onClick={onClose} className="w-1/3 min-h-[48px] cursor-pointer">Cancelar</Button>
                     <Button type="submit" variant="primary" size="lg" className="w-2/3 min-h-[48px] shadow-md cursor-pointer" disabled={isSubmitting}>
                         {isSubmitting ? 'Criando...' : 'Criar Ordem'}

@@ -62,7 +62,7 @@ function App() {
         const inviteCode = path.split('/join/')[1];
         return (
             <Suspense fallback={
-                <div className="min-h-screen bg-slate-950 flex justify-center items-center">
+                <div className="min-h-screen bg-[#111318] flex justify-center items-center">
                     <div className="w-8 h-8 border-4 border-kanban-amber/20 border-t-kanban-amber rounded-full animate-spin"></div>
                 </div>
             }>
@@ -73,7 +73,7 @@ function App() {
 
     // Se o Supabase ainda está checando o token, mostra tela de loading lisa
     if (!isInitialized) {
-        return <div className="min-h-screen bg-slate-950 flex justify-center items-center">
+        return <div className="min-h-screen bg-[#111318] flex justify-center items-center">
             <div className="w-8 h-8 border-4 border-kanban-amber/20 border-t-kanban-amber rounded-full animate-spin"></div>
         </div>;
     }
@@ -85,7 +85,7 @@ function App() {
         if (!showLogin) {
             return (
                 <Suspense fallback={
-                    <div className="min-h-screen bg-slate-950 flex justify-center items-center">
+                    <div className="min-h-screen bg-[#111318] flex justify-center items-center">
                         <div className="w-8 h-8 border-4 border-kanban-amber/20 border-t-kanban-amber rounded-full animate-spin"></div>
                     </div>
                 }>
@@ -117,26 +117,26 @@ function App() {
     // Se o período de testes grátis expirou, bloqueia e exibe a tela de cobrança/suporte
     if (isTrialExpired) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-6 relative overflow-hidden font-sans select-none">
+            <div className="min-h-screen bg-[#111318] flex flex-col justify-center items-center p-6 relative overflow-hidden font-sans select-none">
                 <div className="absolute inset-0 bg-gradient-to-tr from-kanban-amber/5 via-transparent to-red-500/5 opacity-40 pointer-events-none"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[rgba(200,85,88,0.1)] rounded-full blur-[100px] pointer-events-none"></div>
 
-                <div className="w-full max-w-[480px] z-10 backdrop-blur-xl bg-slate-900/60 border border-slate-800/60 rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-center flex flex-col gap-6 animate-in zoom-in-95 duration-500">
+                <div className="w-full max-w-[480px] z-10 backdrop-blur-xl bg-[#181B22]/60 border border-[#262A33]/60 rounded-[14px] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-center flex flex-col gap-6 animate-in zoom-in-95 duration-500">
                     <div className="relative mx-auto mb-2">
-                        <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+                        <div className="w-20 h-20 bg-[rgba(200,85,88,0.1)] border border-[#C85558]/20 text-[#C85558] rounded-[14px] flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.1)]">
                             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 17v-5M12 17v-3M15 17v-6" /></svg>
                         </div>
                     </div>
 
                     <h2 className="text-2xl font-bold text-white tracking-tight">Período de Testes Expirado</h2>
                     
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-[#7B808F] text-sm leading-relaxed">
                         Seu período de avaliação gratuita de 30 dias do <strong className="text-white">EDM Lean</strong> para a empresa <strong className="text-white">{nomeEmpresa}</strong> chegou ao fim. Esperamos que o painel Kanban e os relatórios OEE tenham ajudado a otimizar a sua produção!
                     </p>
 
-                    <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-5 text-left flex flex-col gap-3">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Como reativar o acesso?</span>
-                        <p className="text-xs text-slate-400 leading-relaxed">
+                    <div className="bg-[#111318]/80 border border-[#262A33] rounded-2xl p-5 text-left flex flex-col gap-3">
+                        <span className="text-[10px] font-semibold text-[#565B68] uppercase tracking-widest">Como reativar o acesso?</span>
+                        <p className="text-xs text-[#7B808F] leading-relaxed">
                             Para contratar o plano Pro ou reativar o seu acesso de teste, entre em contato diretamente com o responsável comercial/desenvolvedor:
                         </p>
                         {/* BOTÃO WHATSAPP */}
@@ -155,7 +155,7 @@ function App() {
 
                     <button 
                         onClick={() => logout()}
-                        className="text-xs font-bold text-slate-500 hover:text-slate-350 uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 w-fit mx-auto cursor-pointer"
+                        className="text-xs font-bold text-[#565B68] hover:text-[#E7E9ED] uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 w-fit mx-auto cursor-pointer"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                         Sair da Conta
@@ -168,11 +168,11 @@ function App() {
     // Tela de Carregamento Global (Splash Screen)
     if (isInitialLoading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center">
+            <div className="min-h-screen bg-[#111318] flex flex-col justify-center items-center">
                 <div className="relative flex flex-col items-center">
                     <div className="absolute inset-0 bg-kanban-amber/20 blur-[50px] rounded-full w-32 h-32 transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"></div>
-                    <div className="inline-flex items-center justify-center p-4 bg-slate-900 rounded-2xl shadow-lg border border-slate-800 mb-6 relative z-10 animate-pulse">
-                        <span className="text-4xl font-black text-white flex">
+                    <div className="inline-flex items-center justify-center p-4 bg-[#181B22] rounded-2xl shadow-lg border border-[#262A33] mb-6 relative z-10 animate-pulse">
+                        <span className="text-4xl font-semibold text-white flex">
                             M<span className="text-kanban-amber">.</span>
                         </span>
                     </div>
@@ -184,7 +184,7 @@ function App() {
                             </svg>
                             INICIALIZANDO WORKSPACE
                         </h2>
-                        <p className="text-slate-500 text-sm font-medium">Buscando configurações da planta...</p>
+                        <p className="text-[#565B68] text-sm font-medium">Buscando configurações da planta...</p>
                     </div>
                 </div>
             </div>

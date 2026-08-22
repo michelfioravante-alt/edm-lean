@@ -127,12 +127,12 @@ export default function MachineConsumptionChart({ periodo }) {
                     <>
                         <Doughnut data={data} options={options} />
                         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none pr-[90px]">
-                            <span className="text-3xl font-black text-white">{totalTrocas}</span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center max-w-[90px] leading-tight">
+                            <span className="text-3xl font-semibold text-white">{totalTrocas}</span>
+                            <span className="text-[10px] font-bold text-[#565B68] uppercase tracking-widest text-center max-w-[90px] leading-tight">
                                 Total de trocas
                             </span>
                             {maiorConsumo && (
-                                <span className="text-[9px] text-slate-500 mt-1 text-center max-w-[90px]">
+                                <span className="text-[9px] text-[#565B68] mt-1 text-center max-w-[90px]">
                                     Mais trocas: {maiorConsumo[0]}
                                 </span>
                             )}

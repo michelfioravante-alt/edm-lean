@@ -99,7 +99,7 @@ export default function MachineHoursChart({ concluidas = [] }) {
                 {sortedData.length > 0 ? (
                     <Bar options={options} data={chartData} />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#7B808F]">
                         <p>Aguardando aferição de novas peças.</p>
                     </div>
                 )}

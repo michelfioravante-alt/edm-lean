@@ -3,13 +3,13 @@ import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Sliders, ChevronD
 import { parseNxShopDoc, minutosParaHorasMin, applyCustomMapping } from '../../utils/nxShopDocParser';
 
 const COLUMN_ROLE_OPTIONS = [
-    { value: 'ignore', label: '❌ Ignorar coluna' },
-    { value: 'tool_code', label: '🛠️ Código Ferramenta (T01...)' },
-    { value: 'tool_name', label: '📝 Nome / Descrição Ferramenta' },
-    { value: 'op_time', label: '⏱️ Tempo Operação (min)' },
-    { value: 'setup_time', label: '🔧 Tempo de Setup (min)' },
-    { value: 'op_name', label: '⚙️ Nome da Operação' },
-    { value: 'part_code', label: '📦 Código Peça / Programa' },
+    { value: 'ignore', label: 'Ignorar coluna' },
+    { value: 'tool_code', label: 'Código Ferramenta (T01...)' },
+    { value: 'tool_name', label: 'Nome / Descrição Ferramenta' },
+    { value: 'op_time', label: 'Tempo Operação (min)' },
+    { value: 'setup_time', label: 'Tempo de Setup (min)' },
+    { value: 'op_name', label: 'Nome da Operação' },
+    { value: 'part_code', label: 'Código Peça / Programa' },
 ];
 
 // Aparecem na pré-visualização quando a folha os traz. Cliente e programador só
@@ -91,7 +91,7 @@ export default function ImportNxSheet({ onImport, disabled }) {
                 onDrop={handleDrop}
                 onClick={() => !disabled && inputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors ${
-                    disabled ? 'opacity-50 cursor-not-allowed border-slate-800' : 'border-slate-700 hover:border-kanban-amber/60 hover:bg-slate-900/50'
+                    disabled ? 'opacity-50 cursor-not-allowed border-[#262A33]' : 'border-[#333844] hover:border-kanban-amber/60 hover:bg-[#181B22]/80'
                 }`}
             >
                 <input
@@ -103,20 +103,20 @@ export default function ImportNxSheet({ onImport, disabled }) {
                     onChange={(e) => processFile(e.target.files?.[0])}
                 />
                 <Upload className="w-8 h-8 mx-auto text-kanban-amber mb-2" />
-                <p className="text-sm font-bold text-slate-200">Importar folha de processo CAM (Shop Doc)</p>
-                <p className="text-xs text-slate-500 mt-1">Arraste .html ou .xlsx (Siemens NX, Mastercam, PowerMill, WorkNC...)</p>
+                <p className="text-sm font-bold text-[#E7E9ED]">Importar folha de processo CAM (Shop Doc)</p>
+                <p className="text-xs text-[#565B68] mt-1">Arraste .html ou .xlsx (Siemens NX, Mastercam, PowerMill, WorkNC...)</p>
                 {loading && <p className="text-xs text-kanban-amber mt-2">Lendo arquivo...</p>}
             </div>
 
             {error && (
-                <div className="flex gap-2 text-sm text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg p-3">
+                <div className="flex gap-2 text-sm text-[#C85558] bg-red-950/30 border border-red-900/50 rounded-lg p-3">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     {error}
                 </div>
             )}
 
             {preview && (
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3 text-sm animate-in fade-in duration-200">
+                <div className="bg-[#181B22]/60 border border-[#262A33] rounded-xl p-4 space-y-3 text-sm animate-in fade-in duration-200">
                     <div className="flex items-center justify-between">
                         {avisos.length > 0 ? (
                             <div className="flex items-center gap-2 text-kanban-amber font-bold text-xs uppercase tracking-wider">
@@ -133,7 +133,7 @@ export default function ImportNxSheet({ onImport, disabled }) {
                             <button
                                 type="button"
                                 onClick={() => setShowMapper(!showMapper)}
-                                className="text-xs font-bold text-kanban-amber hover:underline flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded border border-slate-800"
+                                className="text-xs font-bold text-kanban-amber hover:underline flex items-center gap-1.5 bg-[#111318] px-2.5 py-1 rounded border border-[#262A33]"
                             >
                                 <Sliders className="w-3.5 h-3.5" />
                                 {showMapper ? 'Ocultar Mapeador' : 'Mapear Colunas Didático'}
@@ -143,29 +143,29 @@ export default function ImportNxSheet({ onImport, disabled }) {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                        <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Arquivo</span>
-                            <span className="text-slate-200 font-medium truncate block">{preview.arquivo}</span>
+                        <div className="bg-[#111318] p-2.5 rounded-lg border border-[#262A33]">
+                            <span className="text-[#565B68] block text-[10px] uppercase font-bold">Arquivo</span>
+                            <span className="text-[#E7E9ED] font-medium truncate block">{preview.arquivo}</span>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Tempo Total Usinagem</span>
+                        <div className="bg-[#111318] p-2.5 rounded-lg border border-[#262A33]">
+                            <span className="text-[#565B68] block text-[10px] uppercase font-bold">Tempo Total Usinagem</span>
                             <span className="text-kanban-amber font-bold">{tempo?.horas || 0}h {String(tempo?.minutos || 0).padStart(2, '0')}m</span>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Tempo de Setup</span>
+                        <div className="bg-[#111318] p-2.5 rounded-lg border border-[#262A33]">
+                            <span className="text-[#565B68] block text-[10px] uppercase font-bold">Tempo de Setup</span>
                             <span className="text-kanban-amber font-bold">{tempoSetup?.horas || 0}h {String(tempoSetup?.minutos || 0).padStart(2, '0')}m</span>
                         </div>
                         {preview.operacoes?.length > 0 && (
-                            <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                                <span className="text-slate-500 block text-[10px] uppercase font-bold">Operações</span>
-                                <span className="text-slate-200 font-bold">{preview.operacoes.length}</span>
+                            <div className="bg-[#111318] p-2.5 rounded-lg border border-[#262A33]">
+                                <span className="text-[#565B68] block text-[10px] uppercase font-bold">Operações</span>
+                                <span className="text-[#E7E9ED] font-bold">{preview.operacoes.length}</span>
                             </div>
                         )}
                         {DADOS_DA_FOLHA.map(({ chave, rotulo }) =>
                             preview[chave] ? (
-                                <div key={chave} className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                                    <span className="text-slate-500 block text-[10px] uppercase font-bold">{rotulo}</span>
-                                    <span className="text-slate-200 font-medium truncate block">{preview[chave]}</span>
+                                <div key={chave} className="bg-[#111318] p-2.5 rounded-lg border border-[#262A33]">
+                                    <span className="text-[#565B68] block text-[10px] uppercase font-bold">{rotulo}</span>
+                                    <span className="text-[#E7E9ED] font-medium truncate block">{preview[chave]}</span>
                                 </div>
                             ) : null
                         )}
@@ -183,11 +183,11 @@ export default function ImportNxSheet({ onImport, disabled }) {
                     )}
 
                     {preview.ferramentas?.length > 0 && (
-                        <div className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                            <span className="text-slate-400 font-bold block mb-1">Ferramentas Detectadas ({preview.ferramentas.length}):</span>
+                        <div className="text-xs text-[#E7E9ED] bg-[#111318] p-2.5 rounded-lg border border-[#262A33]">
+                            <span className="text-[#7B808F] font-bold block mb-1">Ferramentas Detectadas ({preview.ferramentas.length}):</span>
                             <div className="flex flex-wrap gap-1.5">
                                 {preview.ferramentas.map((f, i) => (
-                                    <span key={i} className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 font-mono text-[11px] border border-slate-800">
+                                    <span key={i} className="px-2 py-0.5 rounded bg-[#181B22] text-[#E7E9ED] font-mono text-[11px] border border-[#262A33]">
                                         <strong className="text-kanban-amber">{f.codigoT}:</strong> {f.nome}
                                     </span>
                                 ))}
@@ -197,26 +197,26 @@ export default function ImportNxSheet({ onImport, disabled }) {
 
                     {/* MAPEADOR DIDÁTICO INTERATIVO DE COLUNAS */}
                     {showMapper && maxCols > 0 && (
-                        <div className="space-y-3 pt-3 border-t border-slate-800 animate-in fade-in duration-300">
-                            <div className="bg-slate-950 p-3 rounded-xl border border-kanban-amber/40 space-y-2">
-                                <h4 className="font-extrabold text-kanban-amber text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="space-y-3 pt-3 border-t border-[#262A33] animate-in fade-in duration-300">
+                            <div className="bg-[#111318] p-3 rounded-xl border border-kanban-amber/40 space-y-2">
+                                <h4 className="font-semibold text-kanban-amber text-xs uppercase tracking-wider flex items-center gap-1.5">
                                     <Eye className="w-4 h-4" /> Mapeador Didático de Colunas CAM
                                 </h4>
-                                <p className="text-[11px] text-slate-400 leading-relaxed">
+                                <p className="text-[11px] text-[#7B808F] leading-relaxed">
                                     Abaixo estão as primeiras 5 linhas da sua folha. Escolha no seletor do topo de cada coluna a informação correspondente:
                                 </p>
 
-                                <div className="overflow-x-auto max-w-full rounded-lg border border-slate-800 mt-2">
+                                <div className="overflow-x-auto max-w-full rounded-lg border border-[#262A33] mt-2">
                                     <table className="w-full text-left text-xs">
                                         <thead>
-                                            <tr className="bg-slate-900">
+                                            <tr className="bg-[#181B22]">
                                                 {Array.from({ length: maxCols }).map((_, colIdx) => (
-                                                    <th key={colIdx} className="p-2 border-b border-r border-slate-800 min-w-[150px]">
-                                                        <span className="text-[10px] text-slate-500 font-mono block mb-1">Coluna {colIdx + 1}</span>
+                                                    <th key={colIdx} className="p-2 border-b border-r border-[#262A33] min-w-[150px]">
+                                                        <span className="text-[10px] text-[#565B68] font-mono block mb-1">Coluna {colIdx + 1}</span>
                                                         <select
                                                             value={colMapping[colIdx] || 'ignore'}
                                                             onChange={(e) => handleColRoleChange(colIdx, e.target.value)}
-                                                            className="w-full bg-slate-950 text-slate-100 border border-slate-700 rounded p-1 text-[11px] font-bold focus:border-kanban-amber"
+                                                            className="w-full bg-[#111318] text-[#E7E9ED] border border-[#333844] rounded p-1 text-[11px] font-bold focus:border-kanban-amber"
                                                         >
                                                             {COLUMN_ROLE_OPTIONS.map(opt => (
                                                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -228,10 +228,10 @@ export default function ImportNxSheet({ onImport, disabled }) {
                                         </thead>
                                         <tbody>
                                             {sampleRows.map((row, rowIdx) => (
-                                                <tr key={rowIdx} className="border-b border-slate-900/60 hover:bg-slate-900/30">
+                                                <tr key={rowIdx} className="border-b border-[#262A33] hover:bg-[#181B22]/30">
                                                     {Array.from({ length: maxCols }).map((_, colIdx) => (
-                                                        <td key={colIdx} className="p-2 border-r border-slate-900 text-[11px] text-slate-300 font-mono truncate max-w-[180px]">
-                                                            {row[colIdx] || <span className="text-slate-600 italic">-</span>}
+                                                        <td key={colIdx} className="p-2 border-r border-[#262A33] text-[11px] text-[#E7E9ED] font-mono truncate max-w-[180px]">
+                                                            {row[colIdx] || <span className="text-[#565B68] italic">-</span>}
                                                         </td>
                                                     ))}
                                                 </tr>
