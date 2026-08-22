@@ -18,6 +18,8 @@ export default function Header({ onMenuToggle }) {
         }
         enterLocalStudyMode('programmer', setor);
     };
+
+    const handleGerenteClick = () => {
         if (role === 'admin' && setorPadrao === 'TODOS') return;
         setIsPinModalOpen(true);
     };
