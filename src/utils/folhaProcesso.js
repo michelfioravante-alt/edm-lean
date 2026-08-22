@@ -1,7 +1,6 @@
 export function urlKanbanOs(osId) {
-    if (typeof window === 'undefined') return `#os=${osId}`;
-    const path = window.location.pathname.replace(/\/$/, '') || '/';
-    return `${window.location.origin}${path}#os=${osId}`;
+    if (typeof window === 'undefined') return `/#os=${osId}`;
+    return `${window.location.origin}/#os=${osId}`;
 }
 
 export function parseOsHash(hash) {

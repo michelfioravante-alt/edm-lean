@@ -75,8 +75,8 @@ export default function CalculadoraTempoModal({ onCalculate, onClose, initialQua
                     <Calculator className="w-8 h-8" />
                 </div>
                 <div>
-                    <h4 className="font-semibold text-lg text-[#E7E9ED]">Assistente de Cálculo Múltiplo</h4>
-                    <p className="font-semibold text-sm text-[#7B808F] mt-1">Soma de tempos por passes métricos.</p>
+                    <h4 className="font-semibold text-base sm:text-lg text-[#E7E9ED]">Assistente de cálculo</h4>
+                    <p className="font-semibold text-xs sm:text-sm text-[#7B808F] mt-1">Soma de tempos por passes (mm/min).</p>
                 </div>
             </div>
 

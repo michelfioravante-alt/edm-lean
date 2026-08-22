@@ -76,6 +76,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
     };
 
     return (
+        <>
         <Modal isOpen={isOpen} onClose={onClose} title={`Programar: ${osData.codigo_peca || osData.codigoPeca || ''}`} maxWidth="max-w-lg">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <p className="text-xs text-[#7B808F]">Este kanban já está em A fazer. Aqui entra CAM, tempos e programa — não a criação da O.S.</p>
@@ -93,19 +94,9 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
                 )}
 
                 {setor === 'EDM_FIO' && (
-                    <div>
-                        <button type="button" onClick={() => setShowCalc((v) => !v)} className="text-xs font-semibold text-[#4A9D74] flex items-center gap-1 cursor-pointer">
-                            <Calculator className="w-3.5 h-3.5" /> Calculadora WEDM
-                        </button>
-                        {showCalc && (
-                            <div className="mt-2">
-                                <CalculadoraTempoModal
-                                    onCalculate={(h, m) => setForm((p) => ({ ...p, tempoEstimadoCorteHoras: String(h), tempoEstimadoCorteMinutos: String(m) }))}
-                                    onClose={() => setShowCalc(false)}
-                                />
-                            </div>
-                        )}
-                    </div>
+                    <button type="button" onClick={() => setShowCalc(true)} className="text-xs font-semibold text-[#4A9D74] flex items-center gap-1 cursor-pointer min-h-[44px]">
+                        <Calculator className="w-3.5 h-3.5" /> Calculadora WEDM
+                    </button>
                 )}
 
                 <div>
@@ -138,5 +129,22 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
                 </div>
             </form>
         </Modal>
+        <Modal
+            isOpen={showCalc}
+            onClose={() => setShowCalc(false)}
+            title="Calculadora WEDM"
+            maxWidth="max-w-md"
+            overlayClassName="z-[210]"
+        >
+            <CalculadoraTempoModal
+                initialQuantidade={parseInt(osData.quantidade, 10) || 1}
+                onCalculate={(h, m) => {
+                    setForm((p) => ({ ...p, tempoEstimadoCorteHoras: String(h), tempoEstimadoCorteMinutos: String(m) }));
+                    setShowCalc(false);
+                }}
+                onClose={() => setShowCalc(false)}
+            />
+        </Modal>
+        </>
     );
 }

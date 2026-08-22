@@ -127,6 +127,7 @@ export default function ExtraSetupModal({ isOpen, onClose, onConfirm, osData }) 
                     onClose={() => setShowCalculator(false)}
                     title="Calculadora de Tempo"
                     maxWidth="max-w-md"
+                    overlayClassName="z-[210]"
                 >
                     <CalculadoraTempoModal
                         onCalculate={handleApplyCalculation}

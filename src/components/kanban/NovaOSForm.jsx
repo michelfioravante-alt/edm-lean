@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { TIPOS_KANBAN_GESTOR, labelSetor } from '../../constants/osWorkflow';
 import { Plus, Trash2, Flag, ArrowRight, X, Calculator } from 'lucide-react';
 import { compressImageFile } from '../../utils/folhaProcesso';
+import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 
 const novaPeca = () => ({ nome: '', etapas: [], quantidade: 1 });
 
@@ -251,6 +252,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     );
 
     return (
+        <>
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
@@ -382,27 +384,14 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                     <div>
                         <button
                             type="button"
-                            onClick={() => setShowEdmCalc((v) => !v)}
-                            className="text-[11px] text-[#565B68] hover:text-[#7B808F] flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => setShowEdmCalc(true)}
+                            className="text-[11px] text-[#565B68] hover:text-[#7B808F] flex items-center gap-1.5 cursor-pointer min-h-[44px]"
                         >
                             <Calculator className="w-3.5 h-3.5" />
-                            {showEdmCalc ? 'Ocultar calculadora de perímetro EDM' : 'Calculadora de perímetro EDM'}
+                            Calculadora de perímetro EDM
                         </button>
-                        {edmTempo && !showEdmCalc && (
+                        {edmTempo && (
                             <p className="text-[10px] text-[#7B808F] mt-1">Estimativa WEDM: {edmTempo.horas}h {String(edmTempo.minutos).padStart(2, '0')}m (aplica nas etapas de fio)</p>
-                        )}
-                        {showEdmCalc && (
-                            <div className="mt-2 border border-[#262A33] rounded-[8px] p-2">
-                                <CalculadoraTempoModal
-                                    initialQuantidade={parseInt(quantidade, 10) || 1}
-                                    onCalculate={(h, m, qtd) => {
-                                        setEdmTempo({ horas: h, minutos: m });
-                                        if (qtd) setQuantidade(qtd);
-                                        setShowEdmCalc(false);
-                                    }}
-                                    onClose={() => setShowEdmCalc(false)}
-                                />
-                            </div>
                         )}
                     </div>
                 )}
@@ -443,7 +432,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                 </div>
 
                 <p className="text-[11px] text-[#7B808F] leading-relaxed">
-                    Depois da criação abre a folha para imprimir (PDF). CAM e máquina continuam no A fazer.
+                    O print aparece no detalhe do cartão. A folha de processo imprime de lá, quando precisar.
                 </p>
 
                 <div className="flex gap-3 pt-2 border-t border-[#262A33]">
@@ -454,5 +443,23 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                 </div>
             </form>
         </Modal>
+            <Modal
+                isOpen={showEdmCalc}
+                onClose={() => setShowEdmCalc(false)}
+                title="Calculadora EDM"
+                maxWidth="max-w-md"
+                overlayClassName="z-[210]"
+            >
+                <CalculadoraTempoModal
+                    initialQuantidade={parseInt(quantidade, 10) || 1}
+                    onCalculate={(h, m, qtd) => {
+                        setEdmTempo({ horas: h, minutos: m });
+                        if (qtd) setQuantidade(qtd);
+                        setShowEdmCalc(false);
+                    }}
+                    onClose={() => setShowEdmCalc(false)}
+                />
+            </Modal>
+        </>
     );
 }

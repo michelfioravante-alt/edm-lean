@@ -5,6 +5,7 @@ export default function Button({
     variant = 'primary',
     size = 'md',
     className = '',
+    type = 'button',
     ...props
 }) {
     const baseClasses = 'inline-flex items-center justify-center font-semibold tracking-wide rounded-[7px] border transition-all active:scale-[0.98] outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer';
@@ -27,7 +28,7 @@ export default function Button({
     const classes = `${baseClasses} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`;
 
     return (
-        <button className={classes} {...props}>
+        <button type={type} className={classes} {...props}>
             {children}
         </button>
     );

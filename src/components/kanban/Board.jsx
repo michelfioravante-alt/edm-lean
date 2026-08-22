@@ -21,7 +21,6 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { KANBAN_COLUMNS } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
 import { kanbanPrecisaProgramar, todosKanbans } from '../../constants/osWorkflow';
-import FolhaProcessoModal from './FolhaProcessoModal';
 import { SETORES_PROGRAMADOR, setorPermitido } from '../../constants/roles';
 
 export default function Board() {
@@ -70,7 +69,6 @@ export default function Board() {
     const [transitionError, setTransitionError] = useState(null);
     const [pendingDevolverAFazer, setPendingDevolverAFazer] = useState(null);
     const [pendingDevolverCorteSetup, setPendingDevolverCorteSetup] = useState(null);
-    const [folhasPrint, setFolhasPrint] = useState(null);
     const destaqueOsId = useAppStore((s) => s.destaqueOsId);
     const limparDestaqueOs = useAppStore((s) => s.limparDestaqueOs);
     const osDeepLinkId = useAppStore((s) => s.osDeepLinkId);
@@ -595,11 +593,7 @@ export default function Board() {
                 <NovaOSForm
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    onCreated={(lista) => setFolhasPrint(lista)}
                 />
-                {folhasPrint && (
-                    <FolhaProcessoModal osList={folhasPrint} onClose={() => setFolhasPrint(null)} />
-                )}
 
                 <ProgramarKanbanModal
                     isOpen={!!programarOs}

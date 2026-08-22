@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
+import Button from '../common/Button';
 import EditOSModal from './EditOSModal';
 import { Clock, Settings, CheckCircle2, PauseCircle, PlayCircle, History, AlertTriangle, Trash, Link as LinkIcon, Copy, Check, Pencil, Printer } from 'lucide-react';
 import FolhaProcessoModal from './FolhaProcessoModal';
+import { resolveFolhaImagemSrc } from '../../services/osPrints';
 import { format } from 'date-fns';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -13,6 +15,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
 
     const [copied, setCopied] = useState(false);
     const [isFolhaOpen, setIsFolhaOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const [obsDraft, setObsDraft] = useState('');
     const [isEditingTotal, setIsEditingTotal] = useState(false);
 
@@ -30,6 +33,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     const kanban = useAppStore((s) => s.kanban);
     const configuracoesGlobais = useAppStore((s) => s.configuracoesGlobais);
     const irmaos = listarKanbansDoGrupo(kanban, activeData);
+    const printSrc = resolveFolhaImagemSrc(activeData.folha_imagem || activeData.folhaImagem);
     const custoInfo = custoHoraKanban(activeData, configuracoesGlobais || {});
     const isGestor = useAuthStore((s) => s.role) === 'admin';
     const [newTotal, setNewTotal] = useState(activeData.quantidade || 1);
@@ -82,15 +86,9 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                         <div className="text-right flex flex-col items-end gap-2">
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setIsFolhaOpen(true)}
-                                    className="p-1.5 rounded-md hover:bg-kanban-amber/10 text-[#7B808F] hover:text-kanban-amber transition-colors"
-                                    title="Imprimir folha de processo"
-                                >
-                                    <Printer className="w-5 h-5" />
-                                </button>
-                                <button
+                                    type="button"
                                     onClick={() => setIsEditOpen(true)}
-                                    className="p-1.5 rounded-md hover:bg-kanban-amber/10 text-[#7B808F] hover:text-kanban-amber transition-colors"
+                                    className="p-1.5 rounded-md hover:bg-kanban-amber/10 text-[#7B808F] hover:text-kanban-amber transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
                                     title="Editar O.S."
                                 >
                                     <Pencil className="w-5 h-5" />
@@ -120,6 +118,20 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {printSrc && (
+                            <img
+                                src={printSrc}
+                                alt="Print da peça"
+                                className="w-full max-h-56 object-contain rounded-[8px] border border-[#262A33] bg-[#111318]"
+                            />
+                        )}
+                        <Button type="button" variant="primary" className="w-full gap-2" onClick={() => setIsFolhaOpen(true)}>
+                            <Printer className="w-4 h-4" />
+                            Imprimir folha de processo
+                        </Button>
                     </div>
 
                     {(irmaos.length > 1 || (isGestor && (custoInfo.custo > 0 || activeData.valor_orcado))) && (

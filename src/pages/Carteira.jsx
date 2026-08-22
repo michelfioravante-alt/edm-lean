@@ -4,7 +4,6 @@ import { useAppStore } from '../store/useAppStore';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import NovaOSForm from '../components/kanban/NovaOSForm';
-import FolhaProcessoModal from '../components/kanban/FolhaProcessoModal';
 import {
     agruparCarteira,
     labelSetor,
@@ -40,7 +39,6 @@ export default function Carteira({ onNavigate }) {
     const [busca, setBusca] = useState('');
     const [ficha, setFicha] = useState(null);
     const [novaOs, setNovaOs] = useState(false);
-    const [folhasPrint, setFolhasPrint] = useState(null);
 
     const carteira = useMemo(() => agruparCarteira(kanban, config || {}), [kanban, config]);
 
@@ -220,8 +218,7 @@ export default function Carteira({ onNavigate }) {
                 </div>
             )}
 
-            <NovaOSForm isOpen={novaOs} onClose={() => setNovaOs(false)} onCreated={setFolhasPrint} />
-            {folhasPrint && <FolhaProcessoModal osList={folhasPrint} onClose={() => setFolhasPrint(null)} />}
+            <NovaOSForm isOpen={novaOs} onClose={() => setNovaOs(false)} />
 
             <Modal
                 isOpen={!!ficha}
