@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { setorEfetivoProgramador, filtrarEstoqueDoPerfil } from '../constants/roles';
 import Button from '../components/common/Button';
 import { Plus, Package, Archive, AlertTriangle, PenTool, Clock, Trash2, Wrench, Monitor, ArrowDownCircle, ArrowUpCircle, History, Lock } from 'lucide-react';
 import { formatarDataBR, formatarHoras } from '../utils/formatters';
@@ -27,12 +28,23 @@ export default function Estoque() {
 
     const role = useAuthStore(state => state.role);
     const setorPadrao = useAuthStore(state => state.setorPadrao);
+    const activeSector = useAppStore(state => state.activeSector);
     const isProgrammerLocked = role !== 'admin';
-    const effectiveSector = (setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC';
+    const effectiveSector = setorEfetivoProgramador(setorPadrao, activeSector);
+    const estoqueDoPerfil = filtrarEstoqueDoPerfil(estoque, role, effectiveSector);
+    const maquinasDoPerfil = isProgrammerLocked
+        ? (maquinas || []).filter((m) => (m.setor || m.tipo) === effectiveSector)
+        : (maquinas || []);
 
     useEffect(() => {
         fetchMovimentacoesEstoque();
     }, [fetchMovimentacoesEstoque]);
+
+    useEffect(() => {
+        if (!isProgrammerLocked) return;
+        setNovoSetor(effectiveSector);
+        setSetorFiltro(effectiveSector);
+    }, [isProgrammerLocked, effectiveSector]);
 
     // Estado Novo Item
     const [novoNome, setNovoNome] = useState('');
@@ -58,11 +70,11 @@ export default function Estoque() {
         if (novoNome.trim() && novaQtd && novoAlerta) {
             setErro('');
             try {
-                await addEstoqueItem(novoNome.trim(), novaQtd, novoAlerta, novoSetor);
+                await addEstoqueItem(novoNome.trim(), novaQtd, novoAlerta, isProgrammerLocked ? effectiveSector : novoSetor);
                 setNovoNome('');
                 setNovaQtd('');
                 setNovoAlerta('');
-                setNovoSetor('TODOS');
+                setNovoSetor(isProgrammerLocked ? effectiveSector : 'TODOS');
             } catch (err) {
                 setErro(`Não foi possível cadastrar o item: ${err.message}`);
             }
@@ -152,7 +164,7 @@ export default function Estoque() {
                 <div className={`${cardClasses} flex flex-col`}>
                     <div className={headerClasses}>
                         <Archive className="text-[#E7E9ED] w-6 h-6" />
-                        <h3 className="text-xl font-bold text-white">Inventário Global</h3>
+                        <h3 className="text-xl font-bold text-white">{isProgrammerLocked ? 'Inventário do setor' : 'Inventário Global'}</h3>
                     </div>
 
                     <div className="p-5 flex-1 space-y-8 bg-[#181B22]">
@@ -172,6 +184,12 @@ export default function Estoque() {
                                 </div>
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Setor do Insumo</label>
+                                    {isProgrammerLocked ? (
+                                        <div className="flex items-center gap-2 px-3 py-3 rounded-lg border border-[#262A33] bg-[#111318] text-sm font-bold text-[#E7E9ED]">
+                                            <Lock className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
+                                            {effectiveSector === 'EDM_FIO' ? 'Eletroerosão a Fio' : 'Usinagem CNC'}
+                                        </div>
+                                    ) : (
                                     <select
                                         value={novoSetor}
                                         onChange={e => setNovoSetor(e.target.value)}
@@ -182,6 +200,7 @@ export default function Estoque() {
                                         <option value="EDM_FIO">Eletroerosão a Fio (Fios, Resinas, Filtros)</option>
                                         <option value="TORNO">Torno CNC (Castanhas, Pastilhas, Bedames)</option>
                                     </select>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={titleClasses}>Qtd. Atual</label>
@@ -205,7 +224,7 @@ export default function Estoque() {
                                 {isProgrammerLocked ? (
                                     <div className="flex items-center gap-2 bg-[#111318] px-3 py-1.5 rounded-lg border border-[#262A33] text-xs font-bold text-[#E7E9ED]">
                                         <Lock className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
-                                        <span>Estoque: {effectiveSector === 'EDM_FIO' ? 'EDM Fio' : effectiveSector === 'TORNO' ? 'Torno CNC' : 'Usinagem CNC'} + Geral</span>
+                                        <span>Somente {effectiveSector === 'EDM_FIO' ? 'EDM Fio' : 'Usinagem CNC'}</span>
                                     </div>
                                 ) : (
                                     <div className="flex bg-[#111318] p-1 rounded-lg border border-[#262A33] text-xs font-bold gap-1">
@@ -242,10 +261,9 @@ export default function Estoque() {
                             </div>
 
                             {(() => {
-                                const estoqueFiltrado = estoque.filter(i => {
-                                    if (isProgrammerLocked) {
-                                        return !i.setor || i.setor === 'TODOS' || i.setor === effectiveSector;
-                                    }
+                                const estoqueFiltrado = isProgrammerLocked
+                                    ? estoqueDoPerfil
+                                    : estoque.filter(i => {
                                     if (setorFiltro === 'TODOS') return true;
                                     if (!i.setor || i.setor === 'TODOS') return true;
                                     return i.setor === setorFiltro;
@@ -371,7 +389,7 @@ export default function Estoque() {
                                     <label className={titleClasses}>Máquina Onde Ocorreu a Troca</label>
                                     <select value={trocaMaquina} onChange={e => setTrocaMaquina(e.target.value)} className={inputClasses} required>
                                         <option value="" disabled>Selecione a máquina...</option>
-                                        {maquinas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                                        {maquinasDoPerfil.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
                                     </select>
                                 </div>
 
@@ -379,7 +397,7 @@ export default function Estoque() {
                                     <label className={titleClasses}>Consumível Instalado (Retirado do Estoque)</label>
                                     <select value={trocaInsumo} onChange={e => setTrocaInsumo(e.target.value)} className={inputClasses} required>
                                         <option value="" disabled>Selecione o insumo do estoque...</option>
-                                        {estoque.map(i => <option key={i.id} value={i.nome}>{i.nome} (Disp: {i.quantidade})</option>)}
+                                        {estoqueDoPerfil.map(i => <option key={i.id} value={i.nome}>{i.nome} (Disp: {i.quantidade})</option>)}
                                     </select>
                                 </div>
 
@@ -482,7 +500,7 @@ export default function Estoque() {
 
             {/* ---------- RELATÓRIOS ANALÍTICOS DE INSUMOS ---------- */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-6 border-t border-[#262A33]">
-                {(setorFiltro === 'TODOS' || setorFiltro === 'EDM_FIO') && (
+                {((isProgrammerLocked && effectiveSector === 'EDM_FIO') || (!isProgrammerLocked && (setorFiltro === 'TODOS' || setorFiltro === 'EDM_FIO'))) && (
                     <InsumosLifeChart />
                 )}
                 <MachineConsumptionChart />

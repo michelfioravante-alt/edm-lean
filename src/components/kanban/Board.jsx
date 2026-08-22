@@ -21,7 +21,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { KANBAN_COLUMNS } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
 import { kanbanPrecisaProgramar, todosKanbans } from '../../constants/osWorkflow';
-import { SETORES_PROGRAMADOR, setorPermitido } from '../../constants/roles';
+import { SETORES_PROGRAMADOR, setorPermitido, filtrarEstoqueDoPerfil, setorEfetivoProgramador } from '../../constants/roles';
 
 export default function Board() {
     // Seletores granulares
@@ -91,7 +91,8 @@ export default function Board() {
     }, [osDeepLinkId, kanban, irParaKanban, setOsDeepLinkId]);
 
     // Memoização simples da contagem de estoque
-    const lowStockCount = (estoque || []).filter(item => item.quantidade <= item.alerta_minimo).length;
+    const lowStockCount = filtrarEstoqueDoPerfil(estoque || [], role, setorEfetivoProgramador(setorPadrao, activeSector))
+        .filter(item => item.quantidade <= item.alerta_minimo).length;
 
     const handleConfirmPause = (pauseData) => {
         if (pauseContext) {
