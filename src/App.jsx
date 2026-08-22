@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import { useAppStore } from './store/useAppStore'
 import { useAuthStore } from './store/useAuthStore'
 import { parseOsHash } from './utils/folhaProcesso'
+import { isLocalMode } from './local/mode'
 
 // Carregamento dinâmico das views (Lazy Loading) para otimização de performance
 const Board = lazy(() => import('./components/kanban/Board'))
