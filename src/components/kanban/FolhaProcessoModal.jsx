@@ -4,6 +4,7 @@ import { Printer } from 'lucide-react';
 import Button from '../common/Button';
 import { labelSetor } from '../../constants/osWorkflow';
 import { urlKanbanOs } from '../../utils/folhaProcesso';
+import { resolveFolhaImagemSrc } from '../../services/osPrints';
 
 function FolhaA4({ os, qr }) {
     const peca = os.codigo_peca || os.codigoPeca || 'S/N';
@@ -11,7 +12,7 @@ function FolhaA4({ os, qr }) {
     const prazoTxt = prazo ? String(prazo).slice(0, 10).split('-').reverse().join('/') : '—';
     const desenho = os.link_desenho || os.linkDesenho || '—';
     const obs = os.observacoes || os.observacao || '';
-    const img = os.folha_imagem || os.folhaImagem;
+    const img = resolveFolhaImagemSrc(os.folha_imagem || os.folhaImagem);
     const qtd = os.quantidade || 1;
 
     return (

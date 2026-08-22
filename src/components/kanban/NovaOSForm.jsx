@@ -38,7 +38,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const [edmTempo, setEdmTempo] = useState(null);
     const [observacoes, setObservacoes] = useState('');
     const [linkDesenho, setLinkDesenho] = useState('');
-    const [folhaImagem, setFolhaImagem] = useState('');
+    const [folhaBlob, setFolhaBlob] = useState(null);
+    const [folhaPreview, setFolhaPreview] = useState('');
 
     if (!isOpen) return null;
 
@@ -56,7 +57,11 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         setEdmTempo(null);
         setObservacoes('');
         setLinkDesenho('');
-        setFolhaImagem('');
+        setFolhaBlob(null);
+        setFolhaPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return '';
+        });
     };
 
     const handleClose = () => {
@@ -127,8 +132,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         is_prioridade: isPrioridade,
         observacoes: observacoes.trim(),
         linkDesenho: linkDesenho.trim(),
-        folhaImagem,
-        folha_imagem: folhaImagem,
+        folhaBlob,
     });
 
     const handleSubmit = async (e) => {
@@ -421,15 +425,21 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                             const f = e.target.files?.[0];
                             if (!f) return;
                             try {
-                                setFolhaImagem(await compressImageFile(f));
+                                const blob = await compressImageFile(f);
+                                setFolhaPreview((prev) => {
+                                    if (prev) URL.revokeObjectURL(prev);
+                                    return URL.createObjectURL(blob);
+                                });
+                                setFolhaBlob(blob);
                             } catch (err) {
                                 alert(err?.message || 'Não foi possível ler a imagem.');
                             }
                         }}
                     />
-                    {folhaImagem && (
-                        <img src={folhaImagem} alt="Print" className="mt-2 max-h-28 rounded-[6px] border border-[#262A33] object-contain" />
+                    {folhaPreview && (
+                        <img src={folhaPreview} alt="Print" className="mt-2 max-h-28 rounded-[6px] border border-[#262A33] object-contain" />
                     )}
+                    <p className="text-[10px] text-[#565B68] mt-1">Uma foto por kanban. Escolher outra substitui a anterior (Storage, não no banco).</p>
                 </div>
 
                 <p className="text-[11px] text-[#7B808F] leading-relaxed">

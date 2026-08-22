@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { isLocalMode } from '../local/mode';
 import { localApi } from '../local/localApi';
+import { blobToDataUrl, uploadOsPrint } from './osPrints';
 
 // Helper: Garante que toda query tenha o empresa_id atrelado (Embora o RLS segure no back, mandamos do front por segurança/organização)
 const getEmpresaId = () => {
@@ -9,6 +10,33 @@ const getEmpresaId = () => {
     if (!state.user || !state.empresaId) throw new Error("Usuário não autenticado ou sem empresa vinculada");
     return state.empresaId;
 };
+
+async function resolveFolhaBlob(osData) {
+    if (osData?.folhaBlob instanceof Blob) return osData.folhaBlob;
+    const inline = osData?.folha_imagem || osData?.folhaImagem;
+    if (typeof inline === 'string' && inline.startsWith('data:')) {
+        const res = await fetch(inline);
+        return res.blob();
+    }
+    return null;
+}
+
+async function attachPrintIfNeeded(osRow, osData, empresaId) {
+    if (!osRow?.id) return osRow;
+    const blob = await resolveFolhaBlob(osData);
+    if (!blob) return osRow;
+    const url = await uploadOsPrint(empresaId, osRow.id, blob);
+    if (!url) return osRow;
+    const { data, error } = await supabase
+        .from('ordens_servico')
+        .update({ folha_imagem: url })
+        .eq('id', osRow.id)
+        .eq('empresa_id', empresaId)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+}
 
 export const osService = {
 
@@ -70,7 +98,11 @@ export const osService = {
 
     // Cria nova O.S
     async create(osData) {
-        if (isLocalMode()) return localApi.os.create(osData);
+        if (isLocalMode()) {
+            const blob = await resolveFolhaBlob(osData);
+            const folha = blob ? await blobToDataUrl(blob) : (osData.folha_imagem || osData.folhaImagem || null);
+            return localApi.os.create({ ...osData, folha_imagem: folha, folhaImagem: folha });
+        }
         const empresaId = getEmpresaId();
 
         // Mapeia o objeto do state pro formato do banco (Snake Case)
@@ -112,7 +144,7 @@ export const osService = {
             aguardando_tt: osData.aguardando_tt ?? false,
             observacao_tt: osData.observacao_tt || null,
             observacoes: osData.observacoes || osData.observacao || null,
-            folha_imagem: osData.folha_imagem || osData.folhaImagem || null,
+            folha_imagem: null,
         };
 
         try {
@@ -129,12 +161,12 @@ export const osService = {
                     delete payload.folha_imagem;
                     const retry = await supabase.from('ordens_servico').insert(payload).select().single();
                     if (retry.error) throw retry.error;
-                    return retry.data;
+                    return attachPrintIfNeeded(retry.data, osData, empresaId);
                 }
                 console.error('ERRO RETORNADO PELO SUPABASE:', error);
                 throw error;
             }
-            return data;
+            return attachPrintIfNeeded(data, osData, empresaId);
         } catch (err) {
             console.error('FALHA CRÍTICA NO OSSERVICE.CREATE:', err);
             throw err;
@@ -298,7 +330,12 @@ export const osService = {
         if (fields.valorOrcado !== undefined) payload.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
         if (fields.nxImport !== undefined) payload.nx_import = fields.nxImport;
         if (fields.observacoes !== undefined) payload.observacoes = fields.observacoes || null;
-        if (fields.folhaImagem !== undefined || fields.folha_imagem !== undefined) payload.folha_imagem = fields.folhaImagem ?? fields.folha_imagem ?? null;
+        if (fields.folhaBlob instanceof Blob) {
+            payload.folha_imagem = await uploadOsPrint(empresaId, id, fields.folhaBlob);
+        } else if (fields.folhaImagem !== undefined || fields.folha_imagem !== undefined) {
+            const next = fields.folhaImagem ?? fields.folha_imagem ?? null;
+            payload.folha_imagem = typeof next === 'string' && next.startsWith('data:') ? null : next;
+        }
 
         const { data, error } = await supabase
             .from('ordens_servico')

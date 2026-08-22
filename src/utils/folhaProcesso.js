@@ -27,7 +27,14 @@ export function compressImageFile(file, maxW = 1400, quality = 0.72) {
                 ctx.fillStyle = '#111318';
                 ctx.fillRect(0, 0, w, h);
                 ctx.drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/jpeg', quality));
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) reject(new Error('Falha ao comprimir a imagem'));
+                        else resolve(blob);
+                    },
+                    'image/jpeg',
+                    quality
+                );
             };
             img.onerror = () => reject(new Error('Imagem inválida'));
             img.src = reader.result;
