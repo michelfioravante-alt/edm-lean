@@ -1,12 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-base: #111318;
+  --bg-surface: #181B22;
+  --bg-raised: #1F232B;
+  --border: #262A33;
+  --border-strong: #333844;
+  --text-primary: #E7E9ED;
+  --text-secondary: #7B808F;
+  --text-tertiary: #565B68;
+  --text-mono: #9DA2AE;
+  --brand: #D97D3D;
+  --brand-dim: #8A5A38;
+  --ok: #4A9D74;
+  --alert: #C85558;
+  --warn: #C99A4A;
+  --ok-bg: rgba(74, 157, 116, 0.1);
+  --alert-bg: rgba(200, 85, 88, 0.1);
+  --warn-bg: rgba(201, 154, 74, 0.12);
+}
+
 @layer base {
   body {
-    @apply bg-bg text-core font-sans antialiased min-h-screen overflow-x-hidden;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Override browser autofill background logic */
@@ -14,47 +39,28 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px #020617 inset !important;
-    -webkit-text-fill-color: #f1f5f9 !important;
+    -webkit-box-shadow: 0 0 0 30px #111318 inset !important;
+    -webkit-text-fill-color: #E7E9ED !important;
     transition: background-color 5000s ease-in-out 0s;
   }
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.4;
 }
 
 /* Animations */
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.kanban-col-animate {
-  animation: fadeSlideIn 0.4s ease both;
-}
-
-.kanban-card-animate {
-  animation: fadeSlideIn 0.35s ease both;
-}
-
 @keyframes modalIn {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(6px);
+    transform: scale(0.97) translateY(4px);
   }
   to {
     opacity: 1;
@@ -62,25 +68,16 @@ body::before {
   }
 }
 
+.kanban-col-animate {
+  animation: fadeSlideIn 0.3s ease both;
+}
+
+.kanban-card-animate {
+  animation: fadeSlideIn 0.25s ease both;
+}
+
 .animate-modal-in {
-  animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* scan line effect on card hover */
-.card-scanline::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: -100%;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.015), transparent);
-  transition: top 0.4s ease;
-  pointer-events: none;
-}
-
-.card-scanline:hover::after {
-  top: 150%;
+  animation: modalIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* App-like Hide Scrollbar */
@@ -88,7 +85,6 @@ body::before {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -106,8 +102,8 @@ body::before {
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -115,43 +111,170 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  /* slate-800 */
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-  /* slate-700 */
-  background-clip: content-box;
+  background: var(--text-tertiary);
 }
 
-/* Specific scrollbar for Kanban columns */
-.kanban-scroll::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
-
-.kanban-scroll::-webkit-scrollbar-thumb {
-  background: #334155;
-  /* slate-700 */
-}
-
-.kanban-scroll::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-  /* slate-605 */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-@keyframes mockProgress {
-  0% { width: 35%; }
-  100% { width: 88%; }
+/* Specific Industrial MES Layout Helpers */
+.selector-bar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.selector-bar::-webkit-scrollbar {
+  display: none;
 }
 
-.animate-mock-progress {
-  animation: mockProgress 6s infinite alternate ease-in-out;
+.sel-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 7px 12px;
+  border-radius: 6px;
+  position: relative;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.sel-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+.sel-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+  border-color: var(--border-strong);
+}
+.sel-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12%;
+  width: 76%;
+  height: 2px;
+  background: var(--brand);
+}
+
+/* Dense KPI Strip */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.kpi-cell {
+  padding: 12px 14px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.kpi-cell:last-child {
+  border-right: none;
+}
+.kpi-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpi-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-primary);
+}
+.kpi-value.ok {
+  color: var(--ok);
+}
+.kpi-value.alert {
+  color: var(--alert);
+}
+.kpi-value.warn {
+  color: var(--warn);
+}
+.kpi-sub {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+
+/* Mini Data Table for Cards */
+.data-table {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  border-bottom: 1px solid var(--border);
+}
+.data-row:last-child {
+  border-bottom: none;
+}
+.data-row:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.015);
+}
+.data-key {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.data-val {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text-mono);
+  text-align: right;
+}
+
+/* Batch Progress Bar */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress-track {
+  flex: 1;
+  height: 5px;
+  background: var(--bg-raised);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.progress-fill {
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.3s ease;
+}
+.progress-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
 }

@@ -82,7 +82,7 @@ export default function Layout({ children, activeView, onViewChange }) {
     }, [empresaId]);
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+        <div className="min-h-screen flex flex-col bg-[#111318] text-[#E7E9ED]">
             <LocalModeBanner />
             <Header onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 

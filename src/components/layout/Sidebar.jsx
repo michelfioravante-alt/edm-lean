@@ -17,20 +17,20 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
             return {
                 label: 'Gerência / Admin',
                 icon: ShieldCheck,
-                classes: 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                classes: 'bg-[#1F232B] text-[#E7E9ED] border-[#333844]'
             };
         }
         if (isProgrammer) {
             return {
                 label: 'Programador CAM',
                 icon: Code,
-                classes: 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                classes: 'bg-[#1F232B] text-[#9DA2AE] border-[#333844]'
             };
         }
         return {
             label: 'Chão de Fábrica',
             icon: UserCheck,
-            classes: 'bg-teal-500/10 text-teal-300 border-teal-500/20'
+            classes: 'bg-[#1F232B] text-[#7B808F] border-[#333844]'
         };
     };
 
@@ -48,47 +48,45 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
             )}
 
             <aside
-                className={`fixed top-0 left-0 h-[100dvh] w-72 bg-slate-950 border-r border-slate-800/80 text-slate-50 shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out flex flex-col ${
+                className={`fixed top-0 left-0 h-[100dvh] w-72 bg-[#111318] border-r border-[#262A33] text-[#E7E9ED] shadow-2xl z-[60] transform transition-transform duration-250 ease-in-out flex flex-col ${
                     isOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
                 {/* Header do Menu */}
-                <div className="p-4 flex justify-between items-center border-b border-slate-800 bg-slate-900/60">
+                <div className="p-4 flex justify-between items-center border-b border-[#262A33] bg-[#181B22]">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-kanban-amber/20 border border-kanban-amber/40 flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 70L40 50L55 60L85 25" stroke="#fbbf24" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M45 40L55 60" stroke="white" strokeWidth="14" strokeLinecap="round" />
-                            </svg>
+                        <div className="w-[26px] h-[26px] rounded-[6px] bg-[#D97D3D] flex items-center justify-center font-['Space_Grotesk'] font-bold text-[#111318] text-[13px] leading-none select-none">
+                            E
                         </div>
-                        <span className="font-extrabold text-sm tracking-wider uppercase text-white font-mono">Módulo CNC</span>
+                        <div className="flex flex-col">
+                            <span className="font-['Space_Grotesk'] font-semibold text-[13.5px] text-[#E7E9ED] tracking-[0.1px] leading-tight">
+                                EDM Lean
+                            </span>
+                            <span className="text-[9px] text-[#565B68] font-medium tracking-[1.2px] uppercase">
+                                SHOP FLOOR OS
+                            </span>
+                        </div>
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                        className="p-1.5 hover:bg-[#1F232B] rounded-[6px] text-[#7B808F] hover:text-[#E7E9ED] transition-colors cursor-pointer"
                         aria-label="Fechar menu"
                     >
-                        <ChevronLeft className="h-5 w-5" />
+                        <ChevronLeft className="h-4 w-4" />
                     </button>
                 </div>
 
                 {/* Perfil Compacto do Usuário */}
-                <div className="p-3.5 bg-slate-900/40 border-b border-slate-800/60 flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm border shrink-0 ${
-                        isAdmin
-                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                            : isProgrammer
-                                ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                                : 'bg-kanban-steel/15 text-kanban-steel border-kanban-steel/30'
-                    }`}>
-                        {user?.email ? user.email.charAt(0).toUpperCase() : (isAdmin ? 'A' : (isProgrammer ? 'P' : 'O'))}
+                <div className="p-3.5 bg-[#181B22]/60 border-b border-[#262A33] flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-[7px] bg-[#1F232B] border border-[#333844] flex items-center justify-center font-semibold text-xs text-[#E7E9ED] shrink-0 font-['Space_Grotesk']">
+                        {user?.email ? user.email.charAt(0).toUpperCase() : (isAdmin ? 'G' : (isProgrammer ? 'P' : 'O'))}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-200 truncate leading-tight">
-                            {user?.email || (isAdmin ? 'Administrador' : (isProgrammer ? 'Programador CNC' : 'Operador Terminal'))}
+                        <p className="text-xs font-semibold text-[#E7E9ED] truncate leading-tight">
+                            {user?.email || (isAdmin ? 'Gerente Geral' : (isProgrammer ? 'Programador CAM' : 'Operador'))}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full border ${roleBadge.classes}`}>
+                            <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-[5px] border ${roleBadge.classes}`}>
                                 <RoleIcon className="w-2.5 h-2.5" />
                                 {roleBadge.label}
                             </span>
@@ -97,108 +95,108 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                 </div>
 
                 {/* Lista de Navegação Categorizada */}
-                <nav className="p-3 space-y-5 flex-1 overflow-y-auto custom-scrollbar">
+                <nav className="p-3 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
 
-                    {/* Grupo 1: Operação & Chão de Fábrica */}
-                    <div className="space-y-1">
-                        <div className="px-3 pb-2 text-[10px] font-extrabold text-slate-500 uppercase tracking-[0.15em]">
+                    {/* Grupo 1: Operação & Produção */}
+                    <div className="space-y-0.5">
+                        <div className="px-3 pb-2 text-[10px] font-semibold text-[#565B68] uppercase tracking-[0.15em]">
                             Operação & Produção
                         </div>
 
                         <button
                             onClick={() => { onViewChange('kanban'); onClose(); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                 activeView === 'kanban'
-                                    ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                    : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                             }`}
                         >
-                            <ListTodo className="h-4 w-4 shrink-0" />
+                            <ListTodo className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Kanban de Produção</span>
                         </button>
 
                         <button
                             onClick={() => { onViewChange('registros'); onClose(); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                 activeView === 'registros'
-                                    ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                    : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                             }`}
                         >
-                            <History className="h-4 w-4 shrink-0" />
+                            <History className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Histórico de Registros</span>
                         </button>
 
                         <button
                             onClick={() => { onViewChange('estoque'); onClose(); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                 activeView === 'estoque'
-                                    ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                    : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                             }`}
                         >
-                            <Package className="h-4 w-4 shrink-0" />
-                            <span>Estoque & Consumíveis</span>
+                            <Package className="h-4 w-4 shrink-0 text-[#7B808F]" />
+                            <span>Estoque & Insumos</span>
                         </button>
 
                         <button
                             onClick={() => { onViewChange('ferramental'); onClose(); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                 activeView === 'ferramental'
-                                    ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                    : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                             }`}
                         >
-                            <Wrench className="h-4 w-4 shrink-0" />
+                            <Wrench className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Ferramental & Magazines</span>
                         </button>
 
                         <button
                             onClick={() => { onViewChange('clientes'); onClose(); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                 activeView === 'clientes'
-                                    ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                    : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                             }`}
                         >
-                            <Briefcase className="h-4 w-4 shrink-0" />
+                            <Briefcase className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Clientes</span>
                         </button>
                     </div>
 
-                    {/* Grupo 2: Gestão Executiva (Admin & Programador) */}
+                    {/* Grupo 2: Gestão Executiva */}
                     {(isAdmin || isProgrammer) && (
-                        <div className="space-y-1 pt-3 border-t border-slate-800/60">
-                            <div className="px-3 pb-2 text-[10px] font-extrabold text-kanban-amber uppercase tracking-[0.15em] flex items-center justify-between">
+                        <div className="space-y-0.5 pt-3 border-t border-[#262A33]">
+                            <div className="px-3 pb-2 text-[10px] font-semibold text-[#565B68] uppercase tracking-[0.15em] flex items-center justify-between">
                                 <span>Gestão & Estratégia</span>
-                                <span className="text-[8px] bg-kanban-amber/20 text-kanban-amber px-1.5 py-0.5 rounded font-black">
+                                <span className="text-[8px] bg-[#1F232B] text-[#9DA2AE] px-1.5 py-0.5 rounded-[4px] font-mono">
                                     {isAdmin ? 'ADMIN' : 'CAM'}
                                 </span>
                             </div>
 
                             <button
                                 onClick={() => { onViewChange('dashboard'); onClose(); }}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                     activeView === 'dashboard'
-                                        ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                        : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                        ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                        : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                                 }`}
                             >
-                                <LayoutDashboard className="h-4 w-4 shrink-0" />
+                                <LayoutDashboard className="h-4 w-4 shrink-0 text-[#7B808F]" />
                                 <span>Dashboard Executivo</span>
                             </button>
 
                             {isAdmin && (
                                 <button
                                     onClick={() => { onViewChange('configuracoes'); onClose(); }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
                                         activeView === 'configuracoes'
-                                            ? 'bg-kanban-amber/10 border-kanban-amber/40 text-kanban-amber font-bold shadow-sm'
-                                            : 'border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200 font-semibold'
+                                            ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                            : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                                     }`}
                                 >
-                                    <Settings className="h-4 w-4 shrink-0" />
-                                    <span>Configurações da Fábrica</span>
+                                    <Settings className="h-4 w-4 shrink-0 text-[#7B808F]" />
+                                    <span>Configurações</span>
                                 </button>
                             )}
                         </div>
@@ -206,21 +204,17 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                 </nav>
 
                 {/* Footer and Logout */}
-                <div className="p-4 border-t border-slate-800/80 bg-slate-950/80 safe-area-bottom">
+                <div className="p-3 border-t border-[#262A33] bg-[#181B22] safe-area-bottom">
                     <button
                         type="button"
                         onClick={() => logout()}
-                        className={`w-full flex items-center gap-2.5 justify-center p-3 rounded-lg transition-colors font-bold uppercase tracking-wider text-xs border active:scale-[0.98] ${
-                            demoMode
-                                ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 border-amber-500/20 hover:border-amber-500'
-                                : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border-red-500/20 hover:border-red-500'
-                        }`}
+                        className="w-full flex items-center gap-2 justify-center p-2.5 rounded-[7px] transition-colors font-medium text-xs border border-[#333844] bg-[#111318] text-[#7B808F] hover:text-[#C85558] hover:border-[#C85558]/40 active:scale-[0.98] cursor-pointer"
                     >
-                        {demoMode ? <Home className="w-4 h-4" /> : <LogOut className="w-4 h-4" />}
+                        {demoMode ? <Home className="w-3.5 h-3.5" /> : <LogOut className="w-3.5 h-3.5" />}
                         {demoMode ? 'Sair do Modo Demo' : 'Sair do Sistema'}
                     </button>
-                    <div className="text-[10px] text-center text-slate-600 mt-3 font-mono tracking-wider">
-                        MÓDULO CNC &copy; 2026
+                    <div className="text-[10px] text-center text-[#565B68] mt-2.5 font-mono">
+                        EDM LEAN &copy; 2026
                     </div>
                 </div>
             </aside>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Column from './Column';
 import Button from '../common/Button';
-import Modal from '../common/Modal';
 import NovaOSForm from './NovaOSForm';
 import TransitionModal from './TransitionModal';
 import PauseModal from './PauseModal';
@@ -14,13 +13,12 @@ import RegraAfericaoModal from './RegraAfericaoModal';
 import MachineOccupiedModal from './MachineOccupiedModal';
 import ExtraSetupModal from './ExtraSetupModal';
 import SplitModal from './SplitModal';
-import { Plus } from 'lucide-react';
+import { Plus, Lock, Cpu, Zap, RotateCw, Factory, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { ErrorBoundary } from '../common/ErrorBoundary';
-import { KANBAN_COLUMNS, COLUMN_LABELS } from '../../constants/cncProcess';
-import { SECTORS, SECTOR_OPTIONS } from '../../constants/sectorConstants';
-import { Cpu, Zap, Factory, Lock, RotateCw } from 'lucide-react';
+import { KANBAN_COLUMNS } from '../../constants/cncProcess';
+import { SECTORS } from '../../constants/sectorConstants';
 
 export default function Board() {
     // Seletores granulares
@@ -44,7 +42,6 @@ export default function Board() {
     const moveOrdemServico = useAppStore(state => state.moveOrdemServico);
     const togglePausaOrdemServico = useAppStore(state => state.togglePausaOrdemServico);
     const deleteOrdemServico = useAppStore(state => state.deleteOrdemServico);
-    const fetchKanbanDadosInicial = useAppStore(state => state.fetchKanbanDadosInicial);
 
     // Títulos de colunas dinâmicos baseados no setor ativo
     const sectorConfig = SECTORS[activeSector] || SECTORS.CNC;
@@ -54,10 +51,6 @@ export default function Board() {
     const COLUMN_THEMES = Object.fromEntries(
         Object.values(KANBAN_COLUMNS).map((col) => [col.key, { color: col.theme, icon: col.icon }])
     );
-
-
-
-
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [pendingTransition, setPendingTransition] = useState(null);
@@ -76,15 +69,11 @@ export default function Board() {
     // Memoização simples da contagem de estoque
     const lowStockCount = (estoque || []).filter(item => item.quantidade <= item.alerta_minimo).length;
 
-    // O fetch inicial é feito pelo Layout (ao receber empresaId).
-    // O Board não precisa re-fazer o boot — evita fetch duplicado e conflito com polling.
-
     const handleConfirmPause = (pauseData) => {
         if (pauseContext) {
             const state = useAppStore.getState();
             const { osData, colKey } = pauseContext;
 
-            // Pausa retroativa específica para Falta de Energia (não altera isPausado agora)
             if (pauseData?.tipo === 'faltaEnergiaRetroativa') {
                 if (pauseData.aplicarGlobal) {
                     state.registrarPausaRetroativaFaltaEnergiaGlobal(pauseData);
@@ -95,7 +84,6 @@ export default function Board() {
                 return;
             }
 
-            // Quebra de ferramenta: estoque + histórico + pausa (imediata ou retroativa)
             if (pauseData?.tipo === 'quebraFerramenta') {
                 state.registrarQuebraFerramentaPausa(osData.id, colKey, pauseData)
                     .catch((err) => {
@@ -191,7 +179,6 @@ export default function Board() {
         return filtered.slice(0, 20);
     };
 
-
     const handleConfirmTransition = (data) => {
         if (!pendingTransition) return;
         const state = useAppStore.getState();
@@ -237,8 +224,6 @@ export default function Board() {
         });
     };
 
-    const handleCancelTransition = () => setPendingTransition(null);
-
     const handleConfirmDevolverCorteSetup = () => {
         if (!pendingDevolverCorteSetup) return;
         const ctx = pendingDevolverCorteSetup;
@@ -282,7 +267,6 @@ export default function Board() {
         const ctx = splitContext;
         setSplitContext(null);
 
-        // Indo para Concluído com "Avançar Tudo": abrir AfericaoModal (o move é feito ao confirmar aferição)
         if (choice === 'all' && destCol === 'concluido') {
             setPendingAfericao({ osId, sourceCol, destCol, osData });
             return;
@@ -369,8 +353,6 @@ export default function Board() {
         });
     };
 
-    const handleCancelAfericao = () => setPendingAfericao(null);
-
     const handleConfirmExtraSetup = (extraTimes) => {
         if (!extraSetupContext) return;
         const ctx = extraSetupContext;
@@ -405,167 +387,127 @@ export default function Board() {
         });
     };
 
+    // Dados calculados para os KPIs
+    const filteredAFazer = getFilteredCards('aFazer', kanban.aFazer || []);
+    const filteredSetup = getFilteredCards('setup', kanban.setup || []);
+    const filteredEmCorte = getFilteredCards('emCorte', kanban.emCorte || []);
+    const filteredAfericao = getFilteredCards('afericao', kanban.afericao || []);
+    const filteredConcluido = getFilteredCards('concluido', kanban.concluido || []);
+    const totalAtivas = filteredAFazer.length + filteredSetup.length + filteredEmCorte.length + filteredAfericao.length;
+    const totalEmAtraso = [...filteredAFazer, ...filteredSetup, ...filteredEmCorte, ...filteredAfericao].filter(os => {
+        const prazo = os.prazo_entrega || os.prazoEntrega;
+        if (!prazo) return false;
+        const prazoDate = new Date(prazo.includes('T') ? prazo : `${prazo}T12:00:00`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return prazoDate.getTime() < today.getTime() && !(os.is_pausado || os.isPausado);
+    }).length;
+    const totalConcluidasHoje = filteredConcluido.filter(os => {
+        const ts = os.timestamp_entrada_concluido || os.timestampEntrada_concluido;
+        return ts && new Date(ts).toDateString() === new Date().toDateString();
+    }).length;
+
+    const sectorLabelShort = activeSector === 'EDM_FIO' ? 'centro EDM' : activeSector === 'TORNO' ? 'torno CNC' : activeSector === 'CNC' ? 'centro CNC' : 'toda a fábrica';
+
     return (
         <ErrorBoundary>
-            <div className="h-full flex flex-col kanban-col-animate relative">
+            <div className="h-full flex flex-col kanban-col-animate relative space-y-4">
                 {transitionError && (
-                    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-red-500/95 text-white px-4 py-3 rounded-xl shadow-lg text-sm font-bold animate-in fade-in duration-200 max-w-[90vw]">
+                    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#C85558] text-white px-4 py-2.5 rounded-[7px] shadow-2xl text-xs font-semibold animate-in fade-in duration-200 max-w-[90vw] border border-[#C85558]">
                         {transitionError}
                     </div>
                 )}
-                {/* O seletor de etapas mobile foi movido para a MobileNav (barra inferior) */}
 
                 {/* FLOATING ACTION BUTTON (MOBILE ONLY) */}
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="md:hidden fixed bottom-24 right-6 z-50 bg-kanban-amber text-slate-900 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border-4 border-slate-950"
+                    className="md:hidden fixed bottom-20 right-5 z-50 bg-[#D97D3D] text-[#111318] w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border border-[#111318] cursor-pointer"
+                    aria-label="Nova Ordem de Serviço"
                 >
-                    <Plus className="w-8 h-8" />
+                    <Plus className="w-6 h-6 stroke-[2.5]" />
                 </button>
 
-                {/* SECTOR SELECTOR BAR */}
-                {isProgrammerLocked ? (
-                    <div className="flex items-center gap-2 p-3 px-4 bg-slate-900 border border-slate-800 rounded-xl mb-6 w-full sm:w-fit text-xs font-bold text-slate-200 shadow-inner">
-                        <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Kanban Exclusivo do Setor: {activeSector === 'EDM_FIO' ? '⚡ Eletroerosão a Fio (EDM)' : activeSector === 'TORNO' ? '⚙️ Torno CNC' : '🌀 Centro de Usinagem CNC'}</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-xl mb-6 w-full sm:w-fit overflow-x-auto shadow-sm">
-                        <button
-                            onClick={() => setActiveSector('CNC')}
-                            className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
-                                activeSector === 'CNC'
-                                    ? 'bg-cyan-500 text-slate-950 shadow-md scale-102 font-black'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                            }`}
-                        >
-                            <Cpu className="w-4 h-4" />
-                            <span>Centro de Usinagem CNC</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveSector('EDM_FIO')}
-                            className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
-                                activeSector === 'EDM_FIO'
-                                    ? 'bg-emerald-500 text-slate-950 shadow-md scale-102 font-black'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                            }`}
-                        >
-                            <Zap className="w-4 h-4" />
-                            <span>Eletroerosão a Fio (EDM)</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveSector('TORNO')}
-                            className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
-                                activeSector === 'TORNO'
-                                    ? 'bg-amber-500 text-slate-950 shadow-md scale-102 font-black'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                            }`}
-                        >
-                            <RotateCw className="w-4 h-4" />
-                            <span>Torno CNC</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveSector('TODOS')}
-                            className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
-                                activeSector === 'TODOS'
-                                    ? 'bg-indigo-500 text-slate-950 shadow-md scale-102 font-black'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                            }`}
-                        >
-                            <Factory className="w-4 h-4" />
-                            <span>Visão Geral Fábrica</span>
-                        </button>
-                    </div>
-                )}
+                {/* 1. SECTOR SELECTOR — SEGMENTED CONTROL */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#262A33]">
+                    {isProgrammerLocked ? (
+                        <div className="flex items-center gap-2 py-1.5 text-xs text-[#7B808F]">
+                            <Lock className="w-3.5 h-3.5 text-[#565B68] shrink-0" />
+                            <span>Setor Ativo: <b className="text-[#E7E9ED] font-semibold">{sectorConfig.label}</b></span>
+                        </div>
+                    ) : (
+                        <div className="selector-bar py-1">
+                            <button
+                                type="button"
+                                onClick={() => setActiveSector('EDM_FIO')}
+                                className={`sel-btn ${activeSector === 'EDM_FIO' ? 'active' : ''}`}
+                            >
+                                Eletroerosão (EDM)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveSector('CNC')}
+                                className={`sel-btn ${activeSector === 'CNC' ? 'active' : ''}`}
+                            >
+                                Centro CNC
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveSector('TORNO')}
+                                className={`sel-btn ${activeSector === 'TORNO' ? 'active' : ''}`}
+                            >
+                                Torno CNC
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveSector('TODOS')}
+                                className={`sel-btn ${activeSector === 'TODOS' ? 'active' : ''}`}
+                            >
+                                Visão Geral
+                            </button>
+                        </div>
+                    )}
 
-
-                {/* PAGE HEADER */}
-                <div className="hidden sm:flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
-                            Kanban — {sectorConfig.label}
-                        </h1>
-                        <p className="text-slate-400 text-base font-medium">
-                            {activeSector === 'CNC' && 'Gerencie as ordens de serviço do centro de usinagem CNC.'}
-                            {activeSector === 'EDM_FIO' && 'Gerencie as ordens de serviço da eletroerosão a fio (WEDM).'}
-                            {activeSector === 'TODOS' && 'Visão consolidada de todas as ordens de serviço da ferramentaria.'}
-                        </p>
+                    {/* Botão Nova OS Desktop */}
+                    <div className="hidden sm:flex items-center">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setIsModalOpen(true)}
+                            className="gap-1.5 shadow-sm"
+                        >
+                            <Plus className="w-4 h-4 stroke-[2.2]" />
+                            <span>Nova OS</span>
+                        </Button>
                     </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 bg-kanban-amber text-slate-900 rounded-lg px-6 py-3 font-bold uppercase tracking-widest cursor-pointer transition-colors hover:bg-amber-400 shadow-sm"
-                    >
-                        <Plus className="w-6 h-6" />
-                        <span>Nova OS</span>
-                    </button>
                 </div>
 
+                {/* 2. DENSE KPI DATA STRIP (TABLE-LIKE ROW) */}
+                <div className="kpi-strip">
+                    <div className="kpi-cell">
+                        <div className="kpi-label">OS Ativas</div>
+                        <div className="kpi-value">{totalAtivas}</div>
+                        <div className="kpi-sub">no {sectorLabelShort}</div>
+                    </div>
+                    <div className="kpi-cell">
+                        <div className="kpi-label">Usinagem</div>
+                        <div className="kpi-value ok">{filteredEmCorte.length}</div>
+                    </div>
+                    <div className="kpi-cell">
+                        <div className="kpi-label">Concl. Hoje</div>
+                        <div className="kpi-value ok">{totalConcluidasHoje}</div>
+                    </div>
+                    <div className="kpi-cell">
+                        <div className="kpi-label">Atraso</div>
+                        <div className={`kpi-value ${totalEmAtraso > 0 ? 'alert' : ''}`}>{totalEmAtraso}</div>
+                    </div>
+                    <div className="kpi-cell">
+                        <div className="kpi-label">Alerta Estoque</div>
+                        <div className={`kpi-value ${lowStockCount > 0 ? 'alert' : ''}`}>{lowStockCount}</div>
+                    </div>
+                </div>
 
-                {/* STATS BAR */}
-                {(() => {
-                    // Filtra pelo setor ativo para que os stats batam com o que aparece nas colunas
-                    const filteredAFazer = getFilteredCards('aFazer', kanban.aFazer || []);
-                    const filteredSetup = getFilteredCards('setup', kanban.setup || []);
-                    const filteredEmCorte = getFilteredCards('emCorte', kanban.emCorte || []);
-                    const filteredAfericao = getFilteredCards('afericao', kanban.afericao || []);
-                    const filteredConcluido = getFilteredCards('concluido', kanban.concluido || []);
-                    const totalAtivas = filteredAFazer.length + filteredSetup.length + filteredEmCorte.length + filteredAfericao.length;
-                    const totalEmAtraso = [...filteredAFazer, ...filteredSetup, ...filteredEmCorte, ...filteredAfericao].filter(os => {
-                        const prazo = os.prazo_entrega || os.prazoEntrega;
-                        if (!prazo) return false;
-                        const prazoDate = new Date(prazo.includes('T') ? prazo : `${prazo}T12:00:00`);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        return prazoDate.getTime() < today.getTime() && !(os.is_pausado || os.isPausado);
-                    }).length;
-                    const totalConcluidas = filteredConcluido.filter(os => {
-                        const ts = os.timestamp_entrada_concluido || os.timestampEntrada_concluido;
-                        return ts && new Date(ts).toDateString() === new Date().toDateString();
-                    }).length;
-
-                    return (
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 shrink-0">
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                                <div className="w-1.5 h-12 rounded-full bg-kanban-steel shrink-0"></div>
-                                <div>
-                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Total OS Ativas</div>
-                                    <div className="text-3xl font-black text-white leading-none">{totalAtivas}</div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                                <div className="w-1.5 h-12 rounded-full bg-kanban-rust shrink-0"></div>
-                                <div>
-                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Em Atraso</div>
-                                    <div className={`text-3xl font-black leading-none ${totalEmAtraso > 0 ? 'text-kanban-rust' : 'text-slate-600'}`}>{totalEmAtraso}</div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                                <div className="w-1.5 h-12 rounded-full bg-kanban-teal shrink-0"></div>
-                                <div>
-                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Em Usinagem</div>
-                                    <div className="text-3xl font-black text-white leading-none">{filteredEmCorte.length}</div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                                <div className="w-1.5 h-12 rounded-full bg-kanban-green shrink-0"></div>
-                                <div>
-                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Concluídas Hoje</div>
-                                    <div className="text-3xl font-black text-white leading-none">{totalConcluidas}</div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-                                <div className="w-1.5 h-12 rounded-full bg-red-500 shrink-0"></div>
-                                <div>
-                                    <div className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Alerta Estoque</div>
-                                    <div className={`text-3xl font-black leading-none ${lowStockCount > 0 ? 'text-red-500' : 'text-slate-600'}`}>{lowStockCount}</div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })()}
-
-                {/* KANBAN COLUMNS */}
-                <div className="flex flex-col md:flex-row gap-4 pb-12 items-center md:items-stretch flex-1 w-full md:w-max md:min-w-full md:px-6 md:snap-scroll-x justify-center">
+                {/* 3. KANBAN COLUMNS */}
+                <div className="flex flex-col md:flex-row gap-3 pb-12 items-center md:items-stretch flex-1 w-full md:w-max md:min-w-full md:snap-scroll-x justify-center">
                     {Object.entries(COLUMN_TITLES)
                         .filter(([key]) => window.innerWidth >= 768 || key === kanbanStage)
                         .map(([columnKey, title]) => (
@@ -600,131 +542,149 @@ export default function Board() {
                                         } else {
                                             setPendingTransition({ osId, sourceCol, destCol, osData: osToMove });
                                         }
-                                    } else if (destCol === 'concluido') {
-
-                                        const osToMove = kanban[sourceCol].find(item => item.id === osId);
-                                        // Lote indo para Concluído: perguntar peças concluídas (SplitModal) antes da aferição
+                                    } else if (destCol === 'aFazer' && (sourceCol === 'setup' || sourceCol === 'emCorte' || sourceCol === 'afericao')) {
+                                        const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
+                                        setPendingDevolverAFazer({ osId, sourceCol, destCol, osData: osToMove });
+                                    } else if (destCol === 'concluido' && sourceCol === 'afericao') {
+                                        const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
                                         if ((osToMove?.quantidade || 1) > 1) {
                                             setSplitContext({ osId, sourceCol, destCol, osData: osToMove });
                                         } else {
                                             setPendingAfericao({ osId, sourceCol, destCol, osData: osToMove });
                                         }
-                                    } else if (sourceCol === 'emCorte' && destCol === 'afericao') {
-                                        const osToMove = kanban[sourceCol].find(item => item.id === osId);
-                                        const total = osToMove?.quantidade || 1;
-                                        // Lote: sempre abre modal de Split (peças concluídas)
-                                        if (total > 1) {
+                                    } else {
+                                        const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
+                                        if ((osToMove?.quantidade || 1) > 1 && destCol === 'concluido') {
                                             setSplitContext({ osId, sourceCol, destCol, osData: osToMove });
                                         } else {
                                             const nowIso = new Date().toISOString();
                                             moveOrdemServico(osId, sourceCol, destCol, {
                                                 status: COLUMN_TITLES[destCol],
                                                 [`timestampEntrada_${destCol}`]: nowIso
+                                            }).catch((err) => {
+                                                console.error("Erro ao mover O.S.:", err);
+                                                setTransitionError(err?.message || "Falha ao salvar.");
+                                                setTimeout(() => setTransitionError(null), 4000);
                                             });
                                         }
-                                    } else if (destCol === 'aFazer' && (sourceCol === 'setup' || sourceCol === 'emCorte')) {
-                                        // Devolver para A fazer: pede confirmação
-                                        const osToMove = kanban[sourceCol].find(item => item.id === osId);
-                                        setPendingDevolverAFazer({ osId, sourceCol, destCol, osData: osToMove });
-                                    } else {
-                                        const nowIso = new Date().toISOString();
-                                        moveOrdemServico(osId, sourceCol, destCol, {
-                                            status: COLUMN_TITLES[destCol],
-                                            [`timestampEntrada_${destCol}`]: nowIso
-                                        });
                                     }
                                 }}
-                                onPauseRequest={(osData) => setPauseContext({ osData, colKey: columnKey })}
+                                onPauseRequest={(osData) => {
+                                    const sourceCol = Object.keys(kanban).find(key => kanban[key].some(item => item.id === osData.id));
+                                    if (sourceCol) setPauseContext({ osData, colKey: sourceCol });
+                                }}
                                 onViewRequest={(osData) => setSelectedOs(osData)}
-                                onDeleteRequest={(osData) => setDeleteContext({ osData, colKey: columnKey })}
                             />
                         ))}
                 </div>
 
-                {/* MODALS */}
-                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nova Ordem de Serviço" maxWidth="max-w-3xl">
-                    <NovaOSForm onClose={() => setIsModalOpen(false)} />
-                </Modal>
+                {/* MODAIS DO FLUXO */}
+                <NovaOSForm
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                />
 
                 {pendingTransition && (
                     <TransitionModal
                         isOpen={!!pendingTransition}
-                        onClose={handleCancelTransition}
-                        onConfirm={handleConfirmTransition}
-                        targetColumnTitle={COLUMN_TITLES[pendingTransition.destCol]}
-                        destCol={pendingTransition.destCol}
                         osData={pendingTransition.osData}
+                        sourceCol={pendingTransition.sourceCol}
+                        destCol={pendingTransition.destCol}
+                        onConfirm={handleConfirmTransition}
+                        onCancel={() => setPendingTransition(null)}
                     />
                 )}
 
-                <PauseModal
-                    isOpen={!!pauseContext}
-                    onClose={() => setPauseContext(null)}
-                    onConfirm={handleConfirmPause}
-                    osData={pauseContext?.osData}
-                />
+                {pauseContext && (
+                    <PauseModal
+                        isOpen={!!pauseContext}
+                        osData={pauseContext.osData}
+                        columnId={pauseContext.colKey}
+                        onConfirm={handleConfirmPause}
+                        onClose={() => setPauseContext(null)}
+                    />
+                )}
 
-                <SplitModal
-                    isOpen={!!splitContext}
-                    onClose={() => setSplitContext(null)}
-                    onConfirm={handleConfirmSplit}
-                    osData={splitContext?.osData}
-                />
+                {pendingAfericao && (
+                    <AfericaoModal
+                        isOpen={!!pendingAfericao}
+                        osData={pendingAfericao.osData}
+                        onConfirm={handleConfirmAfericao}
+                        onClose={() => setPendingAfericao(null)}
+                    />
+                )}
 
-                <AfericaoModal
-                    isOpen={!!pendingAfericao}
-                    onClose={handleCancelAfericao}
-                    onConfirm={handleConfirmAfericao}
-                    osData={pendingAfericao?.osData}
-                />
+                {selectedOs && (
+                    <AcompanhamentoModal
+                        isOpen={!!selectedOs}
+                        osData={selectedOs}
+                        onClose={() => setSelectedOs(null)}
+                        onDelete={handleDeleteFromModal}
+                        onPauseRequest={(osData) => {
+                            const sourceCol = Object.keys(kanban).find(key => kanban[key].some(item => item.id === osData.id));
+                            if (sourceCol) setPauseContext({ osData, colKey: sourceCol });
+                        }}
+                    />
+                )}
 
-                <AcompanhamentoModal
-                    isOpen={!!selectedOs}
-                    onClose={() => setSelectedOs(null)}
-                    osData={selectedOs}
-                    onDeleteRequest={handleDeleteFromModal}
-                    onPauseRequest={(osData) => {
-                        const colKey = Object.keys(kanban).find(key => kanban[key].some(os => os.id === osData.id));
-                        setPauseContext({ osData, colKey });
-                    }}
-                />
+                {deleteContext && (
+                    <ConfirmDeleteModal
+                        isOpen={!!deleteContext}
+                        onConfirm={handleConfirmDelete}
+                        onClose={() => setDeleteContext(null)}
+                    />
+                )}
 
-                <ConfirmDeleteModal
-                    isOpen={!!deleteContext}
-                    onClose={() => setDeleteContext(null)}
-                    onConfirm={handleConfirmDelete}
-                    osData={deleteContext?.osData}
-                />
+                {pendingDevolverAFazer && (
+                    <ConfirmDevolverModal
+                        isOpen={!!pendingDevolverAFazer}
+                        onConfirm={handleConfirmDevolver}
+                        onClose={() => setPendingDevolverAFazer(null)}
+                    />
+                )}
 
-                <ConfirmDevolverModal
-                    isOpen={!!pendingDevolverAFazer}
-                    onClose={() => setPendingDevolverAFazer(null)}
-                    onConfirm={handleConfirmDevolver}
-                    osData={pendingDevolverAFazer?.osData}
-                    sourceCol={pendingDevolverAFazer?.sourceCol}
-                />
+                {pendingDevolverCorteSetup && (
+                    <ConfirmDevolverCorteModal
+                        isOpen={!!pendingDevolverCorteSetup}
+                        onConfirm={handleConfirmDevolverCorteSetup}
+                        onClose={() => setPendingDevolverCorteSetup(null)}
+                    />
+                )}
 
-                <ConfirmDevolverCorteModal
-                    isOpen={!!pendingDevolverCorteSetup}
-                    onClose={() => setPendingDevolverCorteSetup(null)}
-                    onConfirm={handleConfirmDevolverCorteSetup}
-                />
+                {showRegraAfericaoAlert && (
+                    <RegraAfericaoModal
+                        isOpen={showRegraAfericaoAlert}
+                        onClose={() => setShowRegraAfericaoAlert(false)}
+                    />
+                )}
 
-                <RegraAfericaoModal isOpen={showRegraAfericaoAlert} onClose={() => setShowRegraAfericaoAlert(false)} />
+                {occupiedMachineAlert && (
+                    <MachineOccupiedModal
+                        isOpen={!!occupiedMachineAlert}
+                        maquinaNome={occupiedMachineAlert.maquinaName}
+                        targetCol={occupiedMachineAlert.targetCol}
+                        onClose={() => setOccupiedMachineAlert(null)}
+                    />
+                )}
 
-                <MachineOccupiedModal
-                    isOpen={!!occupiedMachineAlert}
-                    onClose={() => setOccupiedMachineAlert(null)}
-                    maquinaName={occupiedMachineAlert?.maquinaName}
-                    targetCol={occupiedMachineAlert?.targetCol}
-                />
+                {extraSetupContext && (
+                    <ExtraSetupModal
+                        isOpen={!!extraSetupContext}
+                        osData={extraSetupContext.osData}
+                        onConfirm={handleConfirmExtraSetup}
+                        onClose={() => setExtraSetupContext(null)}
+                    />
+                )}
 
-                <ExtraSetupModal
-                    isOpen={!!extraSetupContext}
-                    onClose={() => setExtraSetupContext(null)}
-                    onConfirm={handleConfirmExtraSetup}
-                    osData={extraSetupContext?.osData}
-                />
+                {splitContext && (
+                    <SplitModal
+                        isOpen={!!splitContext}
+                        osData={splitContext.osData}
+                        destCol={splitContext.destCol}
+                        onConfirm={handleConfirmSplit}
+                        onClose={() => setSplitContext(null)}
+                    />
+                )}
             </div>
         </ErrorBoundary>
     );

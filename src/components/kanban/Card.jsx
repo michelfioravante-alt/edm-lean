@@ -1,9 +1,12 @@
 import React, { useState, useEffect, memo } from 'react';
-import { PlayCircle, PauseCircle, Clock, Link as LinkIcon, Copy, Check, Plus, Wrench, Eye } from 'lucide-react';
+import { 
+    Calendar, User, Monitor, Clock, Link as LinkIcon, 
+    Copy, Check, Plus, ArrowRight, ArrowLeft, Eye, 
+    Pause, Play, AlertCircle, Cpu, Zap, RotateCw 
+} from 'lucide-react';
 import { calcularTempoFaseAtual } from '../../utils/manufacturingMath';
 import { formatarHoras } from '../../utils/formatters';
 import { useAppStore } from '../../store/useAppStore';
-import { COLUMN_LABELS } from '../../constants/cncProcess';
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function observacaoLegivel(obs, maquinas) {
@@ -36,31 +39,36 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
         isPausado,
         prazo_entrega,
         prazoEntrega,
-        cliente
+        cliente,
+        codigo_molde,
+        codigoMolde,
+        numero_programa,
+        numeroPrograma,
+        componente_molde,
+        componenteMolde,
+        descricao_peca,
+        descricaoPeca,
+        setor,
+        tipo_processo
     } = data;
 
     const updateOrdemServico = useAppStore(state => state.updateOrdemServico);
     const maquinas = useAppStore(state => state.maquinas);
 
-    // Adaptação segura entre o formato antigo local (camelCase) e o novo banco Supabase (snake_case)
     const maquina = maquina_nome || maqLocal;
     const operador = operador_atual || opLocal;
     const programador = programador_nome || pgLocal;
+    const molde = codigo_molde || codigoMolde;
+    const programa = numero_programa || numeroPrograma;
+    const pecaDesc = componente_molde || componenteMolde || descricao_peca || descricaoPeca;
+    const codPeca = codigo_peca || codigoPeca || 'S/N';
+    const osSetor = setor || tipo_processo || 'CNC';
+
     const _rawLink = link_desenho || linkDesenho;
     const linkFinal = (_rawLink && !String(_rawLink).startsWith('{') && !String(_rawLink).startsWith('[')) ? _rawLink : null;
-    const resultadoFinal = data.resultado_afericao || data.resultadoAfericao;
-    const isPrioridadeFinal = is_prioridade || isPrioridade;
+    const isPrioridadeFinal = !!(is_prioridade || isPrioridade);
     const isPausadoFinal = !!(is_pausado || isPausado);
     const prazoFinal = prazo_entrega || prazoEntrega;
-
-    const handleProgressInc = (e) => {
-        e.stopPropagation();
-        const max = quantidade || 1;
-        const current = quantidade_concluida || 0;
-        if (current >= max) return;
-        const next = current + 1;
-        updateOrdemServico(data.id, { quantidade_concluida: next });
-    };
 
     const [nowMs, setNowMs] = useState(Date.now());
     const [copied, setCopied] = useState(false);
@@ -74,47 +82,75 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     }, [status]);
 
     const safePrazo = prazoFinal ? (prazoFinal.includes('T') ? prazoFinal : `${prazoFinal}T12:00:00`) : null;
-    const isOverdue = safePrazo ? new Date(safePrazo).getTime() < new Date().setHours(0,0,0,0) && status !== 'Concluído' : false;
+    const isOverdue = safePrazo ? new Date(safePrazo).getTime() < new Date().setHours(0, 0, 0, 0) && status !== 'Concluído' : false;
     const isDueToday = safePrazo ? new Date(safePrazo).toDateString() === new Date().toDateString() && status !== 'Concluído' : false;
 
-    const getAccentColor = () => {
-        if (isPausadoFinal) return 'bg-amber-500';
-        if (isPrioridadeFinal) return 'bg-red-500';
-        switch (status) {
-            case 'A fazer': return 'bg-kanban-steel';
-            case 'Set-up': return 'bg-kanban-amber';
-            case 'Em Corte': return 'bg-kanban-teal';
-            case 'Aferição': return 'bg-kanban-violet';
-            case 'Concluído': return 'bg-kanban-green';
-            default: return 'bg-slate-700';
-        }
+    const handleProgressInc = (e) => {
+        e.stopPropagation();
+        const max = quantidade || 1;
+        const current = quantidade_concluida || 0;
+        if (current >= max) return;
+        updateOrdemServico(data.id, { quantidade_concluida: current + 1 });
     };
 
-    const accentColor = getAccentColor();
+    // Ícone da máquina de acordo com setor
+    const getMachineIcon = () => {
+        if (osSetor === 'EDM_FIO') return Zap;
+        if (osSetor === 'TORNO') return RotateCw;
+        return Cpu;
+    };
+    const MachineIcon = getMachineIcon();
 
-    const getBadgeStyles = () => {
-        if (isPausadoFinal) return 'bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse';
-        if (isOverdue) return 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse';
-        if (isDueToday) return 'bg-amber-500/20 text-amber-400 border border-amber-500/40';
-
-        switch (status) {
-            case 'A fazer': return 'bg-kanban-steel-dim text-kanban-steel border border-kanban-steel/20';
-            case 'Set-up': return 'bg-kanban-amber-dim text-kanban-amber border border-kanban-amber/30';
-            case 'Em Corte': return 'bg-kanban-teal-dim text-kanban-teal border border-kanban-teal/20';
-            case 'Aferição': return 'bg-kanban-violet-dim text-kanban-violet border border-kanban-violet/20';
-            case 'Concluído': return 'bg-kanban-green-dim text-kanban-green border border-kanban-green/20';
-            default: return 'bg-slate-900 text-slate-400 border border-slate-800';
-        }
+    const getMachineLabel = () => {
+        if (osSetor === 'EDM_FIO') return 'EDM Fio';
+        if (osSetor === 'TORNO') return 'Torno CNC';
+        return 'Centro CNC';
     };
 
-    const badgeLabel = isPausadoFinal ? 'Pausado' : isOverdue ? 'Atrasado' : isDueToday ? 'Hoje' : status;
-    const badgeClass = getBadgeStyles();
+    // Status tag no canto superior direito
+    const getStatusTag = () => {
+        if (isPausadoFinal) {
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Pausado</span>;
+        }
+        if (isPrioridadeFinal) {
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C85558] bg-[rgba(200,85,88,0.1)] border border-[#C85558]/30">Prioridade</span>;
+        }
+        if (isOverdue) {
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C85558] bg-[rgba(200,85,88,0.1)]">Atrasada</span>;
+        }
+        if (status === 'Concluído') {
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#4A9D74] bg-[rgba(74,157,116,0.1)]">Concluído</span>;
+        }
+        return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#7B808F] bg-[#111318] border border-[#333844]">{status}</span>;
+    };
 
     const isOptimistic = !!data._optimistic;
 
+    // Próxima e anterior coluna para navegação rápida
+    const ORDER = ['aFazer', 'setup', 'emCorte', 'afericao', 'concluido'];
+    const currentIndex = ORDER.indexOf(columnId);
+    let prevStage = currentIndex > 0 ? ORDER[currentIndex - 1] : null;
+    const nextStage = currentIndex < ORDER.length - 1 ? ORDER[currentIndex + 1] : null;
+    if (columnId === 'afericao') prevStage = 'setup';
+    if (columnId === 'concluido') prevStage = null;
+
+    const handleMoveAction = (e, destCol) => {
+        e.stopPropagation();
+        if (destCol && onTransitionRequest) {
+            onTransitionRequest(data.id, columnId, destCol);
+        }
+    };
+
+    const hasMetaTable = molde || programa || (data.total_setups > 1);
+    const qtdTotal = quantidade || 1;
+    const qtdProntas = quantidade_concluida || 0;
+    const progressPct = Math.min(100, Math.round((qtdProntas / qtdTotal) * 100));
+
     return (
         <div
-            className={`bg-slate-950 border border-slate-800 rounded-lg relative overflow-hidden transition-all duration-150 hover:border-slate-600 hover:-translate-y-[1px] shadow-sm hover:shadow-lg hover:shadow-black/40 group p-0 kanban-card-wrapper ${isOptimistic ? 'kanban-no-drag opacity-90 cursor-wait' : 'cursor-grab active:cursor-grabbing'}`}
+            className={`bg-[#181B22] border border-[#262A33] rounded-[10px] overflow-hidden transition-all duration-150 hover:border-[#333844] group ${
+                isOptimistic ? 'opacity-80 cursor-wait' : 'cursor-grab active:cursor-grabbing'
+            }`}
             onDoubleClick={() => !isOptimistic && onViewRequest?.(data)}
             onClick={(e) => {
                 if (window.innerWidth < 768 && !isOptimistic && !e.target.closest('button') && !e.target.closest('a')) {
@@ -122,331 +158,206 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                 }
             }}
         >
-            <div className={`w-1 absolute left-0 top-0 bottom-0 rounded-l-lg ${accentColor}`}></div>
-
-            {isOptimistic && (
-                <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded bg-kanban-amber/20 text-kanban-amber border border-kanban-amber/40 text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                    Salvando…
-                </div>
-            )}
-
-            <div className="p-4 relative z-10">
-                {/* Header (PC ID + G-Code + Molde/Componente + Alerts + Setups) */}
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {/* Badge de Setor Produtivo (EDM, Torno ou CNC) */}
-                        {(data.setor || data.tipo_processo || 'CNC') === 'EDM_FIO' ? (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-950/90 text-emerald-400 border border-emerald-500/50 flex items-center gap-1">
-                                ⚡ EDM Fio
-                            </span>
-                        ) : (data.setor || data.tipo_processo) === 'TORNO' ? (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-950/90 text-amber-400 border border-amber-500/50 flex items-center gap-1">
-                                ⚙️ Torno
-                            </span>
-                        ) : (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-cyan-950/90 text-cyan-400 border border-cyan-500/50 flex items-center gap-1">
-                                🌀 CNC
-                            </span>
-                        )}
-
-                        <span className="text-xs font-bold tracking-widest uppercase text-slate-400 font-mono">
-                            PC: {codigo_peca || codigoPeca || 'S/N'}
-                        </span>
-                        {(data.codigo_molde || data.codigoMolde) && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                Molde: {data.codigo_molde || data.codigoMolde}
-                            </span>
-                        )}
-                        {(data.componente_molde || data.componenteMolde) && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-bold text-slate-300 bg-slate-900 border border-slate-800">
-                                {data.componente_molde || data.componenteMolde}
-                            </span>
-                        )}
-                        {(data.numero_programa || data.numeroPrograma) && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black uppercase tracking-wider bg-kanban-amber/20 text-kanban-amber border border-kanban-amber/30">
-                                Prog: {data.numero_programa || data.numeroPrograma}
-                            </span>
-                        )}
-                        {data.aguardando_tt && (
-                            <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse">
-                                🔥 Aguardando Retorno T.T.
-                            </span>
-                        )}
-                        {(data.is_retrabalho || data.isRetrabalho) && (
-                            <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                🛠️ Retrabalho / Ajuste
-                            </span>
-                        )}
-                        {(data.total_setups || data.totalSetups) > 1 && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">
-                                {data.nomes_setups?.[(data.setup_atual || data.setupAtual || 1) - 1] || `OP${(data.setup_atual || data.setupAtual || 1) * 10}`} ({(data.setup_atual || data.setupAtual || 1)}/{data.total_setups || data.totalSetups})
-                            </span>
-                        )}
-                        {data.parent_id && (
-                            <span className="px-2 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-widest bg-kanban-amber/20 text-kanban-amber border border-kanban-amber/30">
-                                Complementar
-                            </span>
-                        )}
-                        {resultadoFinal && (
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-widest ${resultadoFinal === 'Aprovada' ? 'bg-kanban-green/20 text-kanban-green' : 'bg-red-500/20 text-red-500'}`}>
-                                {resultadoFinal}
-                            </span>
-                        )}
+            {/* 1. CARD HEADER (Identificação Técnica) */}
+            <div className="flex items-center justify-between px-3.5 py-2.5 bg-[#1F232B] border-b border-[#262A33]">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-1 text-[10.5px] font-semibold text-[#D97D3D] uppercase tracking-[0.3px] shrink-0">
+                        <MachineIcon className="w-3 h-3 stroke-[1.8]" />
+                        <span>{getMachineLabel()}</span>
                     </div>
+                    <span className="font-['IBM_Plex_Mono'] text-[11px] text-[#9DA2AE] truncate">
+                        {codPeca}
+                    </span>
                 </div>
+                <div className="shrink-0">
+                    {getStatusTag()}
+                </div>
+            </div>
 
-                {/* Cliente / Title */}
-                <h4 className="text-base font-bold text-white mb-2 tracking-wide truncate" title={cliente}>
-                    {cliente || 'Sem Cliente'}
+            {/* 2. CARD BODY (Conteúdo & Metadados) */}
+            <div className="p-3.5">
+                {/* Nome do Cliente */}
+                <h4 className="font-['Space_Grotesk'] font-semibold text-[14.5px] text-[#E7E9ED] leading-tight mb-1 truncate" title={cliente}>
+                    {cliente || 'Cliente não informado'}
                 </h4>
 
-                {/* Badge de Prioridade sob o Cliente */}
-                {isPrioridadeFinal && (
-                    <div className="mb-3">
-                        <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 bg-red-500/20 text-red-500 border border-red-500/30 rounded-md text-[10px] font-black uppercase tracking-widest animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]">
-                            <svg width="10" height="10" viewBox="0 0 14 14" fill="currentColor">
-                                <path d="M7 1L8.85 5.25L13.5 5.8L10 9.1L10.9 13.5L7 11.25L3.1 13.5L4 9.1L0.5 5.8L5.15 5.25L7 1Z" />
-                            </svg>
-                            Prioridade
-                        </span>
+                {/* Descrição da Peça / Componente */}
+                {pecaDesc ? (
+                    <div className="text-[12px] text-[#7B808F] mb-3 line-clamp-2">
+                        {pecaDesc}
+                    </div>
+                ) : (
+                    <div className="h-1 mb-2"></div>
+                )}
+
+                {/* Mini-tabela de dados técnicos */}
+                {hasMetaTable && (
+                    <div className="border border-[#262A33] rounded-[7px] overflow-hidden mb-3 text-[11.5px]">
+                        {molde && (
+                            <div className="flex justify-between items-center px-2.5 py-1.5 border-b border-[#262A33] bg-[rgba(255,255,255,0.015)]">
+                                <span className="text-[#565B68] font-medium">Molde</span>
+                                <span className="font-['IBM_Plex_Mono'] text-[#9DA2AE] text-right font-medium truncate max-w-[170px]">{molde}</span>
+                            </div>
+                        )}
+                        {programa && (
+                            <div className="flex justify-between items-center px-2.5 py-1.5 border-b border-[#262A33] last:border-b-0 bg-transparent">
+                                <span className="text-[#565B68] font-medium">Programa</span>
+                                <span className="font-['IBM_Plex_Mono'] text-[#9DA2AE] text-right font-medium truncate max-w-[170px]">{programa}</span>
+                            </div>
+                        )}
+                        {(data.total_setups > 1) && (
+                            <div className="flex justify-between items-center px-2.5 py-1.5 bg-[rgba(255,255,255,0.015)]">
+                                <span className="text-[#565B68] font-medium">Setup</span>
+                                <span className="font-['IBM_Plex_Mono'] text-[#9DA2AE] text-right font-medium">
+                                    {data.nomes_setups?.[(data.setup_atual || 1) - 1] || `OP${(data.setup_atual || 1) * 10}`} ({(data.setup_atual || 1)}/{data.total_setups})
+                                </span>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* Metadata List */}
-                <div className="flex flex-col gap-2 mb-4">
+                {/* Barra de Progresso de Lote (quando quantidade > 1) */}
+                {qtdTotal > 1 && (
+                    <div className="flex items-center gap-2 my-2.5 py-1 px-2 rounded-[6px] bg-[#111318] border border-[#262A33]">
+                        <span className="font-['IBM_Plex_Mono'] text-[10px] text-[#565B68] font-semibold">LOTE</span>
+                        <div className="flex-1 h-[4px] bg-[#1F232B] rounded-[2px] overflow-hidden border border-[#262A33]">
+                            <div className="h-full bg-[#4A9D74]" style={{ width: `${progressPct}%` }}></div>
+                        </div>
+                        <span className="font-['IBM_Plex_Mono'] text-[10.5px] text-[#9DA2AE] font-medium">
+                            {qtdProntas}/{qtdTotal}
+                        </span>
+                        {status === 'Em Corte' && !isPausadoFinal && (
+                            <button
+                                onClick={handleProgressInc}
+                                className="text-[#4A9D74] hover:text-white p-0.5 rounded transition-colors ml-0.5 cursor-pointer"
+                                title="Marcar +1 pronta"
+                            >
+                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Linhas de Informações Secundárias */}
+                <div className="space-y-1.5 text-[11.5px] text-[#7B808F] mb-3">
                     {prazoFinal && (
-                        <div className={`flex items-center gap-2 text-xs font-semibold tracking-wide ${isOverdue ? 'text-kanban-rust font-bold' : 'text-slate-400'}`}>
-                            <svg width="12" height="12" viewBox="0 0 9 9" fill="none">
-                                <circle cx="4.5" cy="4.5" r="3.5" stroke="currentColor" strokeWidth="1.1" />
-                                <path d="M4.5 2.5V4.5L5.8 5.8" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                            </svg>
-                            Entrega: {new Date(prazoFinal.includes('T') ? prazoFinal : `${prazoFinal}T12:00:00`).toLocaleDateString('pt-BR')} {isOverdue ? '· ATRASADO' : isDueToday ? '· HOJE' : ''}
+                        <div className={`flex items-center gap-2 ${isOverdue ? 'text-[#C85558] font-semibold' : isDueToday ? 'text-[#C99A4A] font-semibold' : ''}`}>
+                            <Calendar className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                            <span>
+                                Entrega {new Date(prazoFinal.includes('T') ? prazoFinal : `${prazoFinal}T12:00:00`).toLocaleDateString('pt-BR')}
+                                {isOverdue && ' (Atrasada)'}
+                                {isDueToday && ' (Hoje)'}
+                            </span>
                         </div>
                     )}
+
                     {maquina && (
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-400">
-                            <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-                                <rect x="1" y="1.5" width="7" height="6" rx="1" stroke="currentColor" strokeWidth="1.1" />
-                                <path d="M3 1V2.5M6 1V2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                            </svg>
-                            Máquina: {maquina}
+                        <div className="flex items-center gap-2">
+                            <Monitor className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                            <span className="truncate">{maquina}</span>
                         </div>
                     )}
+
                     {operador && (
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-kanban-blue">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            Op: {operador}
-                        </div>
-                    )}
-                    {programador && (
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-400">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Prog: {programador}
-                        </div>
-                    )}
-                    {quantidade > 1 && (
-                        <div className="flex items-center justify-between bg-slate-900/80 border border-slate-700/50 rounded-lg p-2 mt-1">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-kanban-teal animate-pulse"></div>
-                                <span className="text-[11px] font-black text-slate-200 uppercase tracking-widest">
-                                    Lote: {quantidade_concluida || 0} / {quantidade} <span className="text-[9px] text-slate-500 font-bold ml-1">concluídas</span>
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                {status === 'Em Corte' && !isPausadoFinal && (
-                                    <button
-                                        onClick={handleProgressInc}
-                                        className="bg-kanban-teal text-slate-950 p-1 rounded hover:bg-teal-400 transition-all active:scale-90 shadow-sm flex items-center gap-1"
-                                        title="Marcar +1 peça pronta"
-                                    >
-                                        <Plus className="w-3.5 h-3.5 stroke-[4px]" />
-                                        <span className="text-[9px] font-black uppercase whitespace-nowrap">Pronta</span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                    {linkFinal && (
-                        <div
-                            className="flex items-center justify-between bg-slate-900 border border-slate-700/50 rounded p-1.5 mt-1 cursor-pointer hover:bg-slate-800 transition-colors group/link"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(linkFinal);
-                                setCopied(true);
-                                setTimeout(() => setCopied(false), 2000);
-                            }}
-                            title="Copiar Caminho do Desenho"
-                        >
-                            <div className="flex items-center gap-2 overflow-hidden">
-                                <LinkIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <span className="text-[10px] font-mono text-slate-400 truncate tracking-tight">{linkFinal}</span>
-                            </div>
-                            <div className="shrink-0 pl-2">
-                                {copied ? <Check className="w-3.5 h-3.5 text-kanban-green" /> : <Copy className="w-3.5 h-3.5 text-slate-500 group-hover/link:text-kanban-amber" />}
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <User className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                            <span className="truncate">{operador}</span>
                         </div>
                     )}
 
-                    {/* Resumo de Ferramentas da O.S. (Apenas para Usinagem/Torno, Omitido para EDM) */}
-                    {(() => {
-                        const isEdm = (data.setor || data.tipo_processo) === 'EDM_FIO';
-                        if (isEdm) return null;
-                        const ferramentas = data.nx_import?.ferramentas || data.nxImport?.ferramentas || [];
-                        if (!ferramentas || ferramentas.length === 0) return null;
-
-                        return (
-                            <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-2 mt-2">
-                                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                                    <span className="flex items-center gap-1 text-kanban-amber font-mono">
-                                        <Wrench className="w-3 h-3" />
-                                        Magazine ({ferramentas.length})
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                    {ferramentas.slice(0, 3).map((f, i) => (
-                                        <span key={i} className="text-[9px] bg-slate-950 text-slate-300 px-1.5 py-0.5 rounded border border-slate-800 font-mono truncate max-w-[130px]">
-                                            <strong className="text-kanban-amber">{f.codigoT || `T${i + 1}`}:</strong> {f.nome || 'Ferramenta'}
-                                        </span>
-                                    ))}
-                                    {ferramentas.length > 3 && (
-                                        <span className="text-[9px] bg-slate-950 text-slate-400 px-1 py-0.5 rounded border border-slate-800 font-bold">
-                                            +{ferramentas.length - 3} mais
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })()}
-
-                    {/* ALERTA DE PAUSA (MOTIVO E OBS) */}
-                    {isPausadoFinal && (
-                        <div className="mt-3 p-3 bg-kanban-amber/10 border-l-4 border-kanban-amber rounded-r-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                                <PauseCircle className="w-4 h-4 text-kanban-amber" />
-                                <span className="text-[10px] font-black uppercase text-kanban-amber tracking-tighter">Motivo da Pausa</span>
-                            </div>
-                            <p className="text-xs font-bold text-slate-200 mb-1 leading-tight">
-                                {data.motivo_pausa || data.motivoPausa || 'Não informado'}
-                            </p>
-                            {(data.observacao_pausa || data.observacaoPausa) && (
-                                <p className="text-[10px] text-slate-400 italic leading-tight border-t border-kanban-amber/20 pt-1">
-                                    "{observacaoLegivel(data.observacao_pausa || data.observacaoPausa, maquinas)}"
-                                </p>
+                    {!(status === 'A fazer' || status === 'Concluído') && (
+                        <div className="flex items-center justify-between pt-1 text-[11px] text-[#565B68] font-['IBM_Plex_Mono']">
+                            <span className="flex items-center gap-1.5">
+                                <Clock className="w-3 h-3" />
+                                Tempo na etapa: {formatarHoras(calcularTempoFaseAtual(data, status, nowMs))}
+                            </span>
+                            {onPauseRequest && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onPauseRequest(data);
+                                    }}
+                                    className="p-1 hover:text-[#E7E9ED] transition-colors cursor-pointer"
+                                    title={isPausadoFinal ? "Retomar" : "Pausar"}
+                                >
+                                    {isPausadoFinal ? <Play className="w-3 h-3 text-[#4A9D74]" /> : <Pause className="w-3 h-3 text-[#C99A4A]" />}
+                                </button>
                             )}
                         </div>
                     )}
                 </div>
 
-
-                {/* Footer Status */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                    <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-extrabold tracking-widest uppercase px-2 py-1 rounded-[4px] ${badgeClass}`}>
-                            {badgeLabel}
-                        </span>
-                        {!(status === 'A fazer' || status === 'Concluído') && (
-                            <span className="text-xs text-slate-400 font-bold tracking-wide flex items-center gap-1.5" title="Tempo investido na fase atual">
-                                <Clock className="w-3.5 h-3.5 text-kanban-amber" />
-                                {formatarHoras(calcularTempoFaseAtual(data, status, nowMs))}
-                            </span>
+                {/* Alerta de Pausa */}
+                {isPausadoFinal && (
+                    <div className="mb-3 p-2.5 bg-[rgba(201,154,74,0.1)] border-l-2 border-[#C99A4A] rounded-r-[6px] text-xs">
+                        <div className="flex items-center gap-1.5 text-[#C99A4A] font-semibold text-[10.5px] uppercase tracking-wider mb-0.5">
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Pausa: {data.motivo_pausa || data.motivoPausa || 'Não informado'}</span>
+                        </div>
+                        {(data.observacao_pausa || data.observacaoPausa) && (
+                            <p className="text-[10px] text-[#9DA2AE] italic leading-tight mt-1">
+                                "{observacaoLegivel(data.observacao_pausa || data.observacaoPausa, maquinas)}"
+                            </p>
                         )}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                        {!(status === 'A fazer' || status === 'Concluído') && (
-                            <button
-                                className="text-slate-500 hover:text-white transition-colors p-[2px] cursor-pointer"
-                                title={isPausadoFinal ? "Retomar Produção" : "Pausar OS"}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onPauseRequest?.(data);
-                                }}
-                            >
-                                {isPausadoFinal ? (
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-kanban-green">
-                                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.3" />
-                                        <path d="M5.5 4.5v5l4-2.5-4-2.5z" fill="currentColor" />
-                                    </svg>
-                                ) : (
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-kanban-amber">
-                                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.3" />
-                                        <path d="M5.5 5v4M8.5 5v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                                    </svg>
-                                )}
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Mobile Quick Actions (Voltar | Detalhes | Mover) */}
-                {!isOptimistic && (
-                <div className="kanban-no-drag md:hidden grid grid-cols-3 gap-1.5 mt-3 pt-3 border-t border-slate-800 touch-manipulation"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {(() => {
-                        const ORDER = ['aFazer', 'setup', 'emCorte', 'afericao', 'concluido'];
-                        const LABELS = COLUMN_LABELS;
-                        const currentIndex = ORDER.indexOf(columnId);
-
-                        let prevStage = currentIndex > 0 ? ORDER[currentIndex - 1] : null;
-                        const nextStage = currentIndex < ORDER.length - 1 ? ORDER[currentIndex + 1] : null;
-                        if (columnId === 'afericao') prevStage = 'setup';
-                        if (columnId === 'concluido') prevStage = null;
-
-                        const handleMove = (destCol) => {
-                            if (destCol && onTransitionRequest) onTransitionRequest(data.id, columnId, destCol);
-                        };
-
-                        return (
-                            <>
-                                {prevStage ? (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleMove(prevStage); }}
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                        className="flex items-center justify-center gap-1 py-2.5 px-1 min-h-[44px] bg-slate-900 border border-slate-800 rounded-lg text-[9px] font-black uppercase tracking-tighter text-slate-400 active:bg-slate-800 active:scale-95 transition-all touch-manipulation cursor-pointer"
-                                    >
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                            <path d="m15 18-6-6 6-6" />
-                                        </svg>
-                                        <span className="truncate">Voltar</span>
-                                    </button>
-                                ) : <div />}
-
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); onViewRequest?.(data); }}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    className="flex items-center justify-center gap-1 py-2.5 px-1 min-h-[44px] bg-slate-900 border border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tighter text-kanban-amber active:bg-slate-800 active:scale-95 transition-all touch-manipulation cursor-pointer"
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    <span>Detalhes</span>
-                                </button>
-
-                                {nextStage ? (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleMove(nextStage); }}
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                        className="flex items-center justify-center gap-1 py-2.5 px-1 min-h-[44px] bg-kanban-blue/10 border border-kanban-blue/30 rounded-lg text-[9px] font-black uppercase tracking-tighter text-kanban-blue active:bg-kanban-blue/20 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer"
-                                    >
-                                        <span className="truncate">Mover</span>
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                            <path d="m9 18 6-6-6-6" />
-                                        </svg>
-                                    </button>
-                                ) : <div />}
-                            </>
-                        );
-                    })()}
-                </div>
                 )}
+
+                {/* Link do Desenho (se houver) */}
+                {linkFinal && (
+                    <div
+                        className="flex items-center justify-between bg-[#111318] border border-[#262A33] rounded-[6px] px-2.5 py-1.5 mb-3 text-[10.5px] font-['IBM_Plex_Mono'] text-[#7B808F] hover:text-[#E7E9ED] cursor-pointer transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(linkFinal);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }}
+                        title="Copiar link do desenho"
+                    >
+                        <div className="flex items-center gap-1.5 truncate">
+                            <LinkIcon className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{linkFinal}</span>
+                        </div>
+                        {copied ? <Check className="w-3 h-3 text-[#4A9D74] shrink-0 ml-2" /> : <Copy className="w-3 h-3 opacity-60 shrink-0 ml-2" />}
+                    </div>
+                )}
+
+                {/* 3. CARD ACTIONS (Side-by-side: Detalhes + Mover) */}
+                <div className="flex items-center gap-2 pt-2 border-t border-[#262A33] kanban-no-drag">
+                    {prevStage && (
+                        <button
+                            type="button"
+                            onClick={(e) => handleMoveAction(e, prevStage)}
+                            className="p-2 bg-transparent text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] border border-[#333844] rounded-[7px] transition-all active:scale-95 cursor-pointer"
+                            title="Voltar etapa anterior"
+                        >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewRequest?.(data);
+                        }}
+                        className="flex-1 py-1.5 px-3 bg-transparent text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] border border-[#333844] rounded-[7px] text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Detalhes</span>
+                    </button>
+
+                    {nextStage && (
+                        <button
+                            type="button"
+                            onClick={(e) => handleMoveAction(e, nextStage)}
+                            className="flex-1 py-1.5 px-3 bg-[#D97D3D] hover:bg-[#c46d32] text-[#111318] border border-[#D97D3D] rounded-[7px] text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                        >
+                            <span>Mover</span>
+                            <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

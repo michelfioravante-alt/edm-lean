@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Briefcase, LogOut, Home } from 'lucide-react';
+import { Briefcase, LogOut, ShieldCheck, Cpu, Zap, RotateCw, Factory, Menu } from 'lucide-react';
 import { isLocalMode } from '../../local/mode';
 import { useAuthStore } from '../../store/useAuthStore';
 import ManagerPinModal from '../common/ManagerPinModal';
@@ -14,128 +14,117 @@ export default function Header({ onMenuToggle }) {
         setIsPinModalOpen(true);
     };
 
-
+    const getRoleLabel = () => {
+        if (role === 'admin') return 'Gerente';
+        if (role === 'programmer') return 'Programador';
+        return 'Operador';
+    };
 
     return (
-        <header className="bg-bg/92 backdrop-blur-md border-b border-edge sticky top-0 z-50 h-[52px] flex items-center px-4 md:px-7">
+        <header className="bg-[#111318] border-b border-[#262A33] sticky top-0 z-50 h-[52px] flex items-center px-4 md:px-6">
             <div className="w-full flex justify-between items-center">
 
-                {/* Left side: Menu toggle + Logo */}
-                <div className="flex items-center gap-5">
+                {/* Left side: Menu toggle + Logo Flat */}
+                <div className="flex items-center gap-3 md:gap-4">
                     <button
                         onClick={onMenuToggle}
-                        className="text-muted hover:text-core transition-colors flex items-center p-1"
+                        className="text-[#7B808F] hover:text-[#E7E9ED] transition-colors p-1.5 rounded-md hover:bg-[#1F232B] cursor-pointer"
                         aria-label="Menu"
                     >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor" />
-                            <rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor" />
-                            <rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor" />
-                        </svg>
+                        <Menu className="w-4 h-4" />
                     </button>
 
-                    <div className="flex items-center gap-2 font-mono text-[13px] font-bold tracking-[0.08em] uppercase text-core leading-none">
-                        <div className="w-[26px] h-[26px] bg-kanban-amber rounded flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                {/* Trend Line - Dark for contrast */}
-                                <path d="M20 70L40 50L55 60L85 25" stroke="#0a0c0f" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-                                {/* Spark / Wire - White for contrast */}
-                                <path d="M45 40L55 60" stroke="white" strokeWidth="12" strokeLinecap="round" />
-                            </svg>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-[26px] h-[26px] rounded-[6px] bg-[#D97D3D] flex items-center justify-center font-['Space_Grotesk'] font-bold text-[#111318] text-[13px] leading-none select-none shrink-0">
+                            E
                         </div>
-                        EDM Lean
-
+                        <div className="flex flex-col">
+                            <span className="font-['Space_Grotesk'] font-semibold text-[14px] text-[#E7E9ED] tracking-[0.1px] leading-tight">
+                                EDM Lean
+                            </span>
+                            <span className="text-[9.5px] text-[#565B68] font-medium tracking-[1.2px] uppercase leading-none mt-0.5">
+                                SHOP FLOOR OS
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Center text (hidden on small screens) */}
-                <div className="hidden lg:block font-mono text-[10px] tracking-[0.2em] uppercase text-dim">
-                    Visualize · Controle · Produza
+                {/* Center text (desktop) */}
+                <div className="hidden lg:block font-mono text-[10px] tracking-[0.2em] uppercase text-[#565B68]">
+                    VISUALIZE · CONTROLE · PRODUZA
                 </div>
 
-                {/* Right side: Empresa + Status + Quick Logout */}
-                <div className="flex items-center gap-3 sm:gap-6">
+                {/* Right side: Empresa + Role + Quick selector in Demo + Logout */}
+                <div className="flex items-center gap-2.5 sm:gap-4">
                     {nomeEmpresa && (
-                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-800/40 rounded-full border border-slate-700/50 max-w-[100px] xs:max-w-[150px] sm:max-w-[300px]">
-                            <Briefcase className="w-3 h-3 text-kanban-amber shrink-0" />
-                            <span className="font-mono text-[9px] sm:text-[10px] text-slate-300 tracking-wider uppercase truncate">
+                        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#181B22] rounded-[6px] border border-[#262A33] max-w-[200px]">
+                            <Briefcase className="w-3 h-3 text-[#7B808F] shrink-0" />
+                            <span className="font-mono text-[10px] text-[#9DA2AE] tracking-wider uppercase truncate">
                                 {nomeEmpresa}
                             </span>
                         </div>
                     )}
 
-                    {/* Seletor rápido de Perfil / Setor — APENAS no Modo Demonstração */}
+                    {/* Role Pill - Clean industrial outline */}
+                    <div className="flex items-center gap-1.5 text-[11.5px] text-[#7B808F] font-medium border border-[#333844] px-2.5 py-1 rounded-[7px] bg-[#181B22]">
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#7B808F]" />
+                        <span>{getRoleLabel()}</span>
+                    </div>
+
+                    {/* Seletor rápido de Perfil / Setor — Apenas Modo Demonstração */}
                     {demoMode && (
                         <>
                             {/* Desktop Button Set */}
-                            <div className="hidden md:flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-bold">
+                            <div className="hidden xl:flex items-center gap-1 bg-[#181B22] p-1 rounded-[7px] border border-[#262A33] text-[11px] font-medium">
                                 <button
                                     type="button"
                                     onClick={handleGerenteClick}
-                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    title="Visão completa de Gerente / Diretor (Requer PIN Master)"
+                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
+                                    title="Visão de Gerência (PIN Master)"
                                 >
-                                    👑 Gerente
+                                    <ShieldCheck className="w-3 h-3" /> Gerente
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => enterLocalStudyMode('programador', 'CNC')}
-                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    title="Programador do Centro de Usinagem CNC"
+                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
+                                    title="Programador CNC"
                                 >
-                                    🌀 Prog. CNC
+                                    <Cpu className="w-3 h-3" /> CNC
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => enterLocalStudyMode('programador', 'EDM_FIO')}
-                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    title="Programador de Eletroerosão a Fio"
+                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
+                                    title="Programador EDM Fio"
                                 >
-                                    ⚡ Prog. EDM
+                                    <Zap className="w-3 h-3" /> EDM Fio
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => enterLocalStudyMode('programador', 'TORNO')}
-                                    className={`px-2 py-1 rounded transition-colors cursor-pointer ${role !== 'admin' && setorPadrao === 'TORNO' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                    title="Programador de Torno CNC"
+                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'TORNO' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
+                                    title="Programador Torno"
                                 >
-                                    ⚙️ Prog. Torno
+                                    <RotateCw className="w-3 h-3" /> Torno
                                 </button>
-                            </div>
-
-                            {/* Mobile Dropdown Select */}
-                            <div className="flex md:hidden items-center bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-xs font-extrabold text-amber-400">
-                                <select
-                                    value={role === 'admin' ? 'gerente' : (setorPadrao || 'CNC')}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === 'gerente') handleGerenteClick();
-                                        else enterLocalStudyMode('programador', val);
-                                    }}
-                                    className="bg-transparent text-amber-400 text-[11px] font-black outline-none border-none cursor-pointer"
-                                >
-                                    <option value="gerente" className="bg-slate-900 text-amber-400 font-bold">👑 Gerente</option>
-                                    <option value="CNC" className="bg-slate-900 text-cyan-400 font-bold">🌀 Prog. CNC</option>
-                                    <option value="EDM_FIO" className="bg-slate-900 text-emerald-400 font-bold">⚡ Prog. EDM</option>
-                                    <option value="TORNO" className="bg-slate-900 text-amber-400 font-bold">⚙️ Prog. Torno</option>
-                                </select>
                             </div>
                         </>
                     )}
 
-                    <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-muted tracking-[0.05em] uppercase">
-                        <span className="w-1.5 h-1.5 rounded-full bg-kanban-teal animate-pulse"></span>
-                        <span>Online</span>
+                    <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-[#565B68] tracking-[0.05em] uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#4A9D74]"></span>
+                        <span>ONLINE</span>
                     </div>
 
-                    {/* Botão Sair visível no mobile (evita depender do menu lateral) */}
+                    {/* Botão Sair no mobile */}
                     <button
                         onClick={() => logout()}
-                        className="md:hidden p-2.5 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors touch-manipulation"
-                        aria-label="Sair do sistema"
+                        className="md:hidden p-2 text-[#7B808F] hover:text-[#C85558] hover:bg-[#C85558]/10 rounded-[7px] transition-colors cursor-pointer"
+                        aria-label="Sair"
                         type="button"
                     >
-                        <LogOut className="w-5 h-5" />
+                        <LogOut className="w-4 h-4" />
                     </button>
                 </div>
             </div>
@@ -148,4 +137,3 @@ export default function Header({ onMenuToggle }) {
         </header>
     );
 }
-

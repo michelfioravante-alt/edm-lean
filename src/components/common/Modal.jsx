@@ -21,27 +21,27 @@ export default function Modal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
             <div
                 className="fixed inset-0 -z-10"
                 onClick={onClose}
             />
 
-            <div className={`relative bg-slate-950 border border-slate-800 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] w-full ${maxWidth} flex flex-col max-h-[90dvh] sm:max-h-[85vh] shrink-0 overflow-hidden animate-modal-in`}>
+            <div className={`relative bg-[#181B22] border border-[#262A33] rounded-[10px] shadow-[0_20px_50px_rgba(0,0,0,0.7)] w-full ${maxWidth} flex flex-col max-h-[90dvh] sm:max-h-[85vh] shrink-0 overflow-hidden animate-modal-in`}>
                 {title && (
-                    <div className="flex justify-between items-center px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0">
-                        <h3 className="text-base sm:text-xl font-extrabold text-white pr-2 leading-tight truncate">{title}</h3>
+                    <div className="flex justify-between items-center px-4 py-3 sm:px-5 sm:py-3.5 border-b border-[#262A33] bg-[#1F232B] shrink-0">
+                        <h3 className="font-['Space_Grotesk'] text-base sm:text-lg font-semibold text-[#E7E9ED] pr-2 leading-tight truncate">{title}</h3>
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors active:scale-95 shrink-0 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer ml-2"
+                            className="p-1.5 rounded-[6px] text-[#7B808F] hover:bg-[#262A33] hover:text-[#E7E9ED] transition-colors active:scale-95 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer ml-2"
                             aria-label="Fechar"
                         >
-                            <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                            <X className="h-4 w-4" />
                         </button>
                     </div>
                 )}
 
-                <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain flex-1 min-h-0 custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain flex-1 min-h-0 custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {children}
                 </div>
             </div>
