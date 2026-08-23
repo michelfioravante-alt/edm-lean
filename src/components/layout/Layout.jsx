@@ -14,7 +14,7 @@ const KANBAN_POLL_INTERVAL_MS = 30000;
 export default function Layout({ children, activeView, onViewChange }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { role, empresaId } = useAuthStore();
-    const { fetchMaquinas, fetchOperadores, fetchConfiguracoes, fetchEstoque, fetchFerramental, fetchProgramadores, fetchHistoricoConsumiveis, fetchHistoricoQuebrasEstoque, fetchFerramentasMaquina, fetchAutoKanbans, fetchUsuarios, fetchClientes } = useAppStore();
+    const { fetchMaquinas, fetchOperadores, fetchConfiguracoes, fetchEstoque, fetchFerramental, fetchProgramadores, fetchHistoricoConsumiveis, fetchHistoricoQuebrasEstoque, fetchFerramentasMaquina, fetchAutoKanbans, fetchUsuarios, fetchClientes, fetchFornecedores } = useAppStore();
 
     // Carrega todos os dados ao ter empresaId disponível
     useEffect(() => {
@@ -32,6 +32,7 @@ export default function Layout({ children, activeView, onViewChange }) {
         fetchAutoKanbans();
         fetchUsuarios();
         fetchClientes();
+        fetchFornecedores();
         useAppStore.getState().fetchKanbanDadosInicial();
     }, [empresaId]);
 
@@ -106,7 +107,7 @@ export default function Layout({ children, activeView, onViewChange }) {
                 role={role}
             />
 
-            <DemoGuideWidget activeView={activeView} />
+            <DemoGuideWidget activeView={activeView} onViewChange={onViewChange} />
         </div>
     );
 }

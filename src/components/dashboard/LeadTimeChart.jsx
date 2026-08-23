@@ -1,133 +1,53 @@
 import React from 'react';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { useAppStore } from '../../store/useAppStore';
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend
-);
+import { horasKanban } from '../../constants/osWorkflow';
+import { barOpts, vGradient } from '../../utils/chartTheme';
+import ChartCard, { ChartEmpty } from './ChartCard';
 
 export default function LeadTimeChart({ concluidas }) {
-    // Aggregates only 'Concluído' OS for efficiency comparison
-    // Compares Estimated Time vs Real Time (Lead Time / Cycle Time conceptually here)
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        barPercentage: 1,
-        categoryPercentage: 0.7,
-        maxBarThickness: 32,
-        plugins: {
-            legend: {
-                position: 'top',
-                labels: {
-                    usePointStyle: true,
-                    boxWidth: 6,
-                    font: { size: 11 },
-                    padding: 12,
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: function (context) {
-                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}h`;
-                    }
-                }
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(148, 163, 184, 0.12)',
-                },
-                border: { display: false },
-                ticks: {
-                    color: '#94a3b8',
-                    font: { size: 11 },
-                    callback: function (value) {
-                        return value + 'h';
-                    }
-                }
-            },
-            x: {
-                grid: { display: false },
-                border: { display: false },
-                ticks: {
-                    color: '#94a3b8',
-                    font: { size: 10 },
-                    maxRotation: 45,
-                }
-            }
-        }
-    };
-
-    // Obter as OS concluídas mais recentes (limitado a 10 para o gráfico visualmente não quebrar)
-    const completedOS = [...concluidas]
+    const completedOS = [...(concluidas || [])]
         .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
-        .slice(0, 10)
+        .slice(0, 8)
         .reverse();
 
-    const labels = completedOS.map(os => os.codigo_peca || os.codigoPeca || `OS-${os.id.toString().slice(-4)}`);
-
-    const plannedData = completedOS.map(os => {
-        const setupH = parseInt(os.tempo_estimado_setup_horas || os.tempoEstimadoSetupHoras || 0, 10) || 0;
-        const setupM = (parseInt(os.tempo_estimado_setup_minutos || os.tempoEstimadoSetupMinutos || 0, 10) || 0) / 60;
-        const corteH = parseInt(os.tempo_estimado_corte_horas || os.tempoEstimadoCorteHoras || 0, 10) || 0;
-        const corteM = (parseInt(os.tempo_estimado_corte_minutos || os.tempoEstimadoCorteMinutos || 0, 10) || 0) / 60;
-        return setupH + setupM + corteH + corteM;
-    });
-
-    const realData = completedOS.map(os => {
-        const temposFases = os.tempos_fases || os.temposFases || { setup: 0, emCorte: 0 };
-        return (temposFases.setup || 0) + (temposFases.emCorte || 0);
-    });
-
-    const chartData = {
+    const labels = completedOS.map((os) => os.codigo_peca || os.codigoPeca || `OS-${String(os.id).slice(-4)}`);
+    const data = {
         labels,
         datasets: [
             {
-                label: 'Tempo Previsto (h)',
-                data: plannedData,
-                backgroundColor: 'rgba(148, 163, 184, 0.7)',
-                borderRadius: 4,
-                borderSkipped: false,
+                label: 'CAM',
+                data: completedOS.map((os) => horasKanban(os).estimadas),
+                backgroundColor: (c) => vGradient(c, 'rgba(139,144,160,0.85)', 'rgba(139,144,160,0.18)'),
+                barPercentage: 0.72,
+                categoryPercentage: 0.62,
             },
             {
-                label: 'Tempo Real (h)',
-                data: realData,
-                backgroundColor: 'rgba(217, 125, 61, 0.85)',
-                borderRadius: 4,
-                borderSkipped: false,
+                label: 'Máquina',
+                data: completedOS.map((os) => {
+                    const h = horasKanban(os);
+                    return h.setupReal + h.corteReal;
+                }),
+                backgroundColor: (c) => vGradient(c, 'rgba(217,125,61,0.95)', 'rgba(217,125,61,0.22)'),
+                barPercentage: 0.72,
+                categoryPercentage: 0.62,
             },
         ],
     };
+    const options = {
+        ...barOpts({ legend: true, tickY: (v) => `${v}h` }),
+        plugins: {
+            ...barOpts({ legend: true }).plugins,
+            tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} h` } },
+        },
+        scales: {
+            ...barOpts().scales,
+            x: { ...barOpts().scales.x, ticks: { ...barOpts().scales.x.ticks, maxRotation: 28 } },
+        },
+    };
 
     return (
-        <div className="bg-surface2 p-6 rounded-xl shadow-card border border-edge h-[400px] flex flex-col">
-            <h3 className="text-lg font-semibold text-core mb-1">Eficiência: Previsto vs Realizado</h3>
-            <p className="text-sm text-muted mb-4">Comparativo das últimas 10 Ordens Concluídas (Horas Líquidas)</p>
-            <div className="flex-1 min-h-0">
-                {completedOS.length > 0 ? (
-                    <Bar options={options} data={chartData} />
-                ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-[#7B808F]">
-                        <p>Nenhuma ordem concluída para exibir gráficos.</p>
-                    </div>
-                )}
-            </div>
-        </div>
+        <ChartCard title="CAM vs máquina" subtitle="Últimas 8 O.S. — previsto no cadastro × setup + corte reais" badge="horas">
+            {completedOS.length ? <Bar options={options} data={data} /> : <ChartEmpty>Nenhuma ordem concluída neste recorte.</ChartEmpty>}
+        </ChartCard>
     );
 }

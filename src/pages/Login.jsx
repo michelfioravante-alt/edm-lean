@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { isLocalMode } from '../local/mode';
-import { Mail, Lock, Zap, ShieldCheck, Factory, Eye, EyeOff, Database, KeyRound, ArrowLeft, FlaskConical } from 'lucide-react';
+import { Mail, Lock, Zap, ShieldCheck, Factory, Eye, EyeOff, Database, KeyRound, ArrowLeft } from 'lucide-react';
 
 export default function Login({ initialMode = 'login', onBack }) {
     const { login, signUp, requestPasswordReset, updatePassword, isResettingPassword, enterLocalStudyMode } = useAuthStore();
@@ -182,18 +182,37 @@ export default function Login({ initialMode = 'login', onBack }) {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Modo demo */}
                         {isLocalMode() && (
-                            <div className="bg-[rgba(74,157,116,0.08)] border border-[#4A9D74]/30 p-3.5 rounded-[8px] text-center space-y-2">
-                                <p className="text-xs font-medium text-[#4A9D74]">
-                                    Modo local ativo — acesse sem senha
-                                </p>
+                            <div className="bg-[rgba(74,157,116,0.08)] border border-[#4A9D74]/30 p-3.5 rounded-[8px] space-y-3">
+                                <div className="text-center space-y-1">
+                                    <p className="text-xs font-semibold text-[#4A9D74]">Fábrica de exemplo, sem senha</p>
+                                    <p className="text-[11px] text-[#9DA2AE] leading-snug">
+                                        Moldes, CNC, eletrofio e têmpera já cadastrados. Escolha com que olho entrar — depois troca no topo.
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => enterLocalStudyMode('admin')}
-                                    className="w-full py-2.5 bg-[#4A9D74] hover:bg-[#3d8763] text-[#111318] font-semibold rounded-[7px] text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2"
+                                    className="w-full py-2.5 bg-[#4A9D74] hover:bg-[#3d8763] text-[#111318] font-semibold rounded-[7px] text-xs uppercase tracking-wider transition-all cursor-pointer"
                                 >
-                                    <FlaskConical className="w-3.5 h-3.5" />
-                                    <span>Explorar Modo Demonstração</span>
+                                    Entrar como gerente
                                 </button>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => enterLocalStudyMode('programmer', 'CNC')}
+                                        className="py-2 rounded-[7px] border border-[#333844] text-[11px] font-semibold text-[#E7E9ED] hover:border-[#D97D3D] cursor-pointer"
+                                    >
+                                        Programador CNC
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => enterLocalStudyMode('programmer', 'EDM_FIO')}
+                                        className="py-2 rounded-[7px] border border-[#333844] text-[11px] font-semibold text-[#E7E9ED] hover:border-[#D97D3D] cursor-pointer"
+                                    >
+                                        Programador eletrofio
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-[#7B808F] text-center">PIN do gerente nesta demo: 1234</p>
                             </div>
                         )}
 
@@ -325,17 +344,6 @@ export default function Login({ initialMode = 'login', onBack }) {
                         </button>
                     </form>
                 </div>
-
-                {/* Demo extra button */}
-                {isLocalMode() && mode === 'login' && (
-                    <button
-                        type="button"
-                        onClick={() => enterLocalStudyMode('admin')}
-                        className="w-full py-3 bg-[rgba(74,157,116,0.12)] hover:bg-[rgba(74,157,116,0.2)] border border-[#4A9D74]/30 text-[#4A9D74] font-medium rounded-[8px] text-xs transition-all cursor-pointer"
-                    >
-                        Entrar no Modo Demonstração Interativo (Sem Login)
-                    </button>
-                )}
 
                 {/* Footer */}
                 <div className="flex flex-col items-center gap-3 opacity-40 hover:opacity-70 transition-opacity">

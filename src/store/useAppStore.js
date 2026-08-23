@@ -9,6 +9,7 @@ import { historicoConsumiveisService } from '../services/historicoConsumiveisSer
 import { autoKanbanService } from '../services/autoKanbanService';
 import { perfisService } from '../services/perfisService';
 import { clientesService } from '../services/clientesService';
+import { fornecedoresService } from '../services/fornecedoresService';
 import { historicoQuebrasEstoqueService } from '../services/historicoQuebrasEstoqueService';
 import { movimentacoesEstoqueService } from '../services/movimentacoesEstoqueService';
 import { ferramentasMaquinaService } from '../services/ferramentasMaquinaService';
@@ -66,6 +67,7 @@ export const useAppStore = create((set) => ({
         pinOnboarding: '1234',
         modoMagazineDefault: 'individual',
         baixaEstoqueNoSetup: false,
+        etapasPersonalizadas: [],
     },
     // Array de máquinas do Supabase (snake_case: { id, nome, status })
     maquinas: [],
@@ -74,6 +76,7 @@ export const useAppStore = create((set) => ({
     operadores: [],
     programadores: [],
     clientes: [],
+    fornecedores: [],
     usuarios: [],
 
     // Kanbans Automáticos
@@ -151,6 +154,7 @@ export const useAppStore = create((set) => ({
                         limiteMaquinas: data.limite_maquinas ?? 999,
                         modoMagazineDefault: data.modo_magazine_default || 'individual',
                         baixaEstoqueNoSetup: data.baixa_estoque_setup ?? false,
+                        etapasPersonalizadas: data.etapas_personalizadas || [],
                     }
                 });
             }
@@ -366,8 +370,32 @@ export const useAppStore = create((set) => ({
         }
     },
 
-    salvarConfiguracoes: async ({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) => {
-        await configService.upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup });
+    salvarEtapasPersonalizadas: async (etapasPersonalizadas) => {
+        const c = useAppStore.getState().configuracoesGlobais || {};
+        try {
+            await configService.upsert({
+                custoHoraMaquina: c.custoHoraMaquina,
+                custoHoraCnc: c.custoHoraCnc,
+                custoHoraEdm: c.custoHoraEdm,
+                turnos: c.turnos,
+                pinOnboarding: c.pinOnboarding,
+                modoMagazineDefault: c.modoMagazineDefault,
+                baixaEstoqueNoSetup: c.baixaEstoqueNoSetup,
+                etapasPersonalizadas,
+            });
+        } catch (e) {
+            console.warn('salvarEtapasPersonalizadas:', e.message);
+        }
+        set({
+            configuracoesGlobais: {
+                ...c,
+                etapasPersonalizadas,
+            },
+        });
+    },
+
+    salvarConfiguracoes: async ({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup, etapasPersonalizadas }) => {
+        await configService.upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup, etapasPersonalizadas });
         set((state) => ({
             configuracoesGlobais: {
                 ...state.configuracoesGlobais,
@@ -378,6 +406,7 @@ export const useAppStore = create((set) => ({
                 pinOnboarding,
                 ...(modoMagazineDefault !== undefined && { modoMagazineDefault }),
                 ...(baixaEstoqueNoSetup !== undefined && { baixaEstoqueNoSetup }),
+                ...(etapasPersonalizadas !== undefined && { etapasPersonalizadas }),
             }
         }));
     },
@@ -424,6 +453,26 @@ export const useAppStore = create((set) => ({
         } catch (e) {
             console.warn('fetchClientes:', e.message);
         }
+    },
+
+    fetchFornecedores: async () => {
+        try {
+            const data = await fornecedoresService.fetchAll();
+            set({ fornecedores: data });
+        } catch (e) {
+            console.warn('fetchFornecedores:', e.message);
+        }
+    },
+
+    addFornecedor: async (payload) => {
+        const created = await fornecedoresService.create(payload);
+        set((state) => ({ fornecedores: [...(state.fornecedores || []), created] }));
+        return created;
+    },
+
+    removeFornecedor: async (id) => {
+        await fornecedoresService.remove(id);
+        set((state) => ({ fornecedores: (state.fornecedores || []).filter((f) => f.id !== id) }));
     },
 
     fetchClientStats: async (clienteNome) => {
@@ -933,9 +982,12 @@ export const useAppStore = create((set) => ({
                 quantidade: k.quantidade || cabecalho.quantidade || 1,
                 tempoEstimadoCorteHoras: k.tempoEstimadoCorteHoras,
                 tempoEstimadoCorteMinutos: k.tempoEstimadoCorteMinutos,
+                tempoEstimadoSetupHoras: k.tempoEstimadoSetupHoras,
+                tempoEstimadoSetupMinutos: k.tempoEstimadoSetupMinutos,
                 programado: k.setor === 'EXTERNO',
                 os_grupo_id: grupoId,
                 roteiro_ordem: i + 1,
+                roteiro: k.roteiro || cabecalho.roteiro || [],
                 status: 'A fazer',
             }, { optimistic: false });
             criados.push(created);
@@ -960,6 +1012,23 @@ export const useAppStore = create((set) => ({
             console.error("Erro ao editar Ordem de Serviço", error);
             throw error;
         }
+    },
+
+    syncRoteiroGrupo: async (os, roteiro) => {
+        const { editOrdemServico } = useAppStore.getState();
+        const grupo = os?.os_grupo_id || os?.osGrupoId;
+        const state = useAppStore.getState();
+        const ids = new Set();
+        if (grupo) {
+            Object.values(state.kanban || {}).forEach((col) => {
+                (col || []).forEach((c) => {
+                    if ((c.os_grupo_id || c.osGrupoId) === grupo) ids.add(c.id);
+                });
+            });
+        } else if (os?.id) {
+            ids.add(os.id);
+        }
+        await Promise.all([...ids].map((id) => editOrdemServico(id, { roteiro })));
     },
 
     moveOrdemServico: async (osId, sourceCol, destCol, updatedOsParams = {}) => {

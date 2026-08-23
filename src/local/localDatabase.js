@@ -14,8 +14,10 @@ export function loadDb() {
             if (!db.historico_quebras_estoque) db.historico_quebras_estoque = [];
             if (!db.ferramentas_maquina) db.ferramentas_maquina = [];
             if (!db.movimentacoes_estoque) db.movimentacoes_estoque = [];
+            if (!db.fornecedores) db.fornecedores = [];
             if (!db.configuracoes.modo_magazine_default) db.configuracoes.modo_magazine_default = 'individual';
             if (db.configuracoes.baixa_estoque_setup === undefined) db.configuracoes.baixa_estoque_setup = false;
+            if (!Array.isArray(db.configuracoes.etapas_personalizadas)) db.configuracoes.etapas_personalizadas = [];
             return db;
         }
     } catch (e) {

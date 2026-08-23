@@ -1,120 +1,50 @@
 import React from 'react';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-const COLORS = [
-    '#D97D3D', '#4A9D74', '#C85558', '#C99A4A', '#7B808F',
-    '#9DA2AE', '#8A5A38', '#565B68', '#C99A4A'
-];
+import { barOpts, hGradient } from '../../utils/chartTheme';
+import ChartCard, { ChartEmpty } from './ChartCard';
 
 export default function PauseReasonsChart({ concluidas = [], kanban = {} }) {
     const motivoHoras = {};
-
-    const addPausas = (pausas) => {
-        (pausas || []).forEach(p => {
+    const add = (pausas) => {
+        (pausas || []).forEach((p) => {
             const motivo = p.motivo?.trim() || 'Não informado';
-            const h = p.duracaoHoras || 0;
+            const h = Number(p.duracaoHoras ?? p.duracaoHoras ?? p.duracao_horas) || 0;
             motivoHoras[motivo] = (motivoHoras[motivo] || 0) + h;
         });
     };
-
-    concluidas.forEach(os => addPausas(os.historico_pausas || os.historicoPausas));
-
-    // Pausas ativas
+    concluidas.forEach((os) => add(os.historico_pausas || os.historicoPausas));
     const ativas = [...(kanban.setup || []), ...(kanban.emCorte || []), ...(kanban.afericao || [])];
-    const agoraMs = Date.now();
-    ativas.forEach(os => {
-        if (os.is_pausado || os.isPausado) {
-            const dataPausa = os.data_pausa || os.dataPausa;
-            const motivo = os.motivo_pausa || os.motivoPausa || 'Não informado';
-            if (dataPausa) {
-                const t = new Date(dataPausa).getTime();
-                if (!isNaN(t)) {
-                    const h = Math.max(0, (agoraMs - t) / (1000 * 60 * 60));
-                    motivoHoras[motivo] = (motivoHoras[motivo] || 0) + h;
-                }
-            }
-        }
+    const now = Date.now();
+    ativas.forEach((os) => {
+        if (!(os.is_pausado || os.isPausado)) return;
+        const dataPausa = os.data_pausa || os.dataPausa;
+        if (!dataPausa) return;
+        const t = new Date(dataPausa).getTime();
+        if (Number.isNaN(t)) return;
+        const motivo = os.motivo_pausa || os.motivoPausa || 'Não informado';
+        motivoHoras[motivo] = (motivoHoras[motivo] || 0) + Math.max(0, (now - t) / 3600000);
     });
+    const sorted = Object.entries(motivoHoras).filter(([, h]) => h > 0).sort((a, b) => b[1] - a[1]).slice(0, 7);
 
-    const sortedData = Object.entries(motivoHoras)
-        .filter(([, h]) => h > 0)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12);
-
-    const barHeight = 24;
-    const chartHeight = Math.max(100, sortedData.length * barHeight);
-    const maxVisibleHeight = 320;
-
+    const data = {
+        labels: sorted.map(([m]) => m),
+        datasets: [{
+            data: sorted.map(([, h]) => h),
+            backgroundColor: (c) => hGradient(c, 'rgba(201,154,74,0.95)', 'rgba(201,154,74,0.18)'),
+            barPercentage: 0.5,
+        }],
+    };
     const options = {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        barThickness: barHeight,
-        maxBarThickness: barHeight,
+        ...barOpts({ horizontal: true, tickY: (v) => `${v}h` }),
         plugins: {
             legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: (ctx) => ` ${ctx.parsed.x.toFixed(1)}h de tempo morto`
-                }
-            }
+            tooltip: { callbacks: { label: (c) => ` ${c.parsed.x.toFixed(1)} h paradas` } },
         },
-        scales: {
-            x: {
-                beginAtZero: true,
-                grid: { color: 'rgba(148, 163, 184, 0.12)' },
-                ticks: {
-                    color: '#94a3b8',
-                    callback: (v) => v + 'h'
-                }
-            },
-            y: {
-                grid: { display: false },
-                ticks: { color: '#94a3b8', font: { size: 11 } }
-            }
-        }
-    };
-
-    const chartData = {
-        labels: sortedData.map(([m]) => m),
-        datasets: [{
-            label: 'Horas',
-            data: sortedData.map(([, h]) => h),
-            backgroundColor: sortedData.map((_, i) => COLORS[i % COLORS.length]),
-            borderRadius: 4,
-            borderSkipped: false,
-        }]
     };
 
     return (
-        <div className="bg-surface2 p-6 rounded-xl shadow-card border border-edge flex flex-col">
-            <h3 className="text-lg font-semibold text-core mb-1">Tempo Morto por Motivo de Pausa</h3>
-            <p className="text-sm text-muted mb-4">Análise de causa raiz: onde as horas estão sendo perdidas</p>
-            <div
-                className="flex-1 min-h-0 overflow-y-auto kanban-scroll"
-                style={{ minHeight: 120, maxHeight: maxVisibleHeight }}
-            >
-                {sortedData.length > 0 ? (
-                    <div style={{ height: chartHeight, minWidth: 200 }}>
-                        <Bar options={options} data={chartData} />
-                    </div>
-                ) : (
-                    <div className="w-full flex flex-col items-center justify-center text-[#7B808F] gap-2 py-8">
-                        <p className="font-bold text-sm">Nenhuma pausa registrada no período.</p>
-                    </div>
-                )}
-            </div>
-        </div>
+        <ChartCard title="Tempo morto" subtitle="Horas de pausa por motivo" badge="parada">
+            {sorted.length ? <Bar options={options} data={data} /> : <ChartEmpty>Nenhuma pausa neste recorte.</ChartEmpty>}
+        </ChartCard>
     );
 }

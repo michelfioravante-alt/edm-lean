@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import KpiCard from '../components/dashboard/KpiCard';
 import LeadTimeChart from '../components/dashboard/LeadTimeChart';
@@ -10,230 +10,74 @@ import MachineConsumptionChart from '../components/dashboard/MachineConsumptionC
 import PauseReasonsChart from '../components/dashboard/PauseReasonsChart';
 import RefugoPorMaquinaChart from '../components/dashboard/RefugoPorMaquinaChart';
 import ProducaoPorOperadorChart from '../components/dashboard/ProducaoPorOperadorChart';
-
-
-
+import CamVsRealChart from '../components/dashboard/CamVsRealChart';
+import WipPipelineChart from '../components/dashboard/WipPipelineChart';
+import OrcadoVsCustoChart from '../components/dashboard/OrcadoVsCustoChart';
+import FornecedoresChart from '../components/dashboard/FornecedoresChart';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { 
-    Activity, Clock, Zap, Target, Filter, DollarSign, TrendingDown, TrendingUp,
-    AlertTriangle, Timer, LayoutDashboard, PauseCircle, Cpu, Cog, Factory, Lock, RotateCw 
+import {
+    agregarKpis,
+    brl,
+    filtrarAtivas,
+    filtrarConcluidas,
+    fmtLead,
+    metricasPorSetor,
+    mesesPassados,
+    pipelineWip,
+    rankingFornecedoresDash,
+} from '../utils/dashboardMetrics';
+import {
+    Activity, AlertTriangle, Clock, Cpu, DollarSign, Factory, Filter, LayoutDashboard,
+    Lock, PauseCircle, Target, Timer, TrendingUp, Zap,
 } from 'lucide-react';
 
+const SETOR_LABEL = { CNC: 'CNC', EDM_FIO: 'Eletrofio', EXTERNO: 'Externo' };
+
 export default function Dashboard() {
-    const { kanban, configuracoesGlobais, activeSector } = useAppStore();
-    const { role, setorPadrao } = useAuthStore();
-    const custoHoraPadrao = Number(configuracoesGlobais?.custoHoraMaquina) || 50;
+    const kanban = useAppStore((s) => s.kanban);
+    const configuracoesGlobais = useAppStore((s) => s.configuracoesGlobais);
+    const activeSector = useAppStore((s) => s.activeSector);
+    const role = useAuthStore((s) => s.role);
+    const setorPadrao = useAuthStore((s) => s.setorPadrao);
+
     const custoHoraCnc = Number(configuracoesGlobais?.custoHoraCnc) || 80;
     const custoHoraEdm = Number(configuracoesGlobais?.custoHoraEdm) || 120;
-
-    const getCustoHoraOS = (osSetor) => {
-        if (osSetor === 'CNC') return custoHoraCnc;
-        if (osSetor === 'EDM_FIO') return custoHoraEdm;
-        return custoHoraPadrao;
-    };
+    const custoHoraPadrao = Number(configuracoesGlobais?.custoHoraMaquina) || 50;
+    const configHora = { custoHoraCnc, custoHoraEdm, custoHoraMaquina: custoHoraPadrao };
 
     const isProgrammerLocked = role !== 'admin';
-    const initialSector = isProgrammerLocked ? ((setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC') : (activeSector || 'TODOS');
+    const initialSector = isProgrammerLocked
+        ? ((setorPadrao && setorPadrao !== 'TODOS') ? setorPadrao : 'CNC')
+        : (activeSector === 'TODOS' || !activeSector ? 'TODOS' : activeSector);
 
-    // Estados dos Filtros
-    const [periodo, setPeriodo] = useState('mes'); // 'mes', 'semana', 'hoje'
-    const [turno, setTurno] = useState('todos'); // 'todos', 't1', 't2', 't3'
+    const [periodo, setPeriodo] = useState('mes');
+    const [turno, setTurno] = useState('todos');
     const [setorFilter, setSetorFilter] = useState(initialSector);
 
-    const gerarMesesPassados = () => {
-        const meses = [];
-        const d = new Date();
-        for (let i = 1; i <= 6; i++) {
-            const dataRef = new Date(d.getFullYear(), d.getMonth() - i, 1);
-            const y = dataRef.getFullYear();
-            const m = String(dataRef.getMonth() + 1).padStart(2, '0');
-            const nomeMes = dataRef.toLocaleString('pt-BR', { month: 'short' });
-            const label = `${nomeMes.toUpperCase()}/${y}`;
-            meses.push({ value: `${y}-${m}`, label });
-        }
-        return meses;
-    };
+    const concluidas = useMemo(
+        () => filtrarConcluidas(kanban.concluido || [], {
+            setor: setorFilter,
+            periodo,
+            turno,
+            turnos: configuracoesGlobais?.turnos,
+        }),
+        [kanban.concluido, setorFilter, periodo, turno, configuracoesGlobais?.turnos],
+    );
 
+    const ativas = useMemo(() => filtrarAtivas(kanban, setorFilter), [kanban, setorFilter]);
+    const kpis = useMemo(() => agregarKpis(concluidas, ativas, configHora), [concluidas, ativas, custoHoraCnc, custoHoraEdm, custoHoraPadrao]);
+    const porSetor = useMemo(() => metricasPorSetor(concluidas, configHora), [concluidas, custoHoraCnc, custoHoraEdm, custoHoraPadrao]);
+    const wip = useMemo(() => pipelineWip(kanban, setorFilter), [kanban, setorFilter]);
+    const rankingFornecedores = useMemo(() => rankingFornecedoresDash(kanban), [kanban]);
 
-
-    // Filtragem Master das OS Concluídas
-    const filteredConcluidas = useMemo(() => {
-        const rawConcluidas = kanban.concluido || [];
-        const now = new Date();
-
-        return rawConcluidas.filter(os => {
-            // Filtro por Setor
-            if (setorFilter !== 'TODOS') {
-                const osSetor = os.setor || os.tipo_processo || 'CNC';
-                if (osSetor !== setorFilter) return false;
-            }
-
-            // Data base para período
-            const tsRaw = os.timestamp_entrada_concluido || os.timestampEntrada_concluido || os.created_at || os.createdAt;
-            const dataBase = (tsRaw && !isNaN(new Date(tsRaw).getTime())) ? new Date(tsRaw) : new Date();
-
-            // Filtro Temporal
-            let matchPeriodo = true;
-            if (periodo === 'mes') matchPeriodo = dataBase.getFullYear() === now.getFullYear() && dataBase.getMonth() === now.getMonth();
-            else if (periodo === 'semana') {
-                const diffTime = Math.abs(now.getTime() - dataBase.getTime());
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                matchPeriodo = diffDays <= 7;
-            }
-            else if (periodo === 'hoje') matchPeriodo = dataBase.toDateString() === now.toDateString();
-            else if (/^\d{4}-\d{2}$/.test(periodo)) {
-                const [y, m] = periodo.split('-').map(Number);
-                matchPeriodo = dataBase.getFullYear() === y && dataBase.getMonth() === (m - 1);
-            }
-
-
-            // Filtro de Turno
-            let matchTurno = true;
-            if (turno !== 'todos' && configuracoesGlobais?.turnos) {
-                const selectedTurnoObj = configuracoesGlobais.turnos.find(t => t.id === turno);
-                if (selectedTurnoObj?.inicio && selectedTurnoObj?.fim) {
-                    const osHour = dataBase.getHours();
-                    const osMinute = dataBase.getMinutes();
-                    const osTimeVal = osHour * 60 + osMinute;
-
-                    const [startH, startM] = (selectedTurnoObj.inicio || '00:00').split(':').map(Number);
-                    const [endH, endM] = (selectedTurnoObj.fim || '23:59').split(':').map(Number);
-
-                    const startVal = startH * 60 + startM;
-                    const endVal = endH * 60 + endM;
-
-                    if (startVal < endVal) {
-                        matchTurno = osTimeVal >= startVal && osTimeVal < endVal;
-                    } else {
-                        matchTurno = osTimeVal >= startVal || osTimeVal < endVal;
-                    }
-                }
-            }
-
-            return matchPeriodo && matchTurno;
-        });
-    }, [kanban.concluido, periodo, turno, setorFilter, configuracoesGlobais?.turnos]);
-
-    // -- Calculators for KPI Top Cards --
-    const concluidas = filteredConcluidas;
-
-    // Filtrar O.S. ativas pelo setor selecionado
-    const todasAtivasFiltradas = useMemo(() => {
-        const rawAtivas = [
-            ...(kanban.aFazer || []),
-            ...(kanban.setup || []),
-            ...(kanban.emCorte || []),
-            ...(kanban.afericao || [])
-        ];
-        if (setorFilter === 'TODOS') return rawAtivas;
-        return rawAtivas.filter(os => (os.setor || os.tipo_processo || 'CNC') === setorFilter);
-    }, [kanban, setorFilter]);
-
-    const ativasCount = todasAtivasFiltradas.length;
-
-    // Quality FPY calculation
-    const aprovadas = concluidas.filter(o => (o.resultadoAfericao || o.resultado_afericao) === 'Aprovada').length;
-    const totalAferidas = concluidas.filter(o => (o.resultadoAfericao || o.resultado_afericao)).length;
-    const fpy = totalAferidas > 0 ? ((aprovadas / totalAferidas) * 100).toFixed(1) : '100';
-
-    // Global Efficiency calc & Financial
-    let totalRealH = 0;
-    let totalPlanH = 0;
-    let totalValorCorte = 0;
-    let totalValorTrabalho = 0;
-    let totalValorPerdidoRefugo = 0;
-    let totalValorTempoMorto = 0;
-
-    concluidas.forEach(os => {
-        const osSetor = os.setor || os.tipo_processo || (setorFilter !== 'TODOS' ? setorFilter : 'CNC');
-        const osRate = getCustoHoraOS(osSetor);
-
-        const setupH = parseInt(os.tempo_estimado_setup_horas || os.tempoEstimadoSetupHoras || 0, 10) || 0;
-        const setupM = (parseInt(os.tempo_estimado_setup_minutos || os.tempoEstimadoSetupMinutos || 0, 10) || 0) / 60;
-        const corteH = parseInt(os.tempo_estimado_corte_horas || os.tempoEstimadoCorteHoras || 0, 10) || 0;
-        const corteM = (parseInt(os.tempo_estimado_corte_minutos || os.tempoEstimadoCorteMinutos || 0, 10) || 0) / 60;
-        totalPlanH += (setupH + setupM + corteH + corteM);
-
-        const realSetup = Number(os.tempos_fases?.setup ?? os.temposFases?.setup ?? 0) || 0;
-        const realCorte = Number(os.tempos_fases?.emCorte ?? os.temposFases?.emCorte ?? 0) || 0;
-        totalRealH += (realSetup + realCorte);
-
-        const resultAfericao = os.resultado_afericao || os.resultadoAfericao;
-        const horasTotais = realSetup + realCorte;
-
-        if (resultAfericao === 'Aprovada') {
-            totalValorCorte += (realCorte * osRate);
-            totalValorTrabalho += (horasTotais * osRate);
-        } else if (resultAfericao === 'Refugo') {
-            totalValorPerdidoRefugo += (horasTotais * osRate);
-        } else {
-            // OS concluída sem resultado de aferição: conta no trabalho realizado
-            // (operador pode ter concluído sem passar pela etapa de aferição)
-            totalValorTrabalho += (horasTotais * osRate);
-        }
-
-        const pausas = os.historico_pausas || os.historicoPausas || [];
-        pausas.forEach(p => {
-            const d = Math.max(0, Number(p.duracaoHoras) || 0);
-            totalValorTempoMorto += (d * osRate);
-        });
-    });
-
-    // Pausas ativas
-    const agoraMs = Date.now();
-    todasAtivasFiltradas.forEach(os => {
-        if (os.is_pausado || os.isPausado) {
-            const dataPausa = os.data_pausa || os.dataPausa;
-            if (dataPausa) {
-                const t = new Date(dataPausa).getTime();
-                if (!isNaN(t)) {
-                    const durH = Math.max(0, (agoraMs - t) / (1000 * 60 * 60));
-                    const osSetor = os.setor || os.tipo_processo || (setorFilter !== 'TODOS' ? setorFilter : 'CNC');
-                    totalValorTempoMorto += (durH * getCustoHoraOS(osSetor));
-                }
-            }
-        }
-    });
-
-    // OEE = Tempo Real Produtivo / Tempo Planejado × 100
-    // Valor > 100% significa que a OS foi executada mais rápido que o estimado (positivo)
-    const oeeRaw = totalPlanH > 0 ? ((totalRealH / totalPlanH) * 100) : 100;
-    const oeeEfficiency = Math.min(oeeRaw, 999).toFixed(1); // sem teto artificial — pode ser >100% se mais eficiente que estimado
-
-    const valorGeradoCorte = totalValorCorte.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const valorGeradoTotais = totalValorTrabalho.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const valorPerdido = totalValorPerdidoRefugo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const valorTempoMorto = totalValorTempoMorto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    // --- Lead Time Médio ---
-    const leadTimesHoras = concluidas
-        .map(os => {
-            const inicio = os.created_at || os.createdAt;
-            const fim = os.timestamp_entrada_concluido || os.timestampEntrada_concluido;
-            return Math.max(0, Math.round((new Date(fim) - new Date(inicio)) / (1000 * 60 * 60)));
-        })
-
-        .filter(h => h !== null && h >= 0);
-    const leadTimeMedio = leadTimesHoras.length > 0
-        ? (leadTimesHoras.reduce((a, b) => a + b, 0) / leadTimesHoras.length)
-        : 0;
-    const leadTimeMedioStr = leadTimeMedio >= 24
-        ? `${(leadTimeMedio / 24).toFixed(1)}d`
-        : `${leadTimeMedio.toFixed(1)}h`;
-
-    // --- Peças em Atraso ---
-    const agora = new Date();
-    const emAtraso = todasAtivasFiltradas.filter(os => {
-        const prazo = os.prazo_entrega || os.prazoEntrega;
-        return prazo && new Date(prazo) < agora;
-    }).length;
+    const isGerente = role === 'admin';
+    const isEdm = setorFilter === 'EDM_FIO';
+    const isCnc = setorFilter === 'CNC';
 
     return (
         <ErrorBoundary>
             <div className="min-h-full flex flex-col gap-6 w-full pb-8">
-                
-                {/* HEADER COM FILTROS (SETOR, PERÍODO, TURNO) */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-[#181B22] p-5 rounded-[10px] border border-[#262A33]">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-[rgba(217,125,61,0.1)] rounded-[8px] border border-[#D97D3D]/20 text-[#D97D3D] shrink-0">
@@ -241,375 +85,168 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">
-                                {isProgrammerLocked ? 'Indicadores do setor' : 'Indicadores de Produção'}
+                                {isProgrammerLocked ? 'Indicadores do setor' : 'Painel da ferramentaria'}
                             </h2>
-                            <p className="text-[#565B68] mt-0.5 text-xs">
-                                {isProgrammerLocked
-                                    ? 'Eficiência, qualidade e tempos do CNC ou EDM — sem valores financeiros.'
-                                    : 'Eficiência operacional por setor (CNC, EDM Fio e Tornos).'}
+                            <p className="text-[#565B68] mt-0.5 text-xs max-w-xl">
+                                Concluídas seguem o período e o turno. A fila (WIP) é o quadro agora. Eficiência CAM = horas previstas ÷ setup+corte reais.
                             </p>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                        
-                        {/* FILTRO DE SETOR PRODUTIVO */}
                         {isProgrammerLocked ? (
                             <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
                                 <Lock className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
-                                <select
-                                    className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
-                                    value={setorFilter}
-                                    onChange={(e) => setSetorFilter(e.target.value)}
-                                >
+                                <select className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none cursor-pointer" value={setorFilter} onChange={(e) => setSetorFilter(e.target.value)}>
                                     <option value="CNC">Centro CNC</option>
-                                    <option value="EDM_FIO">Eletroerosão a Fio</option>
+                                    <option value="EDM_FIO">Eletrofio</option>
                                 </select>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
                                 <Factory className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
-                                <select
-                                    className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
-                                    value={setorFilter}
-                                    onChange={(e) => setSetorFilter(e.target.value)}
-                                >
-                                    <option value="TODOS">Toda a Fábrica</option>
-                                    <option value="CNC">Centro de Usinagem CNC</option>
-                                    <option value="EDM_FIO">Eletroerosão a Fio (EDM)</option>
-                                    <option value="TORNO">Torno CNC</option>
+                                <select className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none cursor-pointer" value={setorFilter} onChange={(e) => setSetorFilter(e.target.value)}>
+                                    <option value="TODOS">Toda a fábrica</option>
+                                    <option value="CNC">CNC</option>
+                                    <option value="EDM_FIO">Eletrofio</option>
+                                    <option value="EXTERNO">Serviço externo</option>
                                 </select>
                             </div>
                         )}
 
-                        {/* FILTRO TEMPORAL */}
                         <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
                             <Filter className="w-3.5 h-3.5 text-[#565B68] shrink-0" />
-                            <select
-                                className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
-                                value={periodo}
-                                onChange={(e) => setPeriodo(e.target.value)}
-                            >
+                            <select className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none cursor-pointer" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
                                 <optgroup label="Período atual">
                                     <option value="hoje">Hoje</option>
-                                    <option value="semana">Esta Semana</option>
-                                    <option value="mes">Este Mês</option>
+                                    <option value="semana">7 dias</option>
+                                    <option value="mes">Este mês</option>
                                 </optgroup>
                                 <optgroup label="Meses passados">
-                                    {gerarMesesPassados().map(({ value, label }) => (
+                                    {mesesPassados().map(({ value, label }) => (
                                         <option key={value} value={value}>{label}</option>
                                     ))}
                                 </optgroup>
                             </select>
                         </div>
 
-                        {/* FILTRO DE TURNO */}
                         <div className="flex items-center gap-2 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33]">
                             <Clock className="w-3.5 h-3.5 text-[#565B68] shrink-0" />
-                            <select
-                                className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none border-none focus:ring-0 cursor-pointer [color-scheme:dark]"
-                                value={turno}
-                                onChange={(e) => setTurno(e.target.value)}
-                            >
-                                <option value="todos">Todos os Turnos</option>
-                                {configuracoesGlobais?.turnos?.map(t => (
-                                    <option key={t.id} value={t.id}>
-                                        {t.nome} ({t.inicio} - {t.fim})
-                                    </option>
+                            <select className="bg-[#111318] text-xs text-[#E7E9ED] font-medium outline-none cursor-pointer" value={turno} onChange={(e) => setTurno(e.target.value)}>
+                                <option value="todos">Todos os turnos</option>
+                                {configuracoesGlobais?.turnos?.map((t) => (
+                                    <option key={t.id} value={t.id}>{t.nome} ({t.inicio} – {t.fim})</option>
                                 ))}
                             </select>
                         </div>
                     </div>
                 </div>
 
-                {/* HEADER DE KPIs ADAPTADO AO PERFIL */}
-                {(() => {
-                    const isGerente = role === 'admin' && setorFilter === 'TODOS';
-                    const isCncProg = setorFilter === 'CNC';
-                    const isEdmProg = setorFilter === 'EDM_FIO';
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <KpiCard
+                        title={isEdm ? 'Eficiência CAM (fio)' : isCnc ? 'Eficiência CAM (CNC)' : 'Eficiência CAM'}
+                        value={`${kpis.oee.toFixed(1)}%`}
+                        icon={Zap}
+                        colorClass={kpis.oee >= 85 ? 'bg-[#4A9D74]' : 'bg-[#C99A4A]'}
+                        tooltipContent="Previsto (cadastro) ÷ horas reais de setup + corte. Acima de 100% = mais rápido que o CAM. Aferição e pausa não entram."
+                        hint={`${kpis.planH.toFixed(1)}h CAM · ${kpis.realCamH.toFixed(1)}h máquina`}
+                    />
+                    <KpiCard
+                        title="FPY (1ª aprovação)"
+                        value={`${kpis.fpy.toFixed(1)}%`}
+                        icon={Target}
+                        colorClass="bg-[#4A9D74]"
+                        tooltipContent="Peças aprovadas na aferição sobre as que tiveram resultado. Refugo baixa o índice."
+                    />
+                    <KpiCard
+                        title="Lead time médio"
+                        value={fmtLead(kpis.leadMedio)}
+                        icon={Timer}
+                        colorClass="bg-[#D97D3D]"
+                        tooltipContent="Da abertura da O.S. até entrar em concluído."
+                    />
+                    <KpiCard
+                        title="WIP no quadro"
+                        value={String(kpis.wip)}
+                        icon={Activity}
+                        colorClass="bg-[#9DA2AE]"
+                        tooltipContent="Cartões em fila, set-up, máquina e aferição agora. Não usa o filtro de mês."
+                    />
+                    <KpiCard
+                        title="Concluídas no período"
+                        value={String(kpis.concluidasN)}
+                        icon={Clock}
+                        colorClass="bg-[#4A9D74]"
+                    />
+                    <KpiCard
+                        title="O.S. em atraso"
+                        value={String(kpis.atrasadas)}
+                        icon={AlertTriangle}
+                        colorClass={kpis.atrasadas > 0 ? 'bg-[#C85558]' : 'bg-[#333844]'}
+                        tooltipContent="Ativas com prazo de entrega já vencido."
+                    />
+                </div>
 
-                    return (
-                        <div className="space-y-5">
-                            <div className="flex items-center justify-between border-b border-[#262A33] pb-3">
-                                <h3 className="text-sm font-semibold text-[#E7E9ED] uppercase tracking-wider flex items-center gap-2">
-                                    {isGerente && <span className="text-[#D97D3D]">Visão Executiva & Financeira</span>}
-                                    {isCncProg && <span className="text-[#9DA2AE]">KPIs — Centro de Usinagem CNC</span>}
-                                    {isEdmProg && <span className="text-[#9DA2AE]">KPIs — Eletroerosão a Fio (EDM)</span>}
-                                    {!isGerente && !isCncProg && !isEdmProg && <span className="text-[#9DA2AE]">Indicadores Gerais da Fábrica</span>}
-                                </h3>
-                                <span className="text-[10px] font-medium text-[#565B68] uppercase tracking-widest bg-[#111318] px-3 py-1 rounded-[5px] border border-[#262A33]">
-                                    {isGerente ? 'Retorno Financeiro & Eficiência Global' : 'Eficiência Operacional, FPY & Tempos'}
-                                </span>
+                {isGerente && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <KpiCard title="Valor de corte" value={brl(kpis.valorCorte)} icon={DollarSign} colorClass="bg-[#4A9D74]" tooltipContent="Horas de corte das aprovadas × tarifa do setor." />
+                        <KpiCard title="Custo de máquina" value={brl(kpis.custoMaquina)} icon={DollarSign} colorClass="bg-[#4A9D74]" tooltipContent="Horas reais (ou CAM se ainda sem cronômetro) × tarifa." />
+                        <KpiCard title="Perda por refugo" value={brl(kpis.valorRefugo)} icon={TrendingUp} colorClass="bg-[#C85558]" tooltipContent="Horas de peças refugadas × tarifa." />
+                        <KpiCard title="Custo de pausas" value={brl(kpis.valorPausa)} icon={PauseCircle} colorClass="bg-[#C99A4A]" tooltipContent="Histórico de pausas + pausa aberta agora." />
+                    </div>
+                )}
+
+                {isGerente && setorFilter === 'TODOS' && (
+                    <div className="rounded-[10px] overflow-hidden border border-[#262A33] bg-[#181B22]">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A33]">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-[#D97D3D]" />
+                                <h3 className="text-xs font-semibold text-[#E7E9ED] uppercase tracking-wider">Mesmo período, por setor</h3>
                             </div>
-
-                            {/* Linha 1: Métricas Principais (Adaptadas ao perfil) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <KpiCard
-                                    title={isEdmProg ? "Eficiência EDM Fio" : isCncProg ? "Eficiência CNC" : "Eficiência Operacional"}
-                                    value={`${oeeEfficiency}%`}
-                                    icon={Zap}
-                                    trend={parseFloat(oeeEfficiency) > 85 ? "up" : "down"}
-                                    colorClass={parseFloat(oeeEfficiency) > 85 ? "bg-[#4A9D74]" : "bg-[#C99A4A]"}
-                                    tooltipContent="Compara o Tempo Planejado (cadastro) vs Tempo Real (cronometrado no Kanban)."
-                                />
-                                <KpiCard
-                                    title={isEdmProg ? "FPY Precisão Fio" : isCncProg ? "FPY 1ª Usinagem" : "Peças Aprovadas FPY"}
-                                    value={`${fpy}%`}
-                                    icon={Target}
-                                    colorClass="bg-[#4A9D74]"
-                                    trend="up"
-                                    tooltipContent="First Pass Yield: Porcentagem de peças aprovadas na inspeção dimensional."
-                                />
-                                <KpiCard
-                                    title="Lead Time Médio"
-                                    value={leadTimesHoras.length > 0 ? leadTimeMedioStr : '--'}
-                                    icon={Timer}
-                                    colorClass="bg-[#D97D3D]"
-                                    tooltipContent="Tempo médio desde a abertura da O.S até a conclusão final."
-                                />
-                                <KpiCard
-                                    title={isEdmProg ? "Carga WIP (EDM Fio)" : isCncProg ? "Carga WIP (CNC)" : "Fila WIP (Ativas)"}
-                                    value={ativasCount.toString()}
-                                    icon={Activity}
-                                    colorClass="bg-[#9DA2AE]"
-                                    tooltipContent="Quantidade de Ordens de Serviço ativas no setor."
-                                />
-                                <KpiCard
-                                    title="Concluídas (Período)"
-                                    value={concluidas.length.toString()}
-                                    icon={Clock}
-                                    colorClass="bg-[#4A9D74]"
-                                    tooltipContent="Volume total de Peças Concluídas para o setor e período."
-                                />
-                                <KpiCard
-                                    title="O.S em Atraso"
-                                    value={emAtraso.toString()}
-                                    icon={AlertTriangle}
-                                    colorClass={emAtraso > 0 ? "bg-[#C85558]" : "bg-[#333844]"}
-                                    trend={emAtraso > 0 ? "down" : null}
-                                    tooltipContent="Peças ativas que passaram do prazo prometido de entrega."
-                                />
-                            </div>
-
-                            {/* Linha 2: Métricas Financeiras — só gerente */}
-                            {role === 'admin' && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <KpiCard
-                                    title={isEdmProg ? "Valor Corte de Fio" : isCncProg ? "Valor Usinagem CNC" : "Valor Usinagem / Ciclo"}
-                                    value={valorGeradoCorte}
-                                    icon={DollarSign}
-                                    colorClass="bg-[#4A9D74]"
-                                    tooltipContent={`Horas de usinagem/corte × taxa horária do setor (CNC: R$ ${custoHoraCnc}/h | Fio: R$ ${custoHoraEdm}/h).`}
-                                />
-                                <KpiCard
-                                    title="Valor Trabalho Total"
-                                    value={valorGeradoTotais}
-                                    icon={DollarSign}
-                                    colorClass="bg-[#4A9D74]"
-                                    tooltipContent={`Horas de Setup + Ciclo das peças aprovadas × taxa horária específica do setor.`}
-                                />
-                                <KpiCard
-                                    title="Perda por Refugo"
-                                    value={valorPerdido}
-                                    icon={TrendingDown}
-                                    colorClass="bg-[#C85558]"
-                                    tooltipContent={`Horas desperdiçadas em peças refugadas × taxa horária do setor.`}
-                                />
-                                <KpiCard
-                                    title="Custo Pausas / Tempo Morto"
-                                    value={valorTempoMorto}
-                                    icon={PauseCircle}
-                                    colorClass="bg-[#C99A4A]"
-                                    tooltipContent={`Horas em pausas acumuladas × taxa horária do setor produtivo.`}
-                                />
-                            </div>
-                            )}
-
-                            {/* COMPARATIVO EXECUTIVO POR SETOR (Aparece na Visão Geral Fábrica / Gerente) */}
-                            {role === 'admin' && setorFilter === 'TODOS' && (() => {
-                                const rawConcluidas = kanban.concluido || [];
-
-                                const calcularMetricasSetor = (setorId, rateDefault) => {
-                                    const rate = Number(
-                                        setorId === 'CNC' ? custoHoraCnc :
-                                        setorId === 'EDM_FIO' ? custoHoraEdm :
-                                        custoHoraPadrao
-                                    ) || rateDefault;
-
-                                    const osDoSetor = rawConcluidas.filter(o => {
-                                        const s = o.setor || o.tipo_processo || 'CNC';
-                                        return s === setorId;
-                                    });
-
-                                    let planH = 0;
-                                    let realH = 0;
-                                    let aprovadasCount = 0;
-                                    let aferidasCount = 0;
-                                    let valorFaturamento = 0;
-                                    let valorPausas = 0;
-
-                                    osDoSetor.forEach(os => {
-                                        const sH = parseInt(os.tempo_estimado_setup_horas || os.tempoEstimadoSetupHoras || 0, 10) || 0;
-                                        const sM = (parseInt(os.tempo_estimado_setup_minutos || os.tempoEstimadoSetupMinutos || 0, 10) || 0) / 60;
-                                        const cH = parseInt(os.tempo_estimado_corte_horas || os.tempoEstimadoCorteHoras || 0, 10) || 0;
-                                        const cM = (parseInt(os.tempo_estimado_corte_minutos || os.tempoEstimadoCorteMinutos || 0, 10) || 0) / 60;
-                                        planH += (sH + sM + cH + cM);
-
-                                        const rSetup = Number(os.tempos_fases?.setup ?? os.temposFases?.setup ?? 0) || 0;
-                                        const rCorte = Number(os.tempos_fases?.emCorte ?? os.temposFases?.emCorte ?? 0) || 0;
-                                        realH += (rSetup + rCorte);
-
-                                        const res = os.resultado_afericao || os.resultadoAfericao;
-                                        if (res) {
-                                            aferidasCount++;
-                                            if (res === 'Aprovada') {
-                                                aprovadasCount++;
-                                                valorFaturamento += ((rSetup + rCorte) * rate);
-                                            }
-                                        }
-
-                                        const pausas = os.historico_pausas || os.historicoPausas || [];
-                                        pausas.forEach(p => {
-                                            valorPausas += (Number(p.duracaoHoras || 0) * rate);
-                                        });
-                                    });
-
-                                    const oee = planH > 0 ? Math.min(100, Math.round((planH / (realH || planH)) * 100)) : 100;
-                                    const fpy = aferidasCount > 0 ? Math.round((aprovadasCount / aferidasCount) * 100) : 100;
-
-                                    return {
-                                        concluidasCount: osDoSetor.length,
-                                        planH: planH.toFixed(1),
-                                        realH: realH.toFixed(1),
-                                        oee,
-                                        fpy,
-                                        valorFaturamento: valorFaturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-                                        valorPausas: valorPausas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-                                    };
-                                };
-
-                                const cncStats = calcularMetricasSetor('CNC', 90);
-                                const edmStats = calcularMetricasSetor('EDM_FIO', 130);
-                                const tornoStats = calcularMetricasSetor('TORNO', 80);
-
-                                return (
-                                    <div className="kpi-strip rounded-[10px] overflow-hidden border border-[#262A33]">
-                                        <div className="col-span-full flex items-center justify-between px-4 py-3 bg-[#181B22] border-b border-[#262A33]">
-                                            <div className="flex items-center gap-2">
-                                                <TrendingUp className="w-4 h-4 text-[#D97D3D]" />
-                                                <h3 className="text-xs font-semibold text-[#E7E9ED] uppercase tracking-wider">Comparativo por Setor</h3>
-                                            </div>
-                                            <span className="text-[10px] text-[#565B68]">Eficiência operacional & faturamento</span>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3">
-                                            {/* CNC Card */}
-                                            <div className="kpi-cell space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
-                                                        <Cpu className="w-3.5 h-3.5" /> Centro CNC
-                                                    </span>
-                                                    <span className="text-[10px] font-mono text-[#565B68] bg-[#111318] px-2 py-0.5 rounded-[4px] border border-[#262A33]">
-                                                        R$ {custoHoraCnc}/h
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-baseline justify-between">
-                                                    <div>
-                                                        <span className="kpi-label">Eficiência</span>
-                                                        <span className="kpi-value">{cncStats.oee}%</span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className="kpi-label">Faturamento</span>
-                                                        <span className="text-sm font-semibold text-[#4A9D74]">{cncStats.valorFaturamento}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="progress-track"><div className="progress-fill" style={{ width: `${cncStats.oee}%` }}></div></div>
-
-                                                <div className="data-table">
-                                                    <div className="data-row"><span className="data-key">Concluídas</span><span className="data-val">{cncStats.concluidasCount} peças</span></div>
-                                                    <div className="data-row"><span className="data-key">FPY</span><span className="data-val text-[#4A9D74]">{cncStats.fpy}%</span></div>
-                                                    <div className="data-row"><span className="data-key">Horas</span><span className="data-val">{cncStats.realH}h</span></div>
-                                                    <div className="data-row"><span className="data-key">Custo Pausas</span><span className="data-val text-[#C99A4A]">{cncStats.valorPausas}</span></div>
-                                                </div>
-                                            </div>
-
-                                            {/* EDM Card */}
-                                            <div className="kpi-cell space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
-                                                        <Zap className="w-3.5 h-3.5" /> EDM Fio
-                                                    </span>
-                                                    <span className="text-[10px] font-mono text-[#565B68] bg-[#111318] px-2 py-0.5 rounded-[4px] border border-[#262A33]">
-                                                        R$ {custoHoraEdm}/h
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-baseline justify-between">
-                                                    <div>
-                                                        <span className="kpi-label">Eficiência</span>
-                                                        <span className="kpi-value">{edmStats.oee}%</span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className="kpi-label">Faturamento</span>
-                                                        <span className="text-sm font-semibold text-[#4A9D74]">{edmStats.valorFaturamento}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="progress-track"><div className="progress-fill" style={{ width: `${edmStats.oee}%` }}></div></div>
-
-                                                <div className="data-table">
-                                                    <div className="data-row"><span className="data-key">Concluídas</span><span className="data-val">{edmStats.concluidasCount} peças</span></div>
-                                                    <div className="data-row"><span className="data-key">FPY</span><span className="data-val text-[#4A9D74]">{edmStats.fpy}%</span></div>
-                                                    <div className="data-row"><span className="data-key">Horas</span><span className="data-val">{edmStats.realH}h</span></div>
-                                                    <div className="data-row"><span className="data-key">Custo Pausas</span><span className="data-val text-[#C99A4A]">{edmStats.valorPausas}</span></div>
-                                                </div>
-                                            </div>
-
-                                            {/* TORNO Card */}
-                                            <div className="kpi-cell space-y-3" style={{ borderRight: 'none' }}>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
-                                                        <RotateCw className="w-3.5 h-3.5" /> Torno CNC
-                                                    </span>
-                                                    <span className="text-[10px] font-mono text-[#565B68] bg-[#111318] px-2 py-0.5 rounded-[4px] border border-[#262A33]">
-                                                        R$ {custoHoraPadrao}/h
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-baseline justify-between">
-                                                    <div>
-                                                        <span className="kpi-label">Eficiência</span>
-                                                        <span className="kpi-value">{tornoStats.oee}%</span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className="kpi-label">Faturamento</span>
-                                                        <span className="text-sm font-semibold text-[#4A9D74]">{tornoStats.valorFaturamento}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="progress-track"><div className="progress-fill" style={{ width: `${tornoStats.oee}%` }}></div></div>
-
-                                                <div className="data-table">
-                                                    <div className="data-row"><span className="data-key">Concluídas</span><span className="data-val">{tornoStats.concluidasCount} peças</span></div>
-                                                    <div className="data-row"><span className="data-key">FPY</span><span className="data-val text-[#4A9D74]">{tornoStats.fpy}%</span></div>
-                                                    <div className="data-row"><span className="data-key">Horas</span><span className="data-val">{tornoStats.realH}h</span></div>
-                                                    <div className="data-row"><span className="data-key">Custo Pausas</span><span className="data-val text-[#C99A4A]">{tornoStats.valorPausas}</span></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-
+                            <span className="text-[10px] text-[#565B68]">Usa as concluídas filtradas — não o histórico inteiro</span>
                         </div>
-                    );
-                })()}
+                        <div className="grid grid-cols-1 md:grid-cols-3">
+                            {porSetor.map((s, i) => (
+                                <div key={s.id} className={`p-4 space-y-3 ${i < 2 ? 'md:border-r border-[#262A33]' : ''}`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[#D97D3D] flex items-center gap-1.5">
+                                            <Cpu className="w-3.5 h-3.5" /> {SETOR_LABEL[s.id] || s.id}
+                                        </span>
+                                        <span className="text-[10px] font-mono text-[#565B68]">{s.concluidasN} O.S.</span>
+                                    </div>
+                                    <div className="flex items-baseline justify-between">
+                                        <div>
+                                            <p className="text-[10px] uppercase text-[#565B68]">CAM</p>
+                                            <p className="text-xl font-semibold text-[#E7E9ED]">{s.oee.toFixed(0)}%</p>
+                                        </div>
+                                        {isGerente && (
+                                            <div className="text-right">
+                                                <p className="text-[10px] uppercase text-[#565B68]">Máquina</p>
+                                                <p className="text-sm font-semibold text-[#4A9D74]">{brl(s.custoMaquina)}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-[#111318] overflow-hidden">
+                                        <div className="h-full bg-[#D97D3D] rounded-full" style={{ width: `${Math.min(s.oee, 100)}%` }} />
+                                    </div>
+                                    <div className="text-[11px] space-y-1 text-[#9DA2AE]">
+                                        <div className="flex justify-between"><span>FPY</span><span className="text-[#4A9D74]">{s.fpy.toFixed(0)}%</span></div>
+                                        <div className="flex justify-between"><span>Máquina</span><span>{s.realCamH.toFixed(1)}h</span></div>
+                                        <div className="flex justify-between"><span>Pausas</span><span className="text-[#C99A4A]">{brl(s.valorPausa)}</span></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-
-                {/* Linha 3: Gráficos de Produção */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <CamVsRealChart series={kpis.camSeries} />
+                    <WipPipelineChart pipeline={wip} />
+                    {isGerente && (
+                        <OrcadoVsCustoChart orcado={kpis.orcado} custo={kpis.custoMaquina} margem={kpis.margem} />
+                    )}
+                    <FornecedoresChart ranking={rankingFornecedores} />
                     <LeadTimeChart concluidas={concluidas} />
                     <QualityPieChart concluidas={concluidas} />
                     {(setorFilter === 'TODOS' || setorFilter === 'EDM_FIO') && (
@@ -620,8 +257,7 @@ export default function Dashboard() {
                     <MachineConsumptionChart periodo={periodo} />
                 </div>
 
-                {/* Linha 4: Análises por Setor e Causa Raiz */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <PauseReasonsChart concluidas={concluidas} kanban={kanban} />
                     <RefugoPorMaquinaChart concluidas={concluidas} />
                     <ProducaoPorOperadorChart concluidas={concluidas} />

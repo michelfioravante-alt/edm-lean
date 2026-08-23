@@ -1,90 +1,69 @@
 import React from 'react';
-import {
-    Chart as ChartJS,
-    ArcElement,
-    Tooltip,
-    Legend
-} from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
-import { useAppStore } from '../../store/useAppStore';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
+import { CHART, doughnutOpts } from '../../utils/chartTheme';
+import ChartCard, { ChartEmpty } from './ChartCard';
 
 export default function QualityPieChart({ concluidas = [] }) {
-    // Contagem
-    const aprovadas = concluidas.filter(os => (os.resultado_afericao || os.resultadoAfericao) === 'Aprovada').length;
-    const refugo = concluidas.filter(os => (os.resultado_afericao || os.resultadoAfericao) === 'Refugo').length;
-
+    const aprovadas = concluidas.filter((os) => {
+        const r = os.resultado_afericao || os.resultadoAfericao;
+        return r === 'Aprovada' || r === 'Aprovada';
+    }).length;
+    const refugo = concluidas.filter((os) => (os.resultado_afericao || os.resultadoAfericao) === 'Refugo').length;
     const total = aprovadas + refugo;
-    const fpy = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : 0;
+    const fpy = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
 
     const data = {
-        labels: ['Aprovadas (FPY)', 'Refugo / Descarte'],
-        datasets: [
-            {
-                data: [aprovadas, refugo],
-                backgroundColor: [
-                    '#4A9D74',
-                    '#C85558',
-                ],
-                borderColor: [
-                    '#3d8763',
-                    '#b04548',
-                ],
-                borderWidth: 1,
-            },
-        ],
+        labels: ['Aprovadas', 'Refugo'],
+        datasets: [{
+            data: [aprovadas, refugo],
+            backgroundColor: [CHART.ok, CHART.alert],
+            hoverBackgroundColor: ['#5BB888', '#D86A6C'],
+            borderWidth: 0,
+            spacing: 3,
+            borderRadius: 6,
+            hoverOffset: 6,
+        }],
     };
-
     const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '65%',
+        ...doughnutOpts(),
         plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    usePointStyle: true,
-                    padding: 20,
-                    font: {
-                        family: "'Inter', sans-serif",
-                        size: 11
-                    }
-                }
-            },
+            legend: { display: false },
             tooltip: {
                 callbacks: {
-                    label: function (context) {
-                        const value = context.parsed;
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                        return ` ${context.label}: ${value} un (${percentage}%)`;
-                    }
-                }
-            }
-        }
+                    label: (c) => {
+                        const pct = total ? ((c.parsed / total) * 100).toFixed(1) : 0;
+                        return ` ${c.label}: ${c.parsed} (${pct}%)`;
+                    },
+                },
+            },
+        },
     };
 
     return (
-        <div className="bg-surface2 p-6 rounded-xl shadow-card border border-edge h-[400px] flex flex-col relative">
-            <h3 className="text-lg font-semibold text-core mb-1">Qualidade de Produção (FPY)</h3>
-            <p className="text-sm text-muted mb-6">Índice de Aprovação vs Refugo na CMM</p>
-
-            <div className="flex-1 relative min-h-0 flex items-center justify-center">
-                {total > 0 ? (
-                    <>
+        <ChartCard title="Qualidade (FPY)" subtitle="Primeira aprovação na aferição" badge="CMM">
+            {total > 0 ? (
+                <div className="h-full flex items-center gap-6">
+                    <div className="relative flex-1 h-full min-w-0">
                         <Doughnut data={data} options={options} />
-                        {/* Overlay Rate Center */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-                            <span className="text-3xl font-semibold text-core">{fpy}%</span>
-                            <span className="text-xs font-bold text-muted uppercase tracking-widest">Aprovação</span>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="font-['Space_Grotesk'] text-[28px] font-semibold text-[#E7E9ED] leading-none">{fpy}%</span>
+                            <span className="text-[10px] uppercase tracking-[0.16em] text-[#6B7080] mt-1">FPY</span>
                         </div>
-                    </>
-                ) : (
-                    <div className="text-[#7B808F] text-center">
-                        <p>Nenhuma peça aferida até o momento.</p>
                     </div>
-                )}
-            </div>
-        </div>
+                    <div className="shrink-0 space-y-3 pr-1">
+                        <div>
+                            <p className="text-[10px] uppercase tracking-wider text-[#6B7080]">Aprovadas</p>
+                            <p className="font-['IBM_Plex_Mono'] text-lg text-[#4A9D74]">{aprovadas}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] uppercase tracking-wider text-[#6B7080]">Refugo</p>
+                            <p className="font-['IBM_Plex_Mono'] text-lg text-[#C85558]">{refugo}</p>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <ChartEmpty>Nenhuma peça aferida neste recorte.</ChartEmpty>
+            )}
+        </ChartCard>
     );
 }

@@ -32,8 +32,8 @@ export const configService = {
         }
     },
 
-    async upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) {
-        if (isLocalMode()) return localApi.config.upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup });
+    async upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup, etapasPersonalizadas }) {
+        if (isLocalMode()) return localApi.config.upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup, etapasPersonalizadas });
         const empresaId = getEmpresaId();
         const payload = {
             empresa_id: empresaId,
@@ -44,12 +44,23 @@ export const configService = {
             ...(custoHoraEdm !== undefined && { custo_hora_edm: custoHoraEdm }),
             ...(modoMagazineDefault !== undefined && { modo_magazine_default: modoMagazineDefault }),
             ...(baixaEstoqueNoSetup !== undefined && { baixa_estoque_setup: baixaEstoqueNoSetup }),
+            ...(etapasPersonalizadas !== undefined && { etapas_personalizadas: etapasPersonalizadas }),
         };
         const { data, error } = await supabase
             .from('configuracoes_empresa')
             .upsert(payload, { onConflict: 'empresa_id' })
             .select()
             .single();
+        if (error && String(error.message || '').includes('etapas_personalizadas')) {
+            const { etapas_personalizadas: _omit, ...semEtapas } = payload;
+            const retry = await supabase
+                .from('configuracoes_empresa')
+                .upsert(semEtapas, { onConflict: 'empresa_id' })
+                .select()
+                .single();
+            if (retry.error) throw retry.error;
+            return retry.data;
+        }
         if (error) throw error;
         return data;
     }

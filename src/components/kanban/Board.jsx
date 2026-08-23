@@ -36,6 +36,10 @@ export default function Board() {
     const isGestor = role === 'admin';
 
     useEffect(() => {
+        if (['TORNO', 'RETIFICA', 'LASER', 'MONTAGEM'].includes(activeSector)) {
+            setActiveSector('CNC');
+            return;
+        }
         if (!isGestor && !setorPermitido(role, activeSector)) {
             const fallback = SETORES_PROGRAMADOR.includes(setorPadrao) ? setorPadrao : 'CNC';
             setActiveSector(fallback);
@@ -432,7 +436,7 @@ export default function Board() {
         return ts && new Date(ts).toDateString() === new Date().toDateString();
     }).length;
 
-    const sectorLabelShort = activeSector === 'EDM_FIO' ? 'centro EDM' : activeSector === 'TORNO' ? 'torno CNC' : activeSector === 'CNC' ? 'centro CNC' : 'toda a fábrica';
+    const sectorLabelShort = activeSector === 'EDM_FIO' ? 'centro EDM' : activeSector === 'EXTERNO' ? 'logística externa' : activeSector === 'CNC' ? 'centro CNC' : 'toda a fábrica';
 
     return (
         <ErrorBoundary>
@@ -459,8 +463,6 @@ export default function Board() {
                         <div className="selector-bar py-1">
                             <button type="button" onClick={() => setActiveSector('EDM_FIO')} className={`sel-btn ${activeSector === 'EDM_FIO' ? 'active' : ''}`}>Eletroerosão (EDM)</button>
                             <button type="button" onClick={() => setActiveSector('CNC')} className={`sel-btn ${activeSector === 'CNC' ? 'active' : ''}`}>Centro CNC</button>
-                            <button type="button" onClick={() => setActiveSector('TORNO')} className={`sel-btn ${activeSector === 'TORNO' ? 'active' : ''}`}>Torno CNC</button>
-                            <button type="button" onClick={() => setActiveSector('RETIFICA')} className={`sel-btn ${activeSector === 'RETIFICA' ? 'active' : ''}`}>Retífica</button>
                             <button type="button" onClick={() => setActiveSector('EXTERNO')} className={`sel-btn ${activeSector === 'EXTERNO' ? 'active' : ''}`}>Externo</button>
                             <button type="button" onClick={() => setActiveSector('TODOS')} className={`sel-btn ${activeSector === 'TODOS' ? 'active' : ''}`}>Visão Geral</button>
                         </div>
@@ -608,8 +610,9 @@ export default function Board() {
                         osData={pendingTransition.osData}
                         sourceCol={pendingTransition.sourceCol}
                         destCol={pendingTransition.destCol}
+                        targetColumnTitle={COLUMN_TITLES[pendingTransition.destCol]}
                         onConfirm={handleConfirmTransition}
-                        onCancel={() => setPendingTransition(null)}
+                        onClose={() => setPendingTransition(null)}
                     />
                 )}
 

@@ -11,7 +11,12 @@ import {
     kanbanPrecisaProgramar,
     custoHoraKanban,
     colKeyDoKanban,
+    rankingFornecedoresExternos,
+    diasEntre,
 } from '../constants/osWorkflow';
+import RoteiroFluxo from '../components/kanban/RoteiroFluxo';
+import EnviarExternoModal from '../components/kanban/EnviarExternoModal';
+import { formatarMoedaBRL } from '../utils/formatters';
 
 const FILTROS = [
     { id: 'todas', label: 'Todas' },
@@ -23,11 +28,19 @@ const FILTROS = [
 
 function gargaloTexto(row) {
     if (row.tudoPronto) return 'Conjunto pronto';
-    const g = row.gargalo;
+    const p = row.passoAberto;
+    if (p?.kind === 'marco') return `${p.label} (marco)`;
+    const g = p?.os || row.gargalo;
     if (!g) return '—';
     const peca = g.codigo_peca || g.codigoPeca || 'kanban';
     const extra = kanbanPrecisaProgramar(g) ? ' · a programar' : '';
-    return `${labelSetor(g.setor || g.tipo_processo)} — ${peca}${extra}`;
+    const ext = (g.setor || g.tipo_processo) === 'EXTERNO' && g.fornecedor_nome
+        ? ` · ${g.fornecedor_nome}`
+        : '';
+    const dias = (g.setor || g.tipo_processo) === 'EXTERNO' && g.enviado_em
+        ? ` · ${Math.round(diasEntre(g.enviado_em, g.voltou_em) || 0)}d`
+        : '';
+    return `${labelSetor(g.setor || g.tipo_processo)} — ${peca}${extra}${ext}${dias}`;
 }
 
 export default function Carteira({ onNavigate }) {
@@ -35,10 +48,13 @@ export default function Carteira({ onNavigate }) {
     const config = useAppStore((s) => s.configuracoesGlobais);
     const irParaKanban = useAppStore((s) => s.irParaKanban);
     const moveOrdemServico = useAppStore((s) => s.moveOrdemServico);
+    const syncRoteiroGrupo = useAppStore((s) => s.syncRoteiroGrupo);
+    const fornecedores = useAppStore((s) => s.fornecedores);
     const [filtro, setFiltro] = useState('todas');
     const [busca, setBusca] = useState('');
     const [ficha, setFicha] = useState(null);
     const [novaOs, setNovaOs] = useState(false);
+    const [envioExterno, setEnvioExterno] = useState(null);
 
     const carteira = useMemo(() => agruparCarteira(kanban, config || {}), [kanban, config]);
 
@@ -65,12 +81,14 @@ export default function Carteira({ onNavigate }) {
         );
     }, [carteira]);
 
+    const ranking = useMemo(() => rankingFornecedoresExternos(kanban), [kanban]);
+
     const verQuadro = (os) => {
         irParaKanban(os);
         onNavigate?.('kanban');
     };
 
-    const moverExterno = (os, destCol) => {
+    const moverExterno = (os, destCol, extra = {}) => {
         const source = colKeyDoKanban(kanban, os.id);
         if (!source || source === destCol) return;
         const statusMap = {
@@ -78,7 +96,25 @@ export default function Carteira({ onNavigate }) {
             emCorte: 'Em Usinagem',
             concluido: 'Concluído',
         };
-        moveOrdemServico(os.id, source, destCol, { status: statusMap[destCol] });
+        const params = { status: statusMap[destCol], ...extra };
+        if (destCol === 'concluido' && !params.voltou_em) params.voltou_em = new Date().toISOString();
+        moveOrdemServico(os.id, source, destCol, params);
+    };
+
+    const pedirNoTerceiro = (k) => {
+        if (!k.fornecedor_id && !(fornecedores || []).length) {
+            alert('Cadastre um fornecedor em Configurações → Máquinas & CAM.');
+            return;
+        }
+        if (k.fornecedor_id) {
+            moverExterno(k, 'emCorte', {
+                enviado_em: k.enviado_em || new Date().toISOString(),
+                fornecedor_id: k.fornecedor_id,
+                fornecedor_nome: k.fornecedor_nome,
+            });
+            return;
+        }
+        setEnvioExterno(k);
     };
 
     return (
@@ -126,8 +162,18 @@ export default function Carteira({ onNavigate }) {
             {filtro === 'em_terceiro' ? (
                 <div className="border border-[#262A33] rounded-[10px] overflow-hidden bg-[#181B22]">
                     <div className="px-4 py-2.5 border-b border-[#262A33] text-[10px] font-semibold uppercase tracking-wider text-[#565B68]">
-                        Fila externo — fornecedor
+                        Fila externo — fornecedor, saída e retorno
                     </div>
+                    {ranking.length > 0 && (
+                        <div className="px-4 py-3 border-b border-[#262A33] flex flex-wrap gap-2">
+                            {ranking.map((r) => (
+                                <span key={r.nome} className="text-[11px] px-2 py-1 rounded-[6px] border border-[#262A33] text-[#9DA2AE]">
+                                    {r.nome}: {r.mediaDias != null ? `${r.mediaDias.toFixed(1)} d médios` : 'sem ciclo fechado'}
+                                    {r.laAgora ? ` · ${r.laAgora} lá agora` : ''}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                     {filaExterna.length === 0 ? (
                         <p className="p-4 text-sm text-[#7B808F]">Nenhum kanban de serviço externo aberto.</p>
                     ) : (
@@ -138,6 +184,7 @@ export default function Carteira({ onNavigate }) {
                                         <th className="px-3 py-2 font-medium">O.S. / peça</th>
                                         <th className="px-3 py-2 font-medium">Cliente</th>
                                         <th className="px-3 py-2 font-medium">Status</th>
+                                        <th className="px-3 py-2 font-medium">Fornecedor</th>
                                         <th className="px-3 py-2 font-medium">Ações</th>
                                     </tr>
                                 </thead>
@@ -150,10 +197,14 @@ export default function Carteira({ onNavigate }) {
                                             </td>
                                             <td className="px-3 py-2.5 text-[#9DA2AE]">{row.cliente || '—'}</td>
                                             <td className="px-3 py-2.5 text-[#C99A4A]">{labelStatusExterno(k)}</td>
+                                            <td className="px-3 py-2.5 text-[#9DA2AE] text-[11px]">
+                                                {k.fornecedor_nome || '—'}
+                                                {k.enviado_em ? ` · saiu ${String(k.enviado_em).slice(0, 10)}` : ''}
+                                            </td>
                                             <td className="px-3 py-2.5">
                                                 <div className="flex flex-wrap gap-1">
                                                     <button type="button" onClick={() => moverExterno(k, 'aFazer')} className="text-[10px] px-2 py-1 rounded border border-[#262A33] text-[#7B808F] cursor-pointer">A enviar</button>
-                                                    <button type="button" onClick={() => moverExterno(k, 'emCorte')} className="text-[10px] px-2 py-1 rounded border border-[#262A33] text-[#7B808F] cursor-pointer">No terceiro</button>
+                                                    <button type="button" onClick={() => pedirNoTerceiro(k)} className="text-[10px] px-2 py-1 rounded border border-[#262A33] text-[#7B808F] cursor-pointer">No terceiro</button>
                                                     <button type="button" onClick={() => moverExterno(k, 'concluido')} className="text-[10px] px-2 py-1 rounded border border-[#262A33] text-[#7B808F] cursor-pointer">Voltou</button>
                                                     <button type="button" onClick={() => setFicha(row)} className="text-[10px] px-2 py-1 rounded border border-[#D97D3D]/40 text-[#D97D3D] cursor-pointer">Ficha</button>
                                                 </div>
@@ -201,12 +252,14 @@ export default function Carteira({ onNavigate }) {
                                             </td>
                                             <td className="px-3 py-2.5 text-[#E7E9ED]">{gargaloTexto(row)}</td>
                                             <td className="px-3 py-2.5 text-[#7B808F]">
-                                                {row.emTerceiro ? `${row.externos.length} em terceiro` : (row.externos.length ? 'externo ok' : '—')}
+                                                {row.emTerceiro
+                                                    ? row.externos.filter((x) => (x.statusLocal || x.status) === 'Em Usinagem' || (x.statusLocal || x.status) === 'Em Corte').map((x) => x.fornecedor_nome || 'terceiro').join(', ')
+                                                    : (row.externos.length ? 'externo ok' : '—')}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="text-[#D97D3D]">R$ {row.custoHora.toFixed(0)}</span>
+                                                <span className="text-[#D97D3D]">{formatarMoedaBRL(row.custoHora)}</span>
                                                 <span className="text-[#565B68] text-xs">
-                                                    {row.orcado != null ? ` / ${row.orcado.toFixed(0)}` : ''}
+                                                    {row.orcado != null ? ` / ${formatarMoedaBRL(row.orcado)}` : ''}
                                                 </span>
                                             </td>
                                         </tr>
@@ -219,6 +272,15 @@ export default function Carteira({ onNavigate }) {
             )}
 
             <NovaOSForm isOpen={novaOs} onClose={() => setNovaOs(false)} />
+            <EnviarExternoModal
+                isOpen={!!envioExterno}
+                onClose={() => setEnvioExterno(null)}
+                fornecedores={fornecedores}
+                onConfirm={(dados) => {
+                    if (envioExterno) moverExterno(envioExterno, 'emCorte', dados);
+                    setEnvioExterno(null);
+                }}
+            />
 
             <Modal
                 isOpen={!!ficha}
@@ -232,13 +294,20 @@ export default function Carteira({ onNavigate }) {
                             <span>Cliente: <b className="text-[#E7E9ED]">{ficha.cliente || '—'}</b></span>
                             <span>Prazo do {ficha.isMolde ? 'molde' : 'item'}: <b className="text-[#E7E9ED]">{ficha.prazo ? String(ficha.prazo).slice(0, 10) : '—'}</b></span>
                             {ficha.orcado != null && (
-                                <span>Orçado: <b className="text-[#E7E9ED]">R$ {ficha.orcado.toFixed(2)}</b></span>
+                                <span>Orçado: <b className="text-[#E7E9ED]">{formatarMoedaBRL(ficha.orcado)}</b></span>
                             )}
-                            <span>Custo hora: <b className="text-[#D97D3D]">R$ {ficha.custoHora.toFixed(2)}</b></span>
+                            <span>Custo hora: <b className="text-[#D97D3D]">{formatarMoedaBRL(ficha.custoHora)}</b></span>
                         </div>
-                        <p className="text-[11px] text-[#565B68]">
-                            Peça pronta pode sair antes do conjunto. Clique em ver no quadro para o Kanban daquele setor.
-                        </p>
+                        <RoteiroFluxo
+                            os={ficha.head}
+                            irmaos={ficha.kanbans}
+                            onToggleMarco={async (passoId, feito) => {
+                                const base = ficha.head.roteiro || ficha.kanbans.find((k) => Array.isArray(k.roteiro) && k.roteiro.length)?.roteiro;
+                                if (!Array.isArray(base) || !base.length) return;
+                                const next = base.map((p) => (p.id === passoId ? { ...p, feito } : p));
+                                await syncRoteiroGrupo(ficha.head, next);
+                            }}
+                        />
                         <ul className="space-y-2">
                             {ficha.kanbans.map((k, i) => {
                                 const custo = custoHoraKanban(k, config || {});

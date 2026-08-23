@@ -279,6 +279,20 @@ html {
   color: var(--text-tertiary);
 }
 
+.chart-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0) 42%),
+    var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 32px rgba(0,0,0,0.18);
+}
+
+.chart-card canvas {
+  max-width: 100%;
+}
+
 @media print {
   body * { visibility: hidden; }
   #folha-print-root,

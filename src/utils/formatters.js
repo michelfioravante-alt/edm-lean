@@ -1,9 +1,26 @@
 export function formatarMoedaBRL(valor) {
-    if (isNaN(valor)) return 'R$ 0,00';
+    if (valor == null || valor === '' || isNaN(Number(valor))) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
-    }).format(valor);
+    }).format(Number(valor));
+}
+
+/** Digitação de reais: 1250000 → "12.500,00". */
+export function formatarMoedaDigitacao(raw) {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    if (!digits) return '';
+    return (parseInt(digits, 10) / 100).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+}
+
+export function parseMoedaBr(str) {
+    if (str == null || str === '') return null;
+    if (typeof str === 'number' && Number.isFinite(str)) return str;
+    const n = parseFloat(String(str).replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
+    return Number.isFinite(n) ? n : null;
 }
 
 export function formatarDataBR(dataString) {

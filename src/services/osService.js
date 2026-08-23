@@ -130,6 +130,12 @@ export const osService = {
             valor_orcado: osData.valor_orcado != null ? parseFloat(osData.valor_orcado) : (osData.valorOrcado != null ? parseFloat(osData.valorOrcado) : null),
             os_grupo_id: osData.os_grupo_id || osData.osGrupoId || null,
             roteiro_ordem: parseInt(osData.roteiro_ordem || osData.roteiroOrdem) || 1,
+            roteiro: osData.roteiro || [],
+            fornecedor_id: osData.fornecedor_id || null,
+            fornecedor_nome: osData.fornecedor_nome || null,
+            tipo_servico_externo: osData.tipo_servico_externo || null,
+            enviado_em: osData.enviado_em || null,
+            voltou_em: osData.voltou_em || null,
 
             // Campos do módulo CNC (requer supabase_cnc_campos.sql aplicado)
             total_setups: parseInt(osData.total_setups || osData.totalSetups) || 1,
@@ -156,9 +162,15 @@ export const osService = {
 
             if (error) {
                 const msg = `${error.message || ''} ${error.details || ''}`;
-                if (msg.includes('observacoes') || msg.includes('folha_imagem')) {
+                if (msg.includes('observacoes') || msg.includes('folha_imagem') || msg.includes('roteiro') || msg.includes('fornecedor')) {
                     delete payload.observacoes;
                     delete payload.folha_imagem;
+                    delete payload.roteiro;
+                    delete payload.fornecedor_id;
+                    delete payload.fornecedor_nome;
+                    delete payload.tipo_servico_externo;
+                    delete payload.enviado_em;
+                    delete payload.voltou_em;
                     const retry = await supabase.from('ordens_servico').insert(payload).select().single();
                     if (retry.error) throw retry.error;
                     return attachPrintIfNeeded(retry.data, osData, empresaId);
@@ -231,6 +243,12 @@ export const osService = {
             payload.estrategia_ferramental = novosParametros.estrategia_ferramental ?? novosParametros.estrategiaFerramental ?? null;
         if (novosParametros.aguardando_tt !== undefined) payload.aguardando_tt = novosParametros.aguardando_tt;
         if (novosParametros.observacao_tt !== undefined) payload.observacao_tt = novosParametros.observacao_tt;
+        if (novosParametros.roteiro !== undefined) payload.roteiro = novosParametros.roteiro;
+        if (novosParametros.fornecedor_id !== undefined) payload.fornecedor_id = novosParametros.fornecedor_id;
+        if (novosParametros.fornecedor_nome !== undefined) payload.fornecedor_nome = novosParametros.fornecedor_nome;
+        if (novosParametros.tipo_servico_externo !== undefined) payload.tipo_servico_externo = novosParametros.tipo_servico_externo;
+        if (novosParametros.enviado_em !== undefined) payload.enviado_em = novosParametros.enviado_em;
+        if (novosParametros.voltou_em !== undefined) payload.voltou_em = novosParametros.voltou_em;
 
         const { data, error } = await supabase
             .from('ordens_servico')
@@ -330,6 +348,12 @@ export const osService = {
         if (fields.valorOrcado !== undefined) payload.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
         if (fields.nxImport !== undefined) payload.nx_import = fields.nxImport;
         if (fields.observacoes !== undefined) payload.observacoes = fields.observacoes || null;
+        if (fields.roteiro !== undefined) payload.roteiro = fields.roteiro;
+        if (fields.fornecedor_id !== undefined) payload.fornecedor_id = fields.fornecedor_id;
+        if (fields.fornecedor_nome !== undefined) payload.fornecedor_nome = fields.fornecedor_nome;
+        if (fields.tipo_servico_externo !== undefined) payload.tipo_servico_externo = fields.tipo_servico_externo;
+        if (fields.enviado_em !== undefined) payload.enviado_em = fields.enviado_em;
+        if (fields.voltou_em !== undefined) payload.voltou_em = fields.voltou_em;
         if (fields.folhaBlob instanceof Blob) {
             payload.folha_imagem = await uploadOsPrint(empresaId, id, fields.folhaBlob);
         } else if (fields.folhaImagem !== undefined || fields.folha_imagem !== undefined) {

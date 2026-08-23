@@ -95,7 +95,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 onClick={() => enterLocalStudyMode('admin')}
                                 className="px-5 py-2.5 bg-[#4A9D74] hover:bg-[#3d8763] text-[#111318] font-semibold rounded-xl text-sm transition-all shadow-[0_0_20px_rgba(217,125,61,0.25)] flex items-center gap-2 cursor-pointer animate-bounce-subtle"
                             >
-                                <span>Explorar Modo Demonstração (Sem Cadastro)</span>
+                                <span>Abrir fábrica de exemplo</span>
                                 <ArrowRight size={16} />
                             </button>
                         ) : (
@@ -135,7 +135,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                             className="px-8 py-4 bg-[#D97D3D] hover:bg-[#c46d32] text-[#111318] font-semibold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.03] active:scale-95 transition-all shadow-[0_10px_35px_rgba(217,125,61,0.25)] text-base cursor-pointer"
                         >
                             <CheckCircle2 size={22} />
-                            <span>Abrir Modo Demonstração Interativo (1-Clique)</span>
+                            <span>Entrar na fábrica de exemplo</span>
                             <ArrowRight size={20} />
                         </button>
 
@@ -196,7 +196,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                             onClick={() => enterLocalStudyMode('admin')}
                             className="mt-8 w-full py-3 bg-[#1F232B] hover:bg-[#262A33] border border-[#333844] text-[#9DA2AE] font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <span>Explorar Kanban CNC</span>
+                            <span>Ver o quadro CNC</span>
                             <ArrowRight size={14} />
                         </button>
                     </div>
@@ -222,7 +222,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                             onClick={() => enterLocalStudyMode('admin')}
                             className="mt-8 w-full py-3 bg-[rgba(74,157,116,0.1)] hover:bg-[rgba(74,157,116,0.18)] border border-[#4A9D74]/30 text-[#4A9D74] font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <span>Explorar Kanban EDM</span>
+                            <span>Ver o quadro de eletrofio</span>
                             <ArrowRight size={14} />
                         </button>
                     </div>
@@ -248,7 +248,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                             onClick={() => enterLocalStudyMode('admin')}
                             className="mt-8 w-full py-3 bg-[rgba(217,125,61,0.12)] hover:bg-[rgba(217,125,61,0.2)] border border-[#D97D3D]/30 text-[#D97D3D] font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <span>Explorar Kanban Torno</span>
+                            <span>Torno é marco no roteiro, não quadro</span>
                             <ArrowRight size={14} />
                         </button>
                     </div>
@@ -286,14 +286,14 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <div className="bg-gradient-to-br from-[#181B22] to-[#111318] p-8 rounded-[14px] border border-[#262A33] text-center shadow-2xl">
                         <h4 className="text-2xl font-semibold text-white mb-4">Pronto para Testar na Prática?</h4>
                         <p className="text-[#7B808F] text-sm font-medium mb-8">
-                            Acesse o ambiente local completo com dados de exemplo de ferramentaria sem precisar criar conta ou digitar senha.
+                            Acesse a ferramentaria de exemplo com O.S., CNC, eletrofio e têmpera — sem criar conta.
                         </p>
                         <button
                             onClick={() => enterLocalStudyMode('admin')}
                             className="w-full py-5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#111318] font-semibold rounded-2xl text-base transition-all shadow-[0_8px_30px_rgba(245,158,11,0.25)] flex items-center justify-center gap-3 cursor-pointer"
                         >
                             <Zap className="w-6 h-6 fill-[#111318]" />
-                            <span>Explorar Modo Demonstração (1-Clique)</span>
+                            <span>Abrir a fábrica de exemplo</span>
                         </button>
                     </div>
                 </div>

@@ -49,6 +49,12 @@ function mapMovePayload(novosParametros = {}) {
         payload.setup_atual = novosParametros.setup_atual ?? novosParametros.setupAtual;
     if (novosParametros.aguardando_tt !== undefined) payload.aguardando_tt = novosParametros.aguardando_tt;
     if (novosParametros.observacao_tt !== undefined) payload.observacao_tt = novosParametros.observacao_tt;
+    if (novosParametros.roteiro !== undefined) payload.roteiro = novosParametros.roteiro;
+    if (novosParametros.fornecedor_id !== undefined) payload.fornecedor_id = novosParametros.fornecedor_id;
+    if (novosParametros.fornecedor_nome !== undefined) payload.fornecedor_nome = novosParametros.fornecedor_nome;
+    if (novosParametros.tipo_servico_externo !== undefined) payload.tipo_servico_externo = novosParametros.tipo_servico_externo;
+    if (novosParametros.enviado_em !== undefined) payload.enviado_em = novosParametros.enviado_em;
+    if (novosParametros.voltou_em !== undefined) payload.voltou_em = novosParametros.voltou_em;
 
     return payload;
 }
@@ -56,15 +62,18 @@ function mapMovePayload(novosParametros = {}) {
 export const localApi = {
     config: {
         async fetch() { return loadDb().configuracoes; },
-        async upsert({ custoHoraMaquina, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup }) {
+        async upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup, etapasPersonalizadas }) {
             return mutateDb((db) => {
                 db.configuracoes = {
                     ...db.configuracoes,
                     custo_hora_maquina: custoHoraMaquina,
                     turnos,
                     pin_onboarding: pinOnboarding,
+                    ...(custoHoraCnc !== undefined && { custo_hora_cnc: custoHoraCnc }),
+                    ...(custoHoraEdm !== undefined && { custo_hora_edm: custoHoraEdm }),
                     ...(modoMagazineDefault !== undefined && { modo_magazine_default: modoMagazineDefault }),
                     ...(baixaEstoqueNoSetup !== undefined && { baixa_estoque_setup: baixaEstoqueNoSetup }),
+                    ...(etapasPersonalizadas !== undefined && { etapas_personalizadas: etapasPersonalizadas }),
                 };
             }).configuracoes;
         },
@@ -128,6 +137,26 @@ export const localApi = {
             return updated;
         },
         async remove(id) { mutateDb((db) => { db.clientes = db.clientes.filter((c) => c.id !== id); }); },
+    },
+    fornecedores: {
+        async fetchAll() { return loadDb().fornecedores || []; },
+        async create({ nome, tipo = 'tempera', prazoDias }) {
+            let created;
+            mutateDb((db) => {
+                if (!db.fornecedores) db.fornecedores = [];
+                created = {
+                    id: uuid(),
+                    empresa_id: LOCAL_EMPRESA_ID,
+                    nome,
+                    tipo: tipo || 'tempera',
+                    prazo_dias: prazoDias ? parseInt(prazoDias, 10) : null,
+                    created_at: new Date().toISOString(),
+                };
+                db.fornecedores.push(created);
+            });
+            return created;
+        },
+        async remove(id) { mutateDb((db) => { db.fornecedores = (db.fornecedores || []).filter((f) => f.id !== id); }); },
     },
     estoque: {
         async fetchAll() { return loadDb().estoque_itens; },
@@ -401,6 +430,12 @@ export const localApi = {
                     valor_orcado: osData.valor_orcado != null ? parseFloat(osData.valor_orcado) : (osData.valorOrcado != null ? parseFloat(osData.valorOrcado) : null),
                     os_grupo_id: osData.os_grupo_id || osData.osGrupoId || null,
                     roteiro_ordem: parseInt(osData.roteiro_ordem || osData.roteiroOrdem) || 1,
+                    roteiro: osData.roteiro || [],
+                    fornecedor_id: osData.fornecedor_id || null,
+                    fornecedor_nome: osData.fornecedor_nome || null,
+                    tipo_servico_externo: osData.tipo_servico_externo || null,
+                    enviado_em: osData.enviado_em || null,
+                    voltou_em: osData.voltou_em || null,
 
                     total_setups: parseInt(osData.total_setups || osData.totalSetups) || 1,
                     setup_atual: parseInt(osData.setup_atual || osData.setupAtual) || 1,
@@ -474,6 +509,12 @@ export const localApi = {
                 if (fields.observacoes !== undefined) os.observacoes = fields.observacoes;
                 if (fields.folhaImagem !== undefined) os.folha_imagem = fields.folhaImagem;
                 if (fields.folha_imagem !== undefined) os.folha_imagem = fields.folha_imagem;
+                if (fields.roteiro !== undefined) os.roteiro = fields.roteiro;
+                if (fields.fornecedor_id !== undefined) os.fornecedor_id = fields.fornecedor_id;
+                if (fields.fornecedor_nome !== undefined) os.fornecedor_nome = fields.fornecedor_nome;
+                if (fields.tipo_servico_externo !== undefined) os.tipo_servico_externo = fields.tipo_servico_externo;
+                if (fields.enviado_em !== undefined) os.enviado_em = fields.enviado_em;
+                if (fields.voltou_em !== undefined) os.voltou_em = fields.voltou_em;
 
                 updated = { ...os };
             });

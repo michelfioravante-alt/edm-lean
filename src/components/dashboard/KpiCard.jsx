@@ -1,8 +1,8 @@
 import React from 'react';
 
-export default function KpiCard({ title, value, icon: Icon, trend, trendValue, colorClass, tooltipContent }) {
+export default function KpiCard({ title, value, icon: Icon, trend, trendValue, colorClass, tooltipContent, hint }) {
     return (
-        <div className="bg-[#181B22] p-5 rounded-[10px] border border-[#262A33] relative z-0 hover:border-[#333844] transition-colors">
+        <div className="chart-card p-5 relative z-0 overflow-hidden">
             {/* Tarja de cor lateral */}
             <div className={`absolute top-0 left-0 w-1 h-full rounded-l-[10px] ${colorClass || 'bg-[#333844]'}`}></div>
 
@@ -30,8 +30,11 @@ export default function KpiCard({ title, value, icon: Icon, trend, trendValue, c
                     <span className={`font-semibold ${trend === 'up' ? 'text-[#4A9D74]' : trend === 'down' ? 'text-[#C85558]' : 'text-[#7B808F]'}`}>
                         {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '-'} {Math.abs(parseFloat(trendValue))}%
                     </span>
-                    <span className="text-[#565B68]">vs último turno</span>
+                    <span className="text-[#565B68]">{hint || 'vs último turno'}</span>
                 </div>
+            )}
+            {hint && !trend && (
+                <p className="text-[10px] text-[#565B68] mt-1 leading-snug">{hint}</p>
             )}
         </div>
     );

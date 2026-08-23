@@ -1,15 +1,145 @@
 import { SECTORS } from './sectorConstants';
 
-export const TIPOS_KANBAN_GESTOR = [
-    { id: 'CNC', label: 'CNC' },
-    { id: 'EDM_FIO', label: 'Eletrofio' },
-    { id: 'TORNO', label: 'Torno' },
-    { id: 'RETIFICA', label: 'Retífica' },
-    { id: 'EXTERNO', label: 'Serviço externo' },
+/** Etapas do roteiro: só CNC/EDM/externo geram cartão. Laser/retífica/torno/montagem são marcos. */
+export const ETAPAS_ROTEIRO = [
+    { id: 'CNC', kind: 'kanban', label: 'CNC', geraCartao: true },
+    { id: 'EDM_FIO', kind: 'kanban', label: 'Eletrofio', geraCartao: true },
+    { id: 'EXTERNO', kind: 'externo', label: 'Têmpera / terceiro', geraCartao: true },
+    { id: 'LASER', kind: 'marco', label: 'Laser', geraCartao: false },
+    { id: 'RETIFICA', kind: 'marco', label: 'Retífica', geraCartao: false },
+    { id: 'TORNO', kind: 'marco', label: 'Torno', geraCartao: false },
+    { id: 'MONTAGEM', kind: 'marco', label: 'Montagem', geraCartao: false },
 ];
 
-export function labelSetor(setor) {
-    return SECTORS[setor]?.shortLabel || setor || 'CNC';
+export const TIPOS_KANBAN_GESTOR = ETAPAS_ROTEIRO;
+
+export const TIPOS_SERVICO_EXTERNO = [
+    { id: 'tempera', label: 'Têmpera' },
+    { id: 'tratamento', label: 'Tratamento térmico' },
+    { id: 'usinagem', label: 'Usinagem terceira' },
+    { id: 'outro', label: 'Outro' },
+];
+
+export function slugEtapaPersonalizada(label) {
+    const base = String(label || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_|_$/g, '')
+        .slice(0, 40);
+    return `PX_${base || Date.now().toString(36)}`;
+}
+
+export function listaEtapasRoteiro(personalizadas = []) {
+    const extra = (personalizadas || []).filter((e) => e?.id && e?.label).map((e) => ({
+        id: e.id,
+        kind: e.kind || 'marco',
+        label: e.label,
+        geraCartao: e.geraCartao === true,
+        personalizada: true,
+    }));
+    return [...ETAPAS_ROTEIRO, ...extra];
+}
+
+export function defEtapa(setor, personalizadas) {
+    const found = listaEtapasRoteiro(personalizadas).find((e) => e.id === setor);
+    if (found) return found;
+    if (typeof setor === 'string' && setor.startsWith('PX_')) {
+        return {
+            id: setor,
+            kind: 'marco',
+            label: setor.replace(/^PX_/, '').replace(/_/g, ' '),
+            geraCartao: false,
+            personalizada: true,
+        };
+    }
+    return { id: setor, kind: 'kanban', label: setor, geraCartao: true };
+}
+
+export function geraCartaoEtapa(setor, personalizadas) {
+    return defEtapa(setor, personalizadas).geraCartao !== false;
+}
+
+export function labelSetor(setor, personalizadas) {
+    return defEtapa(setor, personalizadas).label || SECTORS[setor]?.shortLabel || setor || 'CNC';
+}
+
+export function montarRoteiro(etapasIds, personalizadas) {
+    return (etapasIds || []).map((setor, i) => {
+        const def = defEtapa(setor, personalizadas);
+        return {
+            id: `${def.id}-${i}`,
+            setor: def.id,
+            kind: def.kind,
+            label: def.label,
+            feito: false,
+        };
+    });
+}
+
+function statusEhConcluido(os) {
+    const s = os?.statusLocal || os?.status || '';
+    return s === 'Concluído';
+}
+
+export function roteiroDaOs(os, irmaos) {
+    const r = os?.roteiro;
+    if (Array.isArray(r) && r.length) return r;
+    const lista = (irmaos && irmaos.length ? irmaos : (os ? [os] : []));
+    return lista.map((k, i) => {
+        const setor = k.setor || k.tipo_processo;
+        const def = defEtapa(setor);
+        return {
+            id: k.id || `${setor}-${i}`,
+            setor,
+            kind: def.kind,
+            label: def.label,
+            feito: statusEhConcluido(k),
+        };
+    });
+}
+
+export function primeiroPassoAberto(head, kanbans) {
+    const passos = roteiroDaOs(head, kanbans);
+    for (const p of passos) {
+        if (p.kind === 'marco' && !p.feito) return { kind: 'marco', label: p.label };
+        const k = (kanbans || []).find((c) => (c.setor || c.tipo_processo) === p.setor && !statusEhConcluido(c));
+        if (k) return { kind: p.kind, os: k, label: p.label };
+    }
+    return null;
+}
+
+export function textoRoteiroPassos(passos) {
+    return (passos || []).map((p) => p.label || labelSetor(p.setor)).join('  →  ');
+}
+
+export function diasEntre(inicio, fim) {
+    if (!inicio) return null;
+    const a = new Date(inicio).getTime();
+    const b = (fim ? new Date(fim) : new Date()).getTime();
+    if (Number.isNaN(a) || Number.isNaN(b)) return null;
+    return Math.max(0, (b - a) / (1000 * 60 * 60 * 24));
+}
+
+export function rankingFornecedoresExternos(kanban) {
+    const cards = todosKanbans(kanban).filter((k) => (k.setor || k.tipo_processo) === 'EXTERNO');
+    const map = new Map();
+    cards.forEach((k) => {
+        const nome = k.fornecedor_nome || 'Sem fornecedor';
+        if (!map.has(nome)) map.set(nome, { nome, laAgora: 0, ciclos: [] });
+        const row = map.get(nome);
+        const s = k.statusLocal || k.status || '';
+        if (!statusEhConcluido(k) && (s === 'Em Usinagem' || s === 'Em Corte')) row.laAgora += 1;
+        const d = diasEntre(k.enviado_em, k.voltou_em);
+        if (k.enviado_em && k.voltou_em && d != null) row.ciclos.push(d);
+    });
+    return [...map.values()].map((r) => ({
+        nome: r.nome,
+        laAgora: r.laAgora,
+        ciclos: r.ciclos.length,
+        mediaDias: r.ciclos.length ? r.ciclos.reduce((s, x) => s + x, 0) / r.ciclos.length : null,
+    })).sort((a, b) => (a.mediaDias ?? 999) - (b.mediaDias ?? 999));
 }
 
 /** Cartões antigos (sem flag) já podem ir para set-up. Novos nascem programado=false. */
@@ -32,13 +162,18 @@ export function custoHoraDoSetor(setor, config = {}) {
 
 export function horasKanban(os) {
     const fases = os?.tempos_fases || os?.temposFases || {};
-    const reais = (Number(fases.setup) || 0) + (Number(fases.emCorte) || 0) + (Number(fases.afericao) || 0);
-    const estH = (Number(os?.tempo_estimado_corte_horas || os?.tempoEstimadoCorteHoras) || 0)
-        + (Number(os?.tempo_estimado_setup_horas || os?.tempoEstimadoSetupHoras) || 0);
-    const estM = (Number(os?.tempo_estimado_corte_minutos || os?.tempoEstimadoCorteMinutos) || 0)
-        + (Number(os?.tempo_estimado_setup_minutos || os?.tempoEstimadoSetupMinutos) || 0);
-    const estimadas = estH + estM / 60;
-    return { reais, estimadas };
+    const setupReal = Number(fases.setup) || 0;
+    const corteReal = Number(fases.emCorte) || 0;
+    const afericaoReal = Number(fases.afericao) || 0;
+    const reais = setupReal + corteReal + afericaoReal;
+    const setupEst = (Number(os?.tempo_estimado_setup_horas || os?.tempoEstimadoSetupHoras || os?.tempo_estimado_setup_horas) || 0)
+        + (Number(os?.tempo_estimado_setup_minutos || os?.tempoEstimadoSetupMinutos || os?.tempo_estimado_setup_minutos) || 0) / 60;
+    const corteEst = (Number(os?.tempo_estimado_corte_horas || os?.tempoEstimadoCorteHoras || os?.tempo_estimado_corte_horas) || 0)
+        + (Number(os?.tempo_estimado_corte_minutos || os?.tempoEstimadoCorteMinutos || os?.tempo_estimado_corte_minutos) || 0) / 60;
+    const estimadas = setupEst + corteEst;
+    const baseReal = setupReal + corteReal;
+    const eficienciaCam = (estimadas > 0 && baseReal > 0) ? (estimadas / baseReal) * 100 : null;
+    return { reais, estimadas, setupEst, corteEst, setupReal, corteReal, afericaoReal, eficienciaCam };
 }
 
 export function custoHoraKanban(os, config) {
@@ -74,11 +209,6 @@ export function colKeyDoKanban(kanban, osId) {
         if ((kanban[key] || []).some((c) => c.id === osId)) return key;
     }
     return null;
-}
-
-function statusEhConcluido(os) {
-    const s = os?.statusLocal || os?.status || '';
-    return s === 'Concluído';
 }
 
 export function labelStatusExterno(os) {
@@ -123,7 +253,10 @@ export function agruparCarteira(kanban, config = {}) {
         const custoHora = custos.reduce((s, x) => s + x.custo, 0);
         const orcado = Number(head.valor_orcado ?? head.valorOrcado);
         const externos = kanbans.filter((k) => (k.setor || k.tipo_processo) === 'EXTERNO');
-        const emTerceiro = externos.some((k) => !statusEhConcluido(k));
+        const emTerceiro = externos.some((k) => {
+            const s = k.statusLocal || k.status || '';
+            return s === 'Em Usinagem' || s === 'Em Corte';
+        });
         const aProgramar = kanbans.some(kanbanPrecisaProgramar);
         const pecaPronta = kanbans.some(statusEhConcluido) && abertos.length > 0;
         const tudoPronto = abertos.length === 0;
@@ -140,6 +273,7 @@ export function agruparCarteira(kanban, config = {}) {
             prazo: prazoOs(head),
             atrasada: atrasadaOs(head) || abertos.some(atrasadaOs),
             gargalo,
+            passoAberto: primeiroPassoAberto(head, kanbans),
             custoHora,
             orcado: Number.isFinite(orcado) ? orcado : null,
             emTerceiro,

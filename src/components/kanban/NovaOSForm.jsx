@@ -3,25 +3,34 @@ import Button from '../common/Button';
 import Modal from '../common/Modal';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { TIPOS_KANBAN_GESTOR, labelSetor } from '../../constants/osWorkflow';
+import { listaEtapasRoteiro, labelSetor, geraCartaoEtapa, montarRoteiro, slugEtapaPersonalizada } from '../../constants/osWorkflow';
 import { nomesClienteAutocomplete } from '../../constants/roles';
 import { Plus, Trash2, Flag, ArrowRight, X, Calculator } from 'lucide-react';
 import { compressImageFile } from '../../utils/folhaProcesso';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
+import { formatarMoedaDigitacao, parseMoedaBr } from '../../utils/formatters';
 
 const novaPeca = () => ({ nome: '', etapas: [], quantidade: 1 });
 
-const PRESETS = [
-    { id: 'cnc-tt-fio', label: 'CNC → TT → Fio', etapas: ['CNC', 'EXTERNO', 'EDM_FIO'] },
-    { id: 'cnc-ret', label: 'CNC → Retífica', etapas: ['CNC', 'RETIFICA'] },
-    { id: 'fio-tt', label: 'Fio → TT', etapas: ['EDM_FIO', 'EXTERNO'] },
-];
+function CamposHm({ label, horas, minutos, onHoras, onMinutos, inputCls }) {
+    return (
+        <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565B68] mb-1.5">{label}</p>
+            <div className="flex gap-2">
+                <input type="number" min="0" inputMode="numeric" value={horas} onChange={(e) => onHoras(e.target.value)} placeholder="h" className={inputCls} />
+                <input type="number" min="0" max="59" inputMode="numeric" value={minutos} onChange={(e) => onMinutos(e.target.value)} placeholder="min" className={inputCls} />
+            </div>
+        </div>
+    );
+}
 
 export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const clientes = useAppStore((s) => s.clientes);
     const activeSector = useAppStore((s) => s.activeSector);
     const addOrdemServico = useAppStore((s) => s.addOrdemServico);
     const addGrupoOrdensServico = useAppStore((s) => s.addGrupoOrdensServico);
+    const etapasPersonalizadas = useAppStore((s) => s.configuracoesGlobais?.etapasPersonalizadas) || [];
+    const salvarEtapasPersonalizadas = useAppStore((s) => s.salvarEtapasPersonalizadas);
     const role = useAuthStore((s) => s.role);
     const nomeEmpresa = useAuthStore((s) => s.nomeEmpresa);
     const isGestor = role === 'admin';
@@ -34,6 +43,14 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const [codigoMolde, setCodigoMolde] = useState('');
     const [prazoEntrega, setPrazoEntrega] = useState('');
     const [valorOrcado, setValorOrcado] = useState('');
+    const [setupCncH, setSetupCncH] = useState('');
+    const [setupCncM, setSetupCncM] = useState('');
+    const [corteCncH, setCorteCncH] = useState('');
+    const [corteCncM, setCorteCncM] = useState('');
+    const [setupEdmH, setSetupEdmH] = useState('');
+    const [setupEdmM, setSetupEdmM] = useState('');
+    const [corteEdmH, setCorteEdmH] = useState('');
+    const [corteEdmM, setCorteEdmM] = useState('');
     const [quantidade, setQuantidade] = useState(1);
     const [isPrioridade, setIsPrioridade] = useState(false);
     const [pecas, setPecas] = useState([novaPeca()]);
@@ -43,6 +60,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const [linkDesenho, setLinkDesenho] = useState('');
     const [folhaBlob, setFolhaBlob] = useState(null);
     const [folhaPreview, setFolhaPreview] = useState('');
+    const [novaEtapaNome, setNovaEtapaNome] = useState('');
+    const [editandoEtapaIdx, setEditandoEtapaIdx] = useState(null);
+    const [editandoEtapaTexto, setEditandoEtapaTexto] = useState('');
 
     const nomesClientes = nomesClienteAutocomplete(clientes, nomeEmpresa);
 
@@ -55,6 +75,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         setCodigoMolde('');
         setPrazoEntrega('');
         setValorOrcado('');
+        setSetupCncH(''); setSetupCncM(''); setCorteCncH(''); setCorteCncM('');
+        setSetupEdmH(''); setSetupEdmM(''); setCorteEdmH(''); setCorteEdmM('');
         setQuantidade(1);
         setIsPrioridade(false);
         setPecas([novaPeca()]);
@@ -74,15 +96,13 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         onClose();
     };
 
-    const setEtapasPeca = (idx, etapas) => {
-        setPecas((p) => p.map((row, i) => (i === idx ? { ...row, etapas } : row)));
-    };
-
     const addEtapa = (idx, setor) => {
         setPecas((p) => p.map((row, i) => (
             i === idx ? { ...row, etapas: [...row.etapas, setor] } : row
         )));
     };
+
+    const catalogoEtapas = listaEtapasRoteiro(etapasPersonalizadas);
 
     const removeEtapa = (idx, ei) => {
         setPecas((p) => p.map((row, i) => {
@@ -90,6 +110,58 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
             const etapas = row.etapas.filter((_, j) => j !== ei);
             return { ...row, etapas };
         }));
+        setEditandoEtapaIdx(null);
+    };
+
+    const criarEtapaPersonalizada = async (idx) => {
+        const nome = novaEtapaNome.trim();
+        if (!nome) return;
+        const existente = catalogoEtapas.find((t) => t.label.toLowerCase() === nome.toLowerCase());
+        if (existente) {
+            addEtapa(idx, existente.id);
+            setNovaEtapaNome('');
+            return;
+        }
+        let id = slugEtapaPersonalizada(nome);
+        if (catalogoEtapas.some((t) => t.id === id)) id = `${id}_${Date.now().toString(36).slice(-4)}`;
+        const nova = { id, label: nome, kind: 'marco', geraCartao: false };
+        await salvarEtapasPersonalizadas([...(etapasPersonalizadas || []), nova]);
+        addEtapa(idx, id);
+        setNovaEtapaNome('');
+    };
+
+    const salvarNomeEtapaChip = async (pecaIdx, ei) => {
+        const peca = pecas[pecaIdx];
+        const setor = peca?.etapas?.[ei];
+        const nome = editandoEtapaTexto.trim();
+        setEditandoEtapaIdx(null);
+        if (!setor || !nome) return;
+        if (!String(setor).startsWith('PX_')) return;
+        const next = (etapasPersonalizadas || []).map((e) => (e.id === setor ? { ...e, label: nome } : e));
+        if (!next.some((e) => e.id === setor)) next.push({ id: setor, label: nome, kind: 'marco', geraCartao: false });
+        await salvarEtapasPersonalizadas(next);
+    };
+
+    const temposDoSetor = (setor) => {
+        const isEdm = setor === 'EDM_FIO';
+        const isCnc = setor === 'CNC';
+        if (isEdm) {
+            return {
+                tempoEstimadoSetupHoras: parseInt(setupEdmH, 10) || 0,
+                tempoEstimadoSetupMinutos: parseInt(setupEdmM, 10) || 0,
+                tempoEstimadoCorteHoras: edmTempo ? edmTempo.horas : (parseInt(corteEdmH, 10) || 0),
+                tempoEstimadoCorteMinutos: edmTempo ? edmTempo.minutos : (parseInt(corteEdmM, 10) || 0),
+            };
+        }
+        if (isCnc) {
+            return {
+                tempoEstimadoSetupHoras: parseInt(setupCncH, 10) || 0,
+                tempoEstimadoSetupMinutos: parseInt(setupCncM, 10) || 0,
+                tempoEstimadoCorteHoras: parseInt(corteCncH, 10) || 0,
+                tempoEstimadoCorteMinutos: parseInt(corteCncM, 10) || 0,
+            };
+        }
+        return {};
     };
 
     const flattenKanbans = () => {
@@ -99,6 +171,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                 setor: setorPadrao,
                 codigoPeca: (codigoPeca || 'S/N').toUpperCase(),
                 quantidade: parseInt(quantidade, 10) || 1,
+                roteiro: montarRoteiro([setorPadrao], etapasPersonalizadas),
+                ...temposDoSetor(setorPadrao),
             }];
         }
         const lista = modo === 'molde' ? pecas : [pecas[0] || novaPeca()];
@@ -106,18 +180,19 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         lista.forEach((peca, pi) => {
             const qtd = parseInt(modo === 'molde' ? peca.quantidade : quantidade, 10) || 1;
             const nome = (peca.nome || codigoPeca || codigoMolde || `P${pi + 1}`).trim();
-            (peca.etapas || []).forEach((setor) => {
-                const sufixo = (peca.etapas.length > 1) ? ` · ${labelSetor(setor)}` : '';
-                const isEdm = setor === 'EDM_FIO';
+            const roteiro = montarRoteiro(peca.etapas || [], etapasPersonalizadas);
+            (peca.etapas || []).filter((s) => geraCartaoEtapa(s, etapasPersonalizadas)).forEach((setor) => {
+                const etapasCard = (peca.etapas || []).filter((s) => geraCartaoEtapa(s, etapasPersonalizadas));
+                const sufixo = (etapasCard.length > 1) ? ` · ${labelSetor(setor, etapasPersonalizadas)}` : '';
                 linhas.push({
                     componente: peca.nome?.trim() || '',
                     setor,
                     quantidade: qtd,
                     codigoPeca: modo === 'molde'
                         ? `${codigoMolde || 'MOLDE'}-${nome}${sufixo}`
-                        : `${(codigoPeca || nome).toUpperCase()}${peca.etapas.length > 1 ? sufixo : ''}`,
-                    tempoEstimadoCorteHoras: isEdm && edmTempo ? edmTempo.horas : undefined,
-                    tempoEstimadoCorteMinutos: isEdm && edmTempo ? edmTempo.minutos : undefined,
+                        : `${(codigoPeca || nome).toUpperCase()}${etapasCard.length > 1 ? sufixo : ''}`,
+                    roteiro,
+                    ...temposDoSetor(setor),
                 });
             });
         });
@@ -129,7 +204,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         codigoPeca: codigoPeca.trim() || codigoMolde.trim() || 'S/N',
         codigoMolde: modo === 'molde' ? codigoMolde.trim() : '',
         prazoEntrega,
-        valorOrcado: valorOrcado === '' ? null : valorOrcado,
+        valorOrcado: valorOrcado === '' ? null : parseMoedaBr(valorOrcado),
         quantidade: parseInt(quantidade, 10) || 1,
         status: 'A fazer',
         programado: false,
@@ -147,7 +222,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         try {
             const linhas = flattenKanbans().filter((k) => k.setor);
             if (linhas.length === 0) {
-                alert('Defina pelo menos uma etapa no roteiro.');
+                alert('Inclua pelo menos CNC, eletrofio ou serviço externo. As outras etapas (laser, torno, ou as que você criar) entram só no caminho da peça, sem cartão no quadro.');
                 setIsSubmitting(false);
                 return;
             }
@@ -163,8 +238,11 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                     quantidade: linhas[0].quantidade || cabecalho().quantidade,
                     tempoEstimadoCorteHoras: linhas[0].tempoEstimadoCorteHoras,
                     tempoEstimadoCorteMinutos: linhas[0].tempoEstimadoCorteMinutos,
+                    tempoEstimadoSetupHoras: linhas[0].tempoEstimadoSetupHoras,
+                    tempoEstimadoSetupMinutos: linhas[0].tempoEstimadoSetupMinutos,
                     programado: linhas[0].setor === 'EXTERNO',
                     roteiro_ordem: 1,
+                    roteiro: linhas[0].roteiro || montarRoteiro([linhas[0].setor], etapasPersonalizadas),
                 }, { optimistic: false });
                 criados = one ? [one] : [];
             }
@@ -214,8 +292,37 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                 {peca.etapas.map((setor, ei) => (
                     <React.Fragment key={`${setor}-${ei}`}>
                         {ei > 0 && <ArrowRight className="w-3.5 h-3.5 text-[#565B68] shrink-0" />}
-                        <span className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-[6px] border border-[#D97D3D]/40 bg-[rgba(217,125,61,0.1)] text-[11px] font-semibold text-[#D97D3D]">
-                            {ei + 1}. {labelSetor(setor)}
+                        <span className={`inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-[6px] border text-[11px] font-semibold ${
+                            geraCartaoEtapa(setor, etapasPersonalizadas)
+                                ? 'border-[#D97D3D]/40 bg-[rgba(217,125,61,0.1)] text-[#D97D3D]'
+                                : 'border-[#C99A4A]/40 bg-[rgba(201,154,74,0.08)] text-[#C99A4A]'
+                        }`}>
+                            {editandoEtapaIdx === `${idx}-${ei}` && String(setor).startsWith('PX_') ? (
+                                <input
+                                    autoFocus
+                                    value={editandoEtapaTexto}
+                                    onChange={(e) => setEditandoEtapaTexto(e.target.value)}
+                                    onBlur={() => salvarNomeEtapaChip(idx, ei)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') { e.preventDefault(); salvarNomeEtapaChip(idx, ei); }
+                                        if (e.key === 'Escape') setEditandoEtapaIdx(null);
+                                    }}
+                                    className="w-[110px] bg-transparent border-0 text-[11px] font-semibold text-[#C99A4A] focus:outline-none"
+                                />
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="cursor-pointer text-left"
+                                    title={String(setor).startsWith('PX_') ? 'Clique para renomear' : undefined}
+                                    onClick={() => {
+                                        if (!String(setor).startsWith('PX_')) return;
+                                        setEditandoEtapaIdx(`${idx}-${ei}`);
+                                        setEditandoEtapaTexto(labelSetor(setor, etapasPersonalizadas));
+                                    }}
+                                >
+                                    {ei + 1}. {labelSetor(setor, etapasPersonalizadas)}{!geraCartaoEtapa(setor, etapasPersonalizadas) ? ' · marco' : ''}
+                                </button>
+                            )}
                             <button type="button" onClick={() => removeEtapa(idx, ei)} className="p-0.5 text-[#7B808F] hover:text-[#C85558] cursor-pointer">
                                 <X className="w-3 h-3" />
                             </button>
@@ -226,32 +333,38 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
             <div>
                 <p className="text-[10px] text-[#565B68] mb-1.5">{peca.etapas.length === 0 ? 'Adicionar etapa' : 'Próxima etapa'}</p>
                 <div className="flex flex-wrap gap-1.5">
-                    {TIPOS_KANBAN_GESTOR.map((t) => (
+                    {catalogoEtapas.map((t) => (
                         <button
                             key={t.id}
                             type="button"
                             onClick={() => addEtapa(idx, t.id)}
                             className="px-2 py-1 rounded-[6px] border border-[#262A33] text-[10px] font-semibold text-[#7B808F] hover:border-[#D97D3D] hover:text-[#D97D3D] cursor-pointer"
                         >
-                            + {t.label}
+                            + {t.label}{t.geraCartao === false ? ' (marco)' : ''}
                         </button>
                     ))}
                 </div>
+                <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                    <input
+                        placeholder="Nova etapa, ex.: Corte a laser"
+                        value={novaEtapaNome}
+                        onChange={(e) => setNovaEtapaNome(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); criarEtapaPersonalizada(idx); } }}
+                        placeholder="Nova etapa, ex.: Corte a laser"
+                        className={`${inputCls} flex-1 min-w-[160px] py-1.5 text-[12px]`}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => criarEtapaPersonalizada(idx)}
+                        className="px-2.5 py-1.5 rounded-[6px] border border-[#D97D3D]/40 text-[10px] font-semibold text-[#D97D3D] cursor-pointer hover:bg-[rgba(217,125,61,0.1)]"
+                    >
+                        Criar e adicionar
+                    </button>
+                </div>
+                <p className="text-[10px] text-[#565B68] mt-1.5 leading-relaxed">
+                    Etapa criada vira marco no caminho (sem quadro). Clique nela na lista acima para renomear. CNC, eletrofio e serviço externo continuam gerando cartão.
+                </p>
             </div>
-            {idx === 0 && isGestor && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                    {PRESETS.map((pr) => (
-                        <button
-                            key={pr.id}
-                            type="button"
-                            onClick={() => setEtapasPeca(idx, [...pr.etapas])}
-                            className="text-[10px] px-2 py-1 rounded-[5px] bg-[#181B22] border border-[#262A33] text-[#9DA2AE] cursor-pointer hover:text-[#E7E9ED]"
-                        >
-                            {pr.label}
-                        </button>
-                    ))}
-                </div>
-            )}
         </div>
     );
 
@@ -329,7 +442,14 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                     {isGestor && (
                         <div className={modo === 'molde' ? '' : 'col-span-2'}>
                             <label className={labelCls}>Valor orçado (R$)</label>
-                            <input type="number" min="0" step="0.01" value={valorOrcado} onChange={(e) => setValorOrcado(e.target.value)} placeholder="0,00" className={inputCls} />
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                value={valorOrcado}
+                                onChange={(e) => setValorOrcado(formatarMoedaDigitacao(e.target.value))}
+                                placeholder="12.500,00"
+                                className={inputCls}
+                            />
                         </div>
                     )}
                 </div>
@@ -374,7 +494,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                             )}
                         </div>
                         <p className="text-[10px] text-[#565B68] leading-relaxed">
-                            A ordem da esquerda para a direita é o caminho. Lote de peças iguais: informe a quantidade — vira um único cartão com progresso (ex.: 4/12), não 12 cartões.
+                            Ordem da esquerda para a direita. CNC, eletrofio e serviço externo viram cartão. Laser, retífica, torno, montagem e etapas que você criar só aparecem no caminho da peça.
                         </p>
                         {(modo === 'molde' ? pecas : [pecas[0]]).map((peca, idx) =>
                             renderRoteiroPeca(peca, idx, { showNome: modo === 'molde' })
@@ -384,6 +504,27 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                     <p className="text-sm text-[#E7E9ED] bg-[#111318] border border-[#262A33] rounded-[8px] px-3 py-2">
                         {labelSetor(setorPadrao)} — cai em A fazer para programar
                     </p>
+                )}
+
+                {((!isGestor && setorPadrao !== 'EXTERNO') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('CNC') || (p?.etapas || []).includes('EDM_FIO')))) && (
+                    <div className="border border-[#262A33] rounded-[8px] p-3 bg-[#111318] space-y-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565B68]">Tempos previstos (CAM)</p>
+                        <p className="text-[10px] text-[#565B68] leading-relaxed">
+                            Setup e usinagem/corte a fio entram no cartão e na eficiência: previsto ÷ real. Dá para completar depois ao programar.
+                        </p>
+                        {((!isGestor && setorPadrao === 'CNC') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('CNC')))) && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <CamposHm label="Setup CNC" horas={setupCncH} minutos={setupCncM} onHoras={setSetupCncH} onMinutos={setSetupCncM} inputCls={inputCls} />
+                                <CamposHm label="Usinagem CNC" horas={corteCncH} minutos={corteCncM} onHoras={setCorteCncH} onMinutos={setCorteCncM} inputCls={inputCls} />
+                            </div>
+                        )}
+                        {((!isGestor && setorPadrao === 'EDM_FIO') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')))) && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <CamposHm label="Setup eletrofio" horas={setupEdmH} minutos={setupEdmM} onHoras={setSetupEdmH} onMinutos={setSetupEdmM} inputCls={inputCls} />
+                                <CamposHm label="Corte a fio" horas={edmTempo ? edmTempo.horas : corteEdmH} minutos={edmTempo ? edmTempo.minutos : corteEdmM} onHoras={setCorteEdmH} onMinutos={setCorteEdmM} inputCls={inputCls} />
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')) && (
@@ -460,6 +601,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                     initialQuantidade={parseInt(quantidade, 10) || 1}
                     onCalculate={(h, m, qtd) => {
                         setEdmTempo({ horas: h, minutos: m });
+                        setCorteEdmH(String(h));
+                        setCorteEdmM(String(m));
                         if (qtd) setQuantidade(qtd);
                         setShowEdmCalc(false);
                     }}

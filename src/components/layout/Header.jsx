@@ -56,9 +56,9 @@ export default function Header({ onMenuToggle }) {
                 </div>
 
                 {/* Center text (desktop) */}
-                <div className="hidden lg:block font-mono text-[10px] tracking-[0.2em] uppercase text-[#565B68]">
-                    VISUALIZE · CONTROLE · PRODUZA
-                </div>
+                    <div className="hidden lg:block font-mono text-[10px] tracking-[0.18em] uppercase text-[#565B68]">
+                        {demoMode ? 'Fábrica de exemplo · PIN 1234' : 'VISUALIZE · CONTROLE · PRODUZA'}
+                    </div>
 
                 {/* Right side: Empresa + Role + Quick selector in Demo + Logout */}
                 <div className="flex items-center gap-2.5 sm:gap-4">
@@ -86,7 +86,7 @@ export default function Header({ onMenuToggle }) {
                                     type="button"
                                     onClick={handleGerenteClick}
                                     className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Visão de Gerência (PIN Master)"
+                                    title="Carteira e fábrica inteira. PIN desta demo: 1234"
                                 >
                                     <ShieldCheck className="w-3 h-3" /> Gerente
                                 </button>
@@ -94,7 +94,7 @@ export default function Header({ onMenuToggle }) {
                                     type="button"
                                     onClick={() => entrarProgramador('CNC')}
                                     className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Programador CNC"
+                                    title="Só o quadro CNC — programar e operar"
                                 >
                                     <Cpu className="w-3 h-3" /> CNC
                                 </button>
@@ -102,7 +102,7 @@ export default function Header({ onMenuToggle }) {
                                     type="button"
                                     onClick={() => entrarProgramador('EDM_FIO')}
                                     className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Programador EDM Fio"
+                                    title="Só o quadro de eletrofio"
                                 >
                                     <Zap className="w-3 h-3" /> EDM Fio
                                 </button>

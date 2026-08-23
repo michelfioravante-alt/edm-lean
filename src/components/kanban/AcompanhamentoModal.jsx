@@ -8,7 +8,9 @@ import { resolveFolhaImagemSrc } from '../../services/osPrints';
 import { format } from 'date-fns';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { listarKanbansDoGrupo, labelSetor, custoHoraKanban } from '../../constants/osWorkflow';
+import { listarKanbansDoGrupo, labelSetor, custoHoraKanban, horasKanban } from '../../constants/osWorkflow';
+import RoteiroFluxo from './RoteiroFluxo';
+import { formatarMoedaBRL } from '../../utils/formatters';
 
 export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteRequest, onPauseRequest }) {
     if (!osData) return null;
@@ -32,9 +34,11 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     const activeData = currentOs || osData;
     const kanban = useAppStore((s) => s.kanban);
     const configuracoesGlobais = useAppStore((s) => s.configuracoesGlobais);
+    const syncRoteiroGrupo = useAppStore((s) => s.syncRoteiroGrupo);
     const irmaos = listarKanbansDoGrupo(kanban, activeData);
     const printSrc = resolveFolhaImagemSrc(activeData.folha_imagem || activeData.folhaImagem);
     const custoInfo = custoHoraKanban(activeData, configuracoesGlobais || {});
+    const tempos = horasKanban(activeData);
     const isGestor = useAuthStore((s) => s.role) === 'admin';
     const [newTotal, setNewTotal] = useState(activeData.quantidade || 1);
 
@@ -134,9 +138,22 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                         </Button>
                     </div>
 
-                    {(irmaos.length > 1 || (isGestor && (custoInfo.custo > 0 || activeData.valor_orcado))) && (
-                        <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-3">
-                            <h5 className="text-xs font-bold uppercase text-[#565B68]">Roteiro desta O.S.</h5>
+                    <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-3">
+                        <RoteiroFluxo
+                            os={activeData}
+                            irmaos={irmaos}
+                            onToggleMarco={async (passoId, feito) => {
+                                const base = Array.isArray(activeData.roteiro) && activeData.roteiro.length
+                                    ? activeData.roteiro
+                                    : (irmaos.find((k) => Array.isArray(k.roteiro) && k.roteiro.length)?.roteiro);
+                                if (!Array.isArray(base) || !base.length) return;
+                                const next = base.map((p) => (p.id === passoId ? { ...p, feito } : p));
+                                await syncRoteiroGrupo(activeData, next);
+                            }}
+                        />
+                        {(irmaos.length > 1 || (isGestor && (custoInfo.custo > 0 || activeData.valor_orcado))) && (
+                            <>
+                            <h5 className="text-xs font-bold uppercase text-[#565B68]">Kanbans desta O.S.</h5>
                             {isGestor && custoInfo.custo > 0 && (
                                 <p className="text-sm text-[#E7E9ED]">
                                     Custo hora deste kanban: <span className="font-semibold text-[#D97D3D]">R$ {custoInfo.custo.toFixed(2)}</span>
@@ -144,7 +161,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 </p>
                             )}
                             {isGestor && activeData.valor_orcado != null && (
-                                <p className="text-xs text-[#7B808F]">Orçado da O.S.: R$ {Number(activeData.valor_orcado).toFixed(2)}</p>
+                                <p className="text-xs text-[#7B808F]">Orçado da O.S.: {formatarMoedaBRL(activeData.valor_orcado)}</p>
                             )}
                             {irmaos.length > 1 && (
                                 <ul className="space-y-1.5 text-xs">
@@ -156,8 +173,9 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                     ))}
                                 </ul>
                             )}
-                        </div>
-                    )}
+                            </>
+                        )}
+                    </div>
 
                     <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-2">
                         <h5 className="text-xs font-bold uppercase text-[#565B68]">Observações</h5>
@@ -312,28 +330,35 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
                             <h5 className="text-xs font-bold uppercase text-[#565B68] mb-3 flex items-center gap-2">
-                                <Clock className="w-4 h-4" /> Tempos Líquidos
+                                <Clock className="w-4 h-4" /> Tempos: previsto × real
                             </h5>
                             <ul className="space-y-2 text-sm">
-                                <li className="flex justify-between">
-                                    <span className="text-[#565B68]">Tempo de Set-up:</span>
-                                    <span className="font-mono font-bold text-[#E7E9ED]">{formatarHoras(temposFases.setup)}</span>
+                                <li className="flex justify-between gap-2">
+                                    <span className="text-[#565B68]">Setup</span>
+                                    <span className="font-mono text-[#E7E9ED] text-right">
+                                        {formatarHoras(tempos.setupEst)} prev. · {formatarHoras(tempos.setupReal)} real
+                                    </span>
+                                </li>
+                                <li className="flex justify-between gap-2">
+                                    <span className="text-[#565B68]">Usinagem / corte</span>
+                                    <span className="font-mono text-[#E7E9ED] text-right">
+                                        {formatarHoras(tempos.corteEst)} prev. · {formatarHoras(tempos.corteReal)} real
+                                    </span>
                                 </li>
                                 <li className="flex justify-between">
-                                    <span className="text-[#565B68]">Tempo de Corte:</span>
-                                    <span className="font-mono font-bold text-[#E7E9ED]">{formatarHoras(temposFases.emCorte)}</span>
-                                </li>
-                                <li className="flex justify-between">
-                                    <span className="text-[#565B68]">Tempo de Aferição:</span>
-                                    <span className="font-mono font-bold text-[#E7E9ED]">{formatarHoras(temposFases.afericao || 0)}</span>
+                                    <span className="text-[#565B68]">Aferição</span>
+                                    <span className="font-mono font-bold text-[#E7E9ED]">{formatarHoras(tempos.afericaoReal)}</span>
                                 </li>
                                 <li className="flex justify-between pt-2 mt-2 border-t border-[#262A33]">
-                                    <span className="text-[#E7E9ED] font-bold">Total Produzido:</span>
+                                    <span className="text-[#E7E9ED] font-bold">Eficiência CAM</span>
                                     <span className="font-mono font-bold text-kanban-amber">
-                                        {formatarHoras(temposFases.setup + temposFases.emCorte + (temposFases.afericao || 0))}
+                                        {tempos.eficienciaCam != null ? `${tempos.eficienciaCam.toFixed(0)}%` : '—'}
                                     </span>
                                 </li>
                             </ul>
+                            <p className="text-[10px] text-[#565B68] mt-2 leading-relaxed">
+                                Previsto ÷ real (setup + corte). Acima de 100% = mais rápido que o CAM. Aferição não entra nessa conta.
+                            </p>
                         </div>
 
                         {/* ALERTA DE REFUGO (Reposicionado à direita dos tempos) */}

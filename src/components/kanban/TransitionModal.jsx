@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { useAppStore } from '../../store/useAppStore';
-import { ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../../constants/cncProcess';
+import { COLUMN_LABELS, ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../../constants/cncProcess';
+import { SECTORS } from '../../constants/sectorConstants';
 import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
 
-export default function TransitionModal({ isOpen, onClose, onConfirm, targetColumnTitle, destCol, osData }) {
+export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, targetColumnTitle, destCol, osData }) {
+    const close = onClose || onCancel;
     const { maquinas, operadores, estoque, configuracoesGlobais, activeSector } = useAppStore();
+    const osSector = osData?.setor || activeSector || 'CNC';
+    const etapaLabel = targetColumnTitle
+        || SECTORS[osSector]?.kanbanColumns?.[destCol]?.label
+        || COLUMN_LABELS[destCol]
+        || destCol
+        || 'próxima etapa';
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedMaquina, setSelectedMaquina] = useState('');
     const [selectedOperador, setSelectedOperador] = useState('');
     const [checkedCamTools, setCheckedCamTools] = useState({});
-
-    const osSector = osData?.setor || activeSector || 'CNC';
 
     const filteredMaquinas = maquinas.filter(m => {
         if (!m.setor || m.setor === 'TODOS' || osSector === 'TODOS') return true;
@@ -126,8 +132,8 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
-            title={`Movendo para ${targetColumnTitle}...`}
+            onClose={close}
+            title={`Movendo para ${etapaLabel}`}
             maxWidth={isSetup ? 'max-w-lg' : 'max-w-md'}
         >
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -312,7 +318,7 @@ export default function TransitionModal({ isOpen, onClose, onConfirm, targetColu
                 )}
 
                 <div className="pt-4 flex gap-3 border-t border-[#262A33]">
-                    <Button type="button" variant="ghost" size="md" onClick={onClose} disabled={isSubmitting} className="w-1/3">Cancelar</Button>
+                    <Button type="button" variant="ghost" size="md" onClick={close} disabled={isSubmitting} className="w-1/3">Cancelar</Button>
                     <Button type="submit" variant="primary" size="md" disabled={(isEmCorte && !isCorteReady) || isSubmitting} className="w-2/3">
                         {isSubmitting ? 'Confirmando...' : 'Confirmar Ação'}
                     </Button>

@@ -7,16 +7,18 @@ import {
     Bot, DollarSign, Copy, Wrench, Clock, RefreshCw, Cpu, Layers 
 } from 'lucide-react';
 import { ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../constants/cncProcess';
+import { TIPOS_SERVICO_EXTERNO, slugEtapaPersonalizada } from '../constants/osWorkflow';
 
 export default function ConfigSettings() {
     const {
-        configuracoesGlobais, salvarConfiguracoes,
+        configuracoesGlobais, salvarConfiguracoes, salvarEtapasPersonalizadas,
         fetchConfiguracoes, fetchMaquinas, fetchOperadores, fetchProgramadores, fetchAutoKanbans, fetchUsuarios,
         maquinas, addMaquina, removeMaquina,
         operadores, addOperador, removeOperador,
         programadores, addProgramador, removeProgramador,
         kanbansAutomaticos, addKanbanAutomatico, removeKanbanAutomatico,
-        usuarios
+        usuarios,
+        fornecedores, addFornecedor, removeFornecedor, fetchFornecedores,
     } = useAppStore();
 
     const { user, codigoConvite } = useAuthStore();
@@ -31,6 +33,7 @@ export default function ConfigSettings() {
         fetchProgramadores();
         fetchAutoKanbans();
         fetchUsuarios();
+        fetchFornecedores();
     }, []);
 
     // Estado Local das Configs Globais
@@ -46,6 +49,7 @@ export default function ConfigSettings() {
     const [pinLocal, setPinLocal] = useState(configuracoesGlobais?.pinOnboarding ?? '1234');
     const [modoMagazineLocal, setModoMagazineLocal] = useState(configuracoesGlobais?.modoMagazineDefault || 'individual');
     const [baixaEstoqueSetupLocal, setBaixaEstoqueSetupLocal] = useState(configuracoesGlobais?.baixaEstoqueNoSetup ?? false);
+    const [novaEtapaCfg, setNovaEtapaCfg] = useState('');
 
     // Sincroniza o estado local sempre que configuracoesGlobais for carregado/atualizado
     useEffect(() => {
@@ -161,6 +165,9 @@ export default function ConfigSettings() {
     const [novoProgramador, setNovoProgramador] = useState('');
     const [novoProgramadorSetor, setNovoProgramadorSetor] = useState('CNC');
     const [novoTurnoNome, setNovoTurnoNome] = useState('');
+    const [novoFornecedorNome, setNovoFornecedorNome] = useState('');
+    const [novoFornecedorTipo, setNovoFornecedorTipo] = useState('tempera');
+    const [novoFornecedorPrazo, setNovoFornecedorPrazo] = useState('');
 
     // Kanban Automático State
     const [kbTipo, setKbTipo] = useState('');
@@ -192,6 +199,22 @@ export default function ConfigSettings() {
             setTimeout(() => setToastMsg(''), 2500);
         } catch (err) {
             setToastMsg('Erro: ' + (err?.message || 'Falha ao adicionar máquina'));
+            setTimeout(() => setToastMsg(''), 3500);
+        }
+    };
+
+    const handleAddFornecedor = async (e) => {
+        e.preventDefault();
+        const nomeTrim = novoFornecedorNome.trim();
+        if (!nomeTrim) return;
+        try {
+            await addFornecedor({ nome: nomeTrim, tipo: novoFornecedorTipo, prazoDias: novoFornecedorPrazo });
+            setNovoFornecedorNome('');
+            setNovoFornecedorPrazo('');
+            setToastMsg('Fornecedor cadastrado.');
+            setTimeout(() => setToastMsg(''), 2500);
+        } catch (err) {
+            setToastMsg('Erro: ' + (err?.message || 'Falha ao cadastrar fornecedor'));
             setTimeout(() => setToastMsg(''), 3500);
         }
     };
@@ -395,6 +418,82 @@ export default function ConfigSettings() {
                         </div>
                     </div>
 
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Layers className="text-[#D97D3D] w-5 h-5" />
+                                <h3 className="text-lg font-bold text-white">Etapas do roteiro da peça</h3>
+                            </div>
+                            <span className="text-[10px] font-mono bg-[rgba(217,125,61,0.1)] text-[#D97D3D] px-2.5 py-1 rounded-full border border-[#D97D3D]/30 font-semibold">
+                                CAMINHO
+                            </span>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-[12px] text-[#7B808F] leading-relaxed">
+                                CNC, eletrofio e serviço externo geram cartão no quadro. O restante — laser, retífica, torno, montagem ou o que você cadastrar — entra só no caminho da peça.
+                            </p>
+                            {(configuracoesGlobais?.etapasPersonalizadas || []).length === 0 && (
+                                <p className="text-[12px] text-[#565B68]">Nenhuma etapa personalizada ainda. Ex.: Corte a laser, polimento, solda.</p>
+                            )}
+                            <ul className="space-y-2">
+                                {(configuracoesGlobais?.etapasPersonalizadas || []).map((et) => (
+                                    <li key={et.id} className="flex items-center gap-2">
+                                        <input
+                                            defaultValue={et.label}
+                                            key={`${et.id}-${et.label}`}
+                                            onBlur={(e) => {
+                                                const nome = e.target.value.trim();
+                                                if (!nome || nome === et.label) return;
+                                                const next = (configuracoesGlobais.etapasPersonalizadas || []).map((x) =>
+                                                    x.id === et.id ? { ...x, label: nome } : x
+                                                );
+                                                salvarEtapasPersonalizadas(next);
+                                            }}
+                                            className={inputClasses}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => salvarEtapasPersonalizadas(
+                                                (configuracoesGlobais.etapasPersonalizadas || []).filter((x) => x.id !== et.id)
+                                            )}
+                                            className="p-2 text-[#565B68] hover:text-[#C85558] cursor-pointer"
+                                            title="Remover do catálogo"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                            <form
+                                className="flex flex-wrap gap-2"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const nome = novaEtapaCfg.trim();
+                                    if (!nome) return;
+                                    const lista = configuracoesGlobais?.etapasPersonalizadas || [];
+                                    if (lista.some((x) => x.label.toLowerCase() === nome.toLowerCase())) {
+                                        setNovaEtapaCfg('');
+                                        return;
+                                    }
+                                    let id = slugEtapaPersonalizada(nome);
+                                    if (lista.some((x) => x.id === id)) id = `${id}_${Date.now().toString(36).slice(-4)}`;
+                                    salvarEtapasPersonalizadas([...lista, { id, label: nome, kind: 'marco', geraCartao: false }]);
+                                    setNovaEtapaCfg('');
+                                }}
+                            >
+                                <input
+                                    value={novaEtapaCfg}
+                                    onChange={(e) => setNovaEtapaCfg(e.target.value)}
+                                    placeholder="Nome da etapa, ex.: Corte a laser"
+                                    className={`${inputClasses} flex-1 min-w-[200px]`}
+                                />
+                                <Button type="submit" variant="primary" size="md" className="px-4">
+                                    <Plus className="w-4 h-4 mr-1 inline" /> Cadastrar etapa
+                                </Button>
+                            </form>
+                        </div>
+                    </div>
+
                     {/* Preferências de Magazine Ferramental */}
                     <div className={cardClasses}>
                         <div className={headerClasses}>
@@ -576,6 +675,7 @@ export default function ConfigSettings() {
                                     >
                                         <option value="CNC">Centro CNC</option>
                                         <option value="EDM_FIO">EDM Fio</option>
+                                        <option value="LASER">Laser</option>
                                         <option value="TORNO">Torno CNC</option>
                                     </select>
                                 </div>
@@ -604,7 +704,7 @@ export default function ConfigSettings() {
                                                         ? 'bg-amber-950/80 border-amber-500/50 text-[#D97D3D]'
                                                         : 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
                                                 }`}>
-                                                    {m.setor === 'EDM_FIO' ? 'EDM Fio' : m.setor === 'TORNO' ? 'Torno' : 'CNC'}
+                                                    {m.setor === 'EDM_FIO' ? 'EDM Fio' : m.setor === 'TORNO' ? 'Torno' : m.setor === 'LASER' ? 'Laser' : 'CNC'}
                                                 </span>
                                             </div>
                                             <button
@@ -702,6 +802,69 @@ export default function ConfigSettings() {
                                         <p className="text-xs text-[#565B68] text-center border border-dashed border-[#262A33] rounded-xl py-6">Nenhum programador cadastrado.</p>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`${cardClasses} lg:col-span-2`}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Wrench className="text-[#C99A4A] w-5 h-5" />
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Fornecedores de têmpera / terceiro</h3>
+                                    <p className="text-xs font-bold text-[#565B68]">
+                                        {(fornecedores || []).length} cadastrados — usados na carteira (quem recebeu, lead time)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <form onSubmit={handleAddFornecedor} className="flex flex-col sm:flex-row gap-3 items-end bg-[#111318]/80 p-4 border border-[#262A33]/80 rounded-xl">
+                                <div className="flex-1 w-full">
+                                    <label className={titleClasses}>Empresa</label>
+                                    <input
+                                        type="text"
+                                        value={novoFornecedorNome}
+                                        onChange={(e) => setNovoFornecedorNome(e.target.value)}
+                                        placeholder="Ex: Tempera São Leopoldo"
+                                        className={inputClasses}
+                                    />
+                                </div>
+                                <div className="w-full sm:w-44">
+                                    <label className={titleClasses}>Tipo</label>
+                                    <select value={novoFornecedorTipo} onChange={(e) => setNovoFornecedorTipo(e.target.value)} className={inputClasses}>
+                                        {TIPOS_SERVICO_EXTERNO.map((t) => (
+                                            <option key={t.id} value={t.id}>{t.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="w-full sm:w-28">
+                                    <label className={titleClasses}>Prazo (dias)</label>
+                                    <input type="number" min="0" value={novoFornecedorPrazo} onChange={(e) => setNovoFornecedorPrazo(e.target.value)} className={inputClasses} />
+                                </div>
+                                <Button type="submit" variant="primary" size="md" className="px-4 h-[44px] w-full sm:w-auto shrink-0" disabled={!novoFornecedorNome.trim()}>
+                                    <Plus className="w-5 h-5" />
+                                </Button>
+                            </form>
+                            <div className="space-y-2">
+                                {(fornecedores || []).map((f) => (
+                                    <div key={f.id} className="flex items-center justify-between bg-[#111318]/80 px-4 py-3 border border-[#262A33]/80 rounded-xl">
+                                        <div>
+                                            <p className="font-bold text-sm text-white">{f.nome}</p>
+                                            <p className="text-[10px] text-[#7B808F] uppercase">{f.tipo}{f.prazo_dias ? ` · ${f.prazo_dias} d` : ''}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removerComAviso(() => removeFornecedor(f.id), 'fornecedor')}
+                                            className="text-[#565B68] hover:text-[#C85558] p-1.5 rounded-lg"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {(!fornecedores || !fornecedores.length) && (
+                                    <p className="text-xs text-[#565B68] border border-dashed border-[#262A33] rounded-xl py-6 text-center">Nenhum fornecedor cadastrado.</p>
+                                )}
                             </div>
                         </div>
                     </div>

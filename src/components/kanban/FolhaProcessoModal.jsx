@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { Printer } from 'lucide-react';
 import Button from '../common/Button';
-import { labelSetor, listarKanbansDoGrupo } from '../../constants/osWorkflow';
+import { labelSetor, listarKanbansDoGrupo, textoRoteiroPassos, roteiroDaOs } from '../../constants/osWorkflow';
 import { urlKanbanOs } from '../../utils/folhaProcesso';
 import { resolveFolhaImagemSrc } from '../../services/osPrints';
 import { useAppStore } from '../../store/useAppStore';
 
 function textoRoteiro(os, irmaos) {
+    const passos = roteiroDaOs(os, irmaos);
+    if (passos.length) return textoRoteiroPassos(passos);
     const lista = (irmaos && irmaos.length > 1) ? irmaos : (os ? [os] : []);
     return lista.map((k) => labelSetor(k.setor || k.tipo_processo)).join('  →  ');
 }

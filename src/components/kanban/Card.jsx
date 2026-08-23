@@ -8,7 +8,7 @@ import { calcularTempoFaseAtual } from '../../utils/manufacturingMath';
 import { formatarHoras } from '../../utils/formatters';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { kanbanPrecisaProgramar, labelSetor, custoHoraKanban, listarKanbansDoGrupo } from '../../constants/osWorkflow';
+import { kanbanPrecisaProgramar, labelSetor, custoHoraKanban, listarKanbansDoGrupo, horasKanban } from '../../constants/osWorkflow';
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function observacaoLegivel(obs, maquinas) {
@@ -63,6 +63,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     const precisaProgramar = kanbanPrecisaProgramar(data);
     const irmaos = listarKanbansDoGrupo(kanban, data);
     const custoInfo = custoHoraKanban(data, configuracoesGlobais || {});
+    const temposPrev = horasKanban(data);
     const role = useAuthStore((s) => s.role);
     const isGestor = role === 'admin';
 
@@ -279,6 +280,14 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                         <div className="flex items-center gap-2">
                             <Monitor className="w-3.5 h-3.5 shrink-0 opacity-70" />
                             <span className="truncate">{maquina}</span>
+                        </div>
+                    )}
+                    {temposPrev.estimadas > 0 && (
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                            <span className="truncate">
+                                Prev. {formatarHoras(temposPrev.setupEst)} setup · {formatarHoras(temposPrev.corteEst)} corte
+                            </span>
                         </div>
                     )}
 
