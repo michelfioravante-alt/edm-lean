@@ -205,20 +205,20 @@ export default function Clientes() {
     };
 
     const inputCls = 'w-full px-3 py-2.5 border border-[#333844] bg-[#111318] rounded-lg focus:outline-none focus:border-kanban-amber text-[#E7E9ED] text-sm placeholder-[#565B68] transition-colors';
-    const labelCls = 'block text-xs font-bold text-[#7B808F] uppercase tracking-wider mb-1.5';
+    const labelCls = 'block text-xs font-semibold text-[#7B808F] uppercase tracking-wider mb-1.5';
 
     return (
         <div className="min-h-full flex flex-col gap-6 w-full pb-8 font-sans">
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181B22] p-5 sm:p-6 rounded-xl border border-[#262A33]">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#181B22] p-4 rounded-xl border border-[#262A33]">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-kanban-teal/10 rounded-xl border border-kanban-teal/30 shrink-0">
-                        <Users className="w-7 h-7 sm:w-8 sm:h-8 text-[#4A9D74]" />
+                    <div className="p-2 bg-kanban-teal/10 rounded-lg border border-kanban-teal/30 shrink-0">
+                        <Users className="w-5 h-5 text-[#4A9D74]" />
                     </div>
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-semibold text-white">Clientes & Contatos</h2>
-                        <p className="text-[#7B808F] text-xs sm:text-sm mt-0.5">{clientes.length} cliente{clientes.length !== 1 ? 's' : ''} cadastrado{clientes.length !== 1 ? 's' : ''}</p>
+                        <h2 className="text-xl font-semibold text-white">Clientes e contatos</h2>
+                        <p className="text-[#7B808F] text-xs mt-0.5">{clientes.length} cliente{clientes.length !== 1 ? 's' : ''} cadastrado{clientes.length !== 1 ? 's' : ''}</p>
                     </div>
                 </div>
 
@@ -712,7 +712,7 @@ export default function Clientes() {
                                 <AlertTriangle className="w-6 h-6 text-[#C85558]" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-white text-lg">Excluir Cliente</h3>
+                                <h3 className="font-semibold text-white text-base">Excluir cliente</h3>
                                 <p className="text-[#7B808F] text-sm mt-1">
                                     Tem certeza que deseja excluir <span className="font-bold text-white">"{confirmDelete.nome}"</span>?
                                 </p>
@@ -749,7 +749,7 @@ export default function Clientes() {
                 {statsLoading ? (
                     <div className="py-20 flex flex-col items-center gap-4">
                         <div className="w-10 h-10 border-4 border-[#4A9D74]/20 border-t-[#4A9D74] rounded-full animate-spin"></div>
-                        <p className="text-[#7B808F] font-bold text-sm tracking-widest animate-pulse">CARREGANDO HISTÓRICO DE O.S....</p>
+                        <p className="text-[#7B808F] text-sm font-medium animate-pulse">Carregando histórico de O.S....</p>
                     </div>
                 ) : (
                     <div className="space-y-5 font-sans">

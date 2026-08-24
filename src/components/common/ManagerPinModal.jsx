@@ -32,7 +32,7 @@ export default function ManagerPinModal({ isOpen, onClose, onSuccess }) {
                 setError('');
                 onClose();
             }}
-            title="Acesso Restrito à Gerência"
+            title="Acesso restrito à gestão"
             maxWidth="max-w-sm"
         >
             <form onSubmit={handleSubmit} className="space-y-4">

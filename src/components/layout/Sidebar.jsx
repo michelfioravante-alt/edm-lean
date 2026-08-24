@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
     const getRoleBadge = () => {
         if (isAdmin) {
             return {
-                label: 'Gerência',
+                label: 'Gestão',
                 icon: ShieldCheck,
                 classes: 'bg-[#1F232B] text-[#E7E9ED] border-[#333844]'
             };
@@ -75,7 +75,7 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-[#E7E9ED] truncate leading-tight">
-                            {user?.email || (isAdmin ? 'Gerente' : 'Programador')}
+                            {user?.email || (isAdmin ? 'Gestor' : 'Programador')}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
                             <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-[5px] border ${roleBadge.classes}`}>
@@ -96,6 +96,18 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                         </div>
 
                         {isAdmin && (
+                        <>
+                        <button
+                            onClick={() => { onViewChange('home'); onClose(); }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
+                                activeView === 'home'
+                                    ? 'bg-[#1F232B] border-[#333844] text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
+                            }`}
+                        >
+                            <Home className="h-4 w-4 shrink-0 text-[#7B808F]" />
+                            <span>Inicio</span>
+                        </button>
                         <button
                             onClick={() => { onViewChange('carteira'); onClose(); }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
@@ -104,9 +116,10 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                                     : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
                             }`}
                         >
-                            <Home className="h-4 w-4 shrink-0 text-[#7B808F]" />
+                            <Briefcase className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Carteira de O.S.</span>
                         </button>
+                        </>
                         )}
 
                         <button

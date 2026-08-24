@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, ArrowUpRight } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import Modal from '../components/common/Modal';
@@ -55,6 +55,13 @@ export default function Carteira({ onNavigate }) {
     const [ficha, setFicha] = useState(null);
     const [novaOs, setNovaOs] = useState(false);
     const [envioExterno, setEnvioExterno] = useState(null);
+    const filtroPedido = useAppStore((s) => s.carteiraFiltroPedido);
+
+    useEffect(() => {
+        if (!filtroPedido) return;
+        setFiltro(filtroPedido);
+        useAppStore.setState({ carteiraFiltroPedido: null });
+    }, [filtroPedido]);
 
     const carteira = useMemo(() => agruparCarteira(kanban, config || {}), [kanban, config]);
 

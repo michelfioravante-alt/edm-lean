@@ -145,6 +145,8 @@ export const osService = {
             codigo_molde: osData.codigo_molde || osData.codigoMolde || null,
             componente_molde: osData.componente_molde || osData.componenteMolde || null,
             numero_programa: osData.numero_programa || osData.numeroPrograma || null,
+            link_programa: osData.link_programa || osData.linkPrograma || null,
+            checklist_ferramentas: osData.checklist_ferramentas || osData.checklistFerramentas || [],
             nx_import: osData.nx_import || osData.nxImport || null,
             estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
             aguardando_tt: osData.aguardando_tt ?? false,
@@ -162,21 +164,26 @@ export const osService = {
 
             if (error) {
                 const msg = `${error.message || ''} ${error.details || ''}`;
-                if (msg.includes('observacoes') || msg.includes('folha_imagem') || msg.includes('roteiro') || msg.includes('fornecedor')) {
-                    delete payload.observacoes;
-                    delete payload.folha_imagem;
-                    delete payload.roteiro;
-                    delete payload.fornecedor_id;
-                    delete payload.fornecedor_nome;
-                    delete payload.tipo_servico_externo;
-                    delete payload.enviado_em;
-                    delete payload.voltou_em;
-                    const retry = await supabase.from('ordens_servico').insert(payload).select().single();
-                    if (retry.error) throw retry.error;
-                    return attachPrintIfNeeded(retry.data, osData, empresaId);
+                const dropIfMissing = (col, key) => {
+                    if (msg.includes(col)) delete payload[key];
+                };
+                dropIfMissing('observacoes', 'observacoes');
+                dropIfMissing('folha_imagem', 'folha_imagem');
+                dropIfMissing('roteiro', 'roteiro');
+                dropIfMissing('fornecedor', 'fornecedor_id');
+                dropIfMissing('fornecedor_nome', 'fornecedor_nome');
+                dropIfMissing('tipo_servico_externo', 'tipo_servico_externo');
+                dropIfMissing('enviado_em', 'enviado_em');
+                dropIfMissing('voltou_em', 'voltou_em');
+                dropIfMissing('checklist_ferramentas', 'checklist_ferramentas');
+                dropIfMissing('link_programa', 'link_programa');
+                if (msg.includes('is_retrabalho') || msg.includes('parent_id')) {
+                    delete payload.is_retrabalho;
+                    delete payload.parent_id;
                 }
-                console.error('ERRO RETORNADO PELO SUPABASE:', error);
-                throw error;
+                const retry = await supabase.from('ordens_servico').insert(payload).select().single();
+                if (retry.error) throw retry.error;
+                return attachPrintIfNeeded(retry.data, osData, empresaId);
             }
             return attachPrintIfNeeded(data, osData, empresaId);
         } catch (err) {
@@ -347,6 +354,8 @@ export const osService = {
         if (fields.programado !== undefined) payload.programado = fields.programado;
         if (fields.valorOrcado !== undefined) payload.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
         if (fields.nxImport !== undefined) payload.nx_import = fields.nxImport;
+        if (fields.checklistFerramentas !== undefined) payload.checklist_ferramentas = fields.checklistFerramentas;
+        if (fields.linkPrograma !== undefined) payload.link_programa = fields.linkPrograma || null;
         if (fields.observacoes !== undefined) payload.observacoes = fields.observacoes || null;
         if (fields.roteiro !== undefined) payload.roteiro = fields.roteiro;
         if (fields.fornecedor_id !== undefined) payload.fornecedor_id = fields.fornecedor_id;
@@ -369,7 +378,22 @@ export const osService = {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            const msg = `${error.message || ''} ${error.details || ''}`;
+            if (msg.includes('checklist_ferramentas') || msg.includes('link_programa')) {
+                delete payload.checklist_ferramentas;
+                delete payload.link_programa;
+                payload.nx_import = {
+                    ...(payload.nx_import || {}),
+                    checklistFerramentas: fields.checklistFerramentas,
+                    linkPrograma: fields.linkPrograma,
+                };
+                const retry = await supabase.from('ordens_servico').update(payload).eq('id', id).eq('empresa_id', empresaId).select().single();
+                if (retry.error) throw retry.error;
+                return retry.data;
+            }
+            throw error;
+        }
         return data;
     },
 

@@ -5,13 +5,21 @@ import ImportNxSheet from './ImportNxSheet';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 import { useAppStore } from '../../store/useAppStore';
 import { minutosParaHorasMin } from '../../utils/nxShopDocParser';
-import { Calculator } from 'lucide-react';
+import { Calculator, Plus, Trash2 } from 'lucide-react';
+import {
+    lerChecklistFerramentas,
+    lerLinkPrograma,
+    novaLinhaChecklist,
+    estoqueFerramentasDoSetor,
+} from '../../utils/ferramentasChecklist';
 
 export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
-    const { programadores, editOrdemServico } = useAppStore();
+    const { programadores, estoque, fetchEstoque, editOrdemServico } = useAppStore();
     const [saving, setSaving] = useState(false);
     const [showCalc, setShowCalc] = useState(false);
-    const setor = osData?.setor || 'CNC';
+    const setorRaw = osData?.setor || osData?.tipo_processo || osData?.tipoProcesso || 'CNC';
+    const setor = String(setorRaw).toUpperCase();
+    const itensEstoque = estoqueFerramentasDoSetor(estoque, setor === 'TORNO' ? 'CNC' : setor);
 
     const [form, setForm] = useState({
         programador: '',
@@ -20,13 +28,16 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
         tempoEstimadoSetupHoras: '',
         tempoEstimadoSetupMinutos: '',
         numeroPrograma: '',
+        linkPrograma: '',
         totalSetups: 1,
         nomesSetups: ['OP10'],
         nxImport: null,
+        checklistFerramentas: [],
     });
 
     useEffect(() => {
         if (!isOpen || !osData) return;
+        fetchEstoque?.();
         setForm({
             programador: osData.programador || osData.programador_nome || '',
             tempoEstimadoCorteHoras: String(osData.tempo_estimado_corte_horas ?? osData.tempoEstimadoCorteHoras ?? ''),
@@ -34,16 +45,22 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
             tempoEstimadoSetupHoras: String(osData.tempo_estimado_setup_horas ?? osData.tempoEstimadoSetupHoras ?? ''),
             tempoEstimadoSetupMinutos: String(osData.tempo_estimado_setup_minutos ?? osData.tempoEstimadoSetupMinutos ?? ''),
             numeroPrograma: osData.numero_programa || osData.numeroPrograma || '',
+            linkPrograma: lerLinkPrograma(osData),
             totalSetups: osData.total_setups || osData.totalSetups || 1,
             nomesSetups: osData.nomes_setups || osData.nomesSetups || ['OP10'],
             nxImport: osData.nx_import || osData.nxImport || null,
+            checklistFerramentas: lerChecklistFerramentas(osData),
         });
-    }, [isOpen, osData?.id]);
+    }, [isOpen, osData?.id, fetchEstoque]);
 
     if (!osData) return null;
 
     const inputCls = 'w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-[8px] text-[#E7E9ED] text-sm focus:outline-none focus:border-[#D97D3D] [color-scheme:dark]';
     const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
+    const isEdm = setor === 'EDM_FIO' || setor.includes('EDM') || setor.includes('FIO');
+    const isCnc = !isEdm && setor !== 'EXTERNO';
+    const linkDesenho = osData.link_desenho || osData.linkDesenho || '';
+    const programadoresDoSetor = programadores.filter((p) => !p.setor || p.setor === 'TODOS' || p.setor === setor);
 
     const handleNxImport = (data) => {
         const corte = minutosParaHorasMin(data.tempoUsinagemMinutos || 0);
@@ -60,12 +77,34 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
         }));
     };
 
+    const setLinha = (index, patch) => {
+        setForm((p) => {
+            const next = [...(p.checklistFerramentas || [])];
+            next[index] = { ...next[index], ...patch };
+            return { ...p, checklistFerramentas: next };
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
+            const checklist = (form.checklistFerramentas || []).filter((r) => r.estoqueItemId || r.nome);
+            const nxImport = {
+                ...(form.nxImport || {}),
+                checklistFerramentas: checklist,
+                linkPrograma: form.linkPrograma || null,
+            };
             await editOrdemServico(osData.id, {
-                ...form,
+                programador: form.programador,
+                tempoEstimadoCorteHoras: form.tempoEstimadoCorteHoras,
+                tempoEstimadoCorteMinutos: form.tempoEstimadoCorteMinutos,
+                tempoEstimadoSetupHoras: form.tempoEstimadoSetupHoras,
+                tempoEstimadoSetupMinutos: form.tempoEstimadoSetupMinutos,
+                numeroPrograma: form.numeroPrograma,
+                linkPrograma: form.linkPrograma || null,
+                nxImport,
+                checklistFerramentas: checklist,
                 programado: true,
             });
             onClose();
@@ -77,32 +116,105 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
 
     return (
         <>
-        <Modal isOpen={isOpen} onClose={onClose} title={`Programar: ${osData.codigo_peca || osData.codigoPeca || ''}`} maxWidth="max-w-lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Programar: ${osData.codigo_peca || osData.codigoPeca || ''}`} maxWidth="max-w-xl">
             <form onSubmit={handleSubmit} className="space-y-4">
-                <p className="text-xs text-[#7B808F]">Este kanban já está em A fazer. Aqui entra CAM, tempos e programa — não a criação da O.S.</p>
+                <p className="text-xs text-[#7B808F]">
+                    {isEdm
+                        ? 'O gestor já deixou o desenho da peça. Aqui o programador de fio solta o programa (ISO/NC), o caminho na rede e os tempos. Sem isso o cartão não vai para preparação.'
+                        : 'O gestor só abriu o cartão. Aqui entram a folha CAM (botão laranja abaixo), o checklist do estoque e o caminho do programa na rede.'}
+                </p>
+
+                {isCnc && (
+                    <div className="border border-[#D97D3D]/50 rounded-[8px] p-3 bg-[#1A120C]">
+                        <p className="text-[10px] font-semibold text-[#D97D3D] uppercase tracking-wider mb-2">Folha de processo CAM</p>
+                        <ImportNxSheet onImport={handleNxImport} />
+                    </div>
+                )}
+
+                {linkDesenho ? (
+                    <div className="bg-[#111318] border border-[#262A33] rounded-[8px] p-3">
+                        <p className={labelCls}>Desenho da peça (O.S. da gestão)</p>
+                        <p className="text-xs font-mono text-[#9DA2AE] break-all">{linkDesenho}</p>
+                        <p className="text-[10px] text-[#565B68] mt-1">Não substitua isso pelo programa. São arquivos diferentes.</p>
+                    </div>
+                ) : (
+                    <p className="text-[11px] text-[#C99A4A]">Esta O.S. ainda não tem caminho de desenho — peça à gestão completar. O programa CAM/WEDM você preenche abaixo.</p>
+                )}
 
                 <div>
                     <label className={labelCls}>Programador</label>
                     <select value={form.programador} onChange={(e) => setForm((p) => ({ ...p, programador: e.target.value }))} className={inputCls}>
                         <option value="">— Selecionar —</option>
-                        {programadores.map((p) => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+                        {programadoresDoSetor.map((p) => <option key={p.id} value={p.nome}>{p.nome}</option>)}
                     </select>
                 </div>
 
-                {(setor === 'CNC' || setor === 'TORNO') && (
-                    <ImportNxSheet onImport={handleNxImport} />
-                )}
-
-                {setor === 'EDM_FIO' && (
+                {isEdm && (
                     <button type="button" onClick={() => setShowCalc(true)} className="text-xs font-semibold text-[#4A9D74] flex items-center gap-1 cursor-pointer min-h-[44px]">
                         <Calculator className="w-3.5 h-3.5" /> Calculadora WEDM
                     </button>
                 )}
 
                 <div>
-                    <label className={labelCls}>Nº do programa</label>
-                    <input value={form.numeroPrograma} onChange={(e) => setForm((p) => ({ ...p, numeroPrograma: e.target.value }))} className={inputCls} placeholder="O1001" />
+                    <label className={labelCls}>{isEdm ? 'Nº do programa (na máquina de fio)' : 'Nº do programa (na máquina)'}</label>
+                    <input value={form.numeroPrograma} onChange={(e) => setForm((p) => ({ ...p, numeroPrograma: e.target.value }))} className={inputCls} placeholder={isEdm ? 'W1001' : 'O1001'} />
                 </div>
+
+                <div>
+                    <label className={labelCls}>Caminho do programa (rede / pasta)</label>
+                    <input
+                        value={form.linkPrograma}
+                        onChange={(e) => setForm((p) => ({ ...p, linkPrograma: e.target.value }))}
+                        className={inputCls}
+                        placeholder={isEdm ? '\\\\servidor\\wedm\\programas\\W1001.NC' : '\\\\servidor\\cnc\\programas\\O1001.NC'}
+                    />
+                    <p className="text-[10px] text-[#565B68] mt-1">Arquivo do programa, não o desenho. Só existe depois desta programação. O cartão passa a mostrar Programado.</p>
+                </div>
+
+                {isCnc && (
+                    <div className="border border-[#262A33] rounded-[8px] p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className={`${labelCls} mb-0`}>Checklist de ferramentas (estoque)</label>
+                            <button
+                                type="button"
+                                onClick={() => setForm((p) => ({ ...p, checklistFerramentas: [...(p.checklistFerramentas || []), novaLinhaChecklist()] }))}
+                                className="text-[#D97D3D] text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                            >
+                                <Plus className="w-3 h-3" /> Adicionar
+                            </button>
+                        </div>
+                        <p className="text-[11px] text-[#7B808F]">Lista do estoque. O operador marca no set-up; para montar outra, devolve o cartão para set-up.</p>
+                        {(form.checklistFerramentas || []).map((row, idx) => (
+                            <div key={row.id || idx} className="grid grid-cols-12 gap-2 items-center">
+                                <input
+                                    className={`${inputCls} col-span-2 py-1.5 text-xs font-mono`}
+                                    placeholder="T01"
+                                    value={row.slot || ''}
+                                    onChange={(e) => setLinha(idx, { slot: e.target.value })}
+                                />
+                                <select
+                                    className={`${inputCls} col-span-9 py-1.5 text-xs`}
+                                    value={row.estoqueItemId || ''}
+                                    onChange={(e) => {
+                                        const item = itensEstoque.find((i) => i.id === e.target.value);
+                                        setLinha(idx, { estoqueItemId: e.target.value, nome: item?.nome || row.nome });
+                                    }}
+                                >
+                                    <option value="">{row.nome && !row.estoqueItemId ? `(CAM) ${row.nome}` : 'Ferramenta do estoque...'}</option>
+                                    {itensEstoque.map((item) => (
+                                        <option key={item.id} value={item.id}>{item.nome} ({item.quantidade})</option>
+                                    ))}
+                                </select>
+                                <button type="button" onClick={() => setForm((p) => ({ ...p, checklistFerramentas: p.checklistFerramentas.filter((_, i) => i !== idx) }))} className="col-span-1 text-[#565B68] hover:text-[#C85558] cursor-pointer">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                        {!(form.checklistFerramentas || []).length && (
+                            <p className="text-[11px] text-[#565B68] italic">Nenhuma ferramenta ainda. Importe a folha ou adicione do estoque.</p>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -113,7 +225,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
                         </div>
                     </div>
                     <div>
-                        <label className={labelCls}>Usinagem (h / min)</label>
+                        <label className={labelCls}>{isEdm ? 'Corte a fio (h / min)' : 'Usinagem (h / min)'}</label>
                         <div className="flex gap-2">
                             <input inputMode="numeric" value={form.tempoEstimadoCorteHoras} onChange={(e) => setForm((p) => ({ ...p, tempoEstimadoCorteHoras: e.target.value }))} className={inputCls} placeholder="h" />
                             <input inputMode="numeric" value={form.tempoEstimadoCorteMinutos} onChange={(e) => setForm((p) => ({ ...p, tempoEstimadoCorteMinutos: e.target.value }))} className={inputCls} placeholder="min" />

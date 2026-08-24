@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../store/useAuthStore';
+import { isLocalMode } from '../local/mode';
+import { loadDb } from '../local/localDatabase';
 import { Building2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export default function JoinCompany({ inviteCode }) {
@@ -14,7 +16,19 @@ export default function JoinCompany({ inviteCode }) {
     useEffect(() => {
         const fetchCompany = async () => {
             try {
-                // 1. Busca a empresa via RPC segura (não expõe a tabela inteira)
+                if (isLocalMode()) {
+                    const db = loadDb();
+                    const code = String(inviteCode || '').trim().toUpperCase();
+                    if (!db.empresa?.codigo_convite || db.empresa.codigo_convite !== code) {
+                        throw new Error('Código de convite inválido ou expirado.');
+                    }
+                    setCompany({
+                        nome_fantasia: db.empresa.nome_fantasia,
+                        codigo_convite: db.empresa.codigo_convite,
+                    });
+                    return;
+                }
+
                 const { data, error } = await supabase.rpc('buscar_empresa_por_codigo', {
                     p_codigo: inviteCode
                 });

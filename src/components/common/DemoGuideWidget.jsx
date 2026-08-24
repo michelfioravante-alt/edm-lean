@@ -11,33 +11,43 @@ const GUIA = {
         titulo: 'Fábrica de exemplo — 2 minutos',
         descricao: 'Isto não é cadastro. É a Precision Tools no seu navegador: moldes, CNC, eletrofio, têmpera e estoque já preenchidos. Nada vai para a nuvem.',
         passos: [
-            'Gerente (PIN 1234 no topo): vê a carteira — o molde inteiro, o gargalo e o terceiro.',
-            'CNC / EDM Fio no topo: vê só o quadro daquela máquina, para programar e operar.',
-            'Arraste um cartão, abra uma ficha, mexa à vontade. “Restaurar exemplos” na faixa amarela zera tudo.',
+            'Gestor (PIN 1234 no topo): abre no Inicio — avisos, atrasos e o que esta na maquina.',
+            'CNC / EDM Fio no topo: ve so o quadro daquela maquina, para programar e operar.',
+            'Arraste um cartao, abra uma ficha, mexa a vontade. “Restaurar exemplos” na faixa amarela zera tudo.',
         ],
-        dica: 'Comece pela Carteira se for gestor. Se for programador, vá ao Kanban e abra um cartão em A fazer.',
+        dica: 'Comece pelo Inicio se for gestor. A Carteira e a lista completa. Programador vai ao Kanban.',
+    },
+    home: {
+        titulo: 'Inicio — sala de comando',
+        descricao: 'Primeira tela do gestor: o que precisa de acao agora, nao o historico.',
+        passos: [
+            'Os numeros do topo abrem a Carteira ja filtrada (atraso, CAM, terceiro, peca pronta).',
+            'Avisos vermelhos e amarelos: prazo, maquina parada, estoque, terceiro acima da media.',
+            'As tres filas curtas levam ao Kanban ou a Carteira. A lista completa continua no menu Carteira.',
+        ],
+        dica: 'Se a lista de avisos estiver vazia, o chao esta sob controle. Dashboard e para a semana, nao para o turno.',
     },
     carteira: {
         titulo: 'Carteira — a O.S. mãe',
         descricao: 'Uma linha = um molde ou uma peça. Não é o cartão da máquina.',
         passos: [
             'Olhe a coluna Gargalo: é o kanban que está parado agora (CNC, fio ou terceiro).',
-            'Filtro “Em terceiro”: peça na têmpera, com fornecedor e dias lá.',
+            'Filtro “Em terceiro”: peça em tratamento térmico, com fornecedor e dias lá.',
             'Clique na linha: caminho da peça. Laser, retífica, torno e montagem são marcos — toque para marcar feito, sem abrir quadro.',
             '“Ver no quadro” leva ao Kanban daquele setor.',
         ],
-        dica: 'Valor orçado só aparece para o gerente. Programador não vê R$.',
+        dica: 'Valor orçado só aparece para o gestor. Programador não vê R$.',
     },
     kanban: {
         titulo: 'Kanban — CNC, fio e envio',
-        descricao: 'Quadro de verdade só em CNC e eletrofio. Externo no gerente é logística (a enviar / no terceiro / voltou), não usinagem.',
+        descricao: 'Quadro de verdade só em CNC e eletrofio. Externo no gestor é logística (a enviar / no terceiro / voltou), não usinagem.',
         passos: [
             'Cartão em A fazer com faixa “A programar”: abra e informe setup + usinagem/corte CAM. Sem isso a eficiência fica em branco.',
             'Arraste para Prep. ferramental e depois para usinagem/corte: o relógio real começa.',
             'No detalhe: print, folha de processo, previsto × real.',
             'Torno, retífica, laser e montagem não têm aba — estão no roteiro da carteira.',
         ],
-        dica: 'Troque CNC ↔ EDM Fio no topo do quadro (gerente) ou no seletor de perfil da demo.',
+        dica: 'Troque CNC ↔ EDM Fio no topo do quadro (gestor) ou no seletor de perfil da demo.',
     },
     dashboard: {
         titulo: 'Painel — previsto versus real',
@@ -73,10 +83,10 @@ const GUIA = {
         titulo: 'Clientes da carteira',
         descricao: 'Nome que aparece na O.S. e no autocomplete.',
         passos: [
-            'Na nova O.S. o gerente escolhe cliente da lista, a própria fábrica ou “Outros”.',
+            'Na nova O.S. o gestor escolhe cliente da lista, a própria fábrica ou “Outros”.',
             'Programador só vê o nome, sem e-mail nem telefone.',
         ],
-        dica: 'Só o gerente cadastra contato.',
+        dica: 'Só o gestor cadastra contato.',
     },
     registros: {
         titulo: 'Registros — o que já saiu',
@@ -89,19 +99,19 @@ const GUIA = {
     },
     configuracoes: {
         titulo: 'Máquinas, pessoas e terceiro',
-        descricao: 'Parque, programadores, operadores, custo/hora e fornecedor de têmpera.',
+        descricao: 'Parque, programadores, operadores, valor hora e fornecedores externos.',
         passos: [
             'Máquina: CNC, EDM Fio ou Laser (laser é marco, não quadro).',
             'Fornecedores: usados na carteira ao mandar para o terceiro.',
-            'PIN 1234 nesta demo libera a visão gerente.',
+            'PIN 1234 nesta demo libera a visão gestor.',
         ],
-        dica: 'Custo/hora CNC e EDM alimenta o R$ da carteira (só gerente).',
+        dica: 'Custo/hora CNC e EDM alimenta o R$ da carteira (só gestor).',
     },
 };
 
 function rotaDoPerfil(role) {
     if (role === 'admin') {
-        return ['carteira', 'kanban', 'dashboard', 'estoque', 'ferramental', 'clientes', 'registros', 'configuracoes'];
+        return ['home', 'carteira', 'kanban', 'dashboard', 'estoque', 'ferramental', 'clientes', 'registros', 'configuracoes'];
     }
     return ['kanban', 'dashboard', 'estoque', 'ferramental', 'registros'];
 }
@@ -134,7 +144,7 @@ export default function DemoGuideWidget({ activeView, onViewChange }) {
     const idxRota = Math.max(0, rota.indexOf(activeView));
     const proximaTela = rota[(idxRota + 1) % rota.length];
     const perfilTxt = role === 'admin'
-        ? 'Gerente'
+        ? 'Gestor'
         : `Programador ${setorPadrao === 'EDM_FIO' ? 'eletrofio' : 'CNC'}`;
 
     const persistirVisto = () => {
@@ -164,7 +174,7 @@ export default function DemoGuideWidget({ activeView, onViewChange }) {
     const comecarAqui = () => {
         try { localStorage.setItem(STORAGE_WELCOME, '1'); } catch { /* ignore */ }
         setMostrarBoasVindas(false);
-        const destino = role === 'admin' ? 'carteira' : 'kanban';
+        const destino = role === 'admin' ? 'home' : 'kanban';
         if (onViewChange && activeView !== destino) onViewChange(destino);
     };
 

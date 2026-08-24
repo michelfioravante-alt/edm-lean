@@ -66,7 +66,7 @@ export function createSeedDatabase() {
             { id: id(405), empresa_id: EMPRESA_ID, nome: 'Trombetta – Matrizes Progressivas', email: 'contato@trombetta.com.br', telefone: '5134709000', created_at: ago(400) },
         ],
         fornecedores: [
-            { id: id(411), empresa_id: EMPRESA_ID, nome: 'Tempera São Leopoldo', tipo: 'tempera', prazo_dias: 5, created_at: ago(400) },
+            { id: id(411), empresa_id: EMPRESA_ID, nome: 'TT São Leopoldo', tipo: 'tratamento', prazo_dias: 5, created_at: ago(400) },
             { id: id(412), empresa_id: EMPRESA_ID, nome: 'TT Vale do Sinos', tipo: 'tratamento', prazo_dias: 7, created_at: ago(400) },
         ],
         estoque_itens: [
@@ -85,17 +85,21 @@ export function createSeedDatabase() {
         ferramentas_maquina: [],
         ferramental: [
             // Ferramentas com vida útil rastreada
-            { id: id(601), empresa_id: EMPRESA_ID, nome: 'Fresa MD Ø10 4F – Desbaste de Cavidade (Sandvik)', tipo: 'Fresa', codigo: 'FER-010-D', vida_util_horas: 50, alerta_horas: 8, horas_usadas: 44, status: 'alerta', maquina_id: id(101), observacao: 'Verificar desgaste no flanco – cavidade do molde Stihl', created_at: ago(100) },
-            { id: id(602), empresa_id: EMPRESA_ID, nome: 'Fresa MD Ø6 4F – Acabamento Fino (Mitsubishi)', tipo: 'Fresa', codigo: 'FER-006-A', vida_util_horas: 30, alerta_horas: 5, horas_usadas: 11, status: 'disponivel', maquina_id: null, observacao: null, created_at: ago(100) },
-            { id: id(603), empresa_id: EMPRESA_ID, nome: 'Fresa Topo Ø16 – Remoção de Volume H13', tipo: 'Fresa', codigo: 'FER-016-R', vida_util_horas: 20, alerta_horas: 3, horas_usadas: 20, status: 'quebrado', maquina_id: null, observacao: 'Quebrou no desbaste cavidade inferior (aço H13 58HRC)', created_at: ago(50) },
-            { id: id(604), empresa_id: EMPRESA_ID, nome: 'Fio Latão Ø0,25 BrassWire (Bedra) – Carretel ativo', tipo: 'Frequência', codigo: 'FER-WEDM1', vida_util_horas: 80, alerta_horas: 10, horas_usadas: 65, status: 'em_uso', maquina_id: id(104), observacao: 'Tensão 12N – corte de matriz estampo progressivo', created_at: ago(80) },
+            { id: id(601), empresa_id: EMPRESA_ID, nome: 'Fresa MD Ø10 4F – Desbaste de Cavidade (Sandvik)', tipo: 'Fresa', codigo: 'FER-010-D', vida_util_horas: 50, alerta_horas: 8, horas_usadas: 44, status: 'alerta', maquina_id: id(101), estoque_item_id: id(504), observacao: 'Verificar desgaste no flanco – cavidade do molde Stihl', created_at: ago(100) },
+            { id: id(602), empresa_id: EMPRESA_ID, nome: 'Fresa MD Ø6 4F – Acabamento Fino (Mitsubishi)', tipo: 'Fresa', codigo: 'FER-006-A', vida_util_horas: 30, alerta_horas: 5, horas_usadas: 11, status: 'disponivel', maquina_id: null, estoque_item_id: id(505), observacao: null, created_at: ago(100) },
+            { id: id(603), empresa_id: EMPRESA_ID, nome: 'Fresa Topo Ø16 – Remoção de Volume H13', tipo: 'Fresa', codigo: 'FER-016-R', vida_util_horas: 20, alerta_horas: 3, horas_usadas: 20, status: 'quebrado', maquina_id: null, estoque_item_id: id(504), observacao: 'Quebrou no desbaste cavidade inferior (aço H13 58HRC)', created_at: ago(50) },
+            { id: id(604), empresa_id: EMPRESA_ID, nome: 'Fio Latão Ø0,25 BrassWire (Bedra) – Carretel ativo', tipo: 'Frequência', codigo: 'FER-WEDM1', vida_util_horas: 80, alerta_horas: 10, horas_usadas: 65, status: 'em_uso', maquina_id: id(104), estoque_item_id: id(501), observacao: 'Tensão 12N – corte de matriz estampo progressivo', created_at: ago(80) },
             { id: id(605), empresa_id: EMPRESA_ID, nome: 'Cabeçote Desbaste Ø50 R0.8 – Face Mill (Seco)', tipo: 'Fresa', codigo: 'FER-050-F', vida_util_horas: 120, alerta_horas: 15, horas_usadas: 45, status: 'disponivel', maquina_id: null, observacao: null, created_at: ago(150) },
         ],
         historico_ferramental: [
             { id: id(701), empresa_id: EMPRESA_ID, ferramental_id: id(603), evento: 'quebra', maquina_nome: 'DMG Mori DMU 50 (5 Eixos)', operador_nome: 'Carlos Mendes', horas_no_evento: 20, observacao: 'Fresa estourou no desbaste – aço H13 endurecido. Substituída por lote reserva.', created_at: ago(12) },
         ],
         historico_consumiveis: [],
-        kanbans_automaticos: [],
+        kanbans_automaticos: [
+            { id: id(901), empresa_id: EMPRESA_ID, tipo: 'coolant', descricao: 'Filtro / fluido de corte', maquina_nome: 'DMG Mori DMU 50 (5 Eixos)', dias_intervalo: 30, criado_em: ago(200) },
+            { id: id(902), empresa_id: EMPRESA_ID, tipo: 'resina', descricao: 'Resina / condutividade', maquina_nome: 'Fanuc Robocut α-C400iB', dias_intervalo: 21, criado_em: ago(200) },
+        ],
+        convites_acesso: [],
         perfis: [
             { id: USER_ID, empresa_id: EMPRESA_ID, nome: 'Gestão Demo', funcao: 'admin', created_at: ago(720) },
         ],
@@ -113,6 +117,7 @@ export function createSeedDatabase() {
                 programador: 'Marcos – CAM/UG NX (Usinagem)',
                 codigo_molde: 'MLD-STIHL-0220', componente_molde: 'Cavidade Sup. – Carcaça Motor',
                 numero_programa: 'O2045A',
+                programado: false,
                 total_setups: 3, setup_atual: 1,
                 nomes_setups: ['OP10 – Desbaste Cavidade (H13)', 'OP20 – Semi-acabamento 5 Eixos', 'OP30 – Acabamento + Flancos'],
                 nx_import: {
@@ -167,6 +172,13 @@ export function createSeedDatabase() {
                 timestamp_entrada_setup: ago(1.5),
                 codigo_molde: 'STMP-SCH-007', componente_molde: 'Postiço de Embutimento – Aço P20',
                 numero_programa: 'O1892B',
+                programado: true,
+                link_programa: '\\\\servidor\\cnc\\programas\\O1892B.NC',
+                checklist_ferramentas: [
+                    { id: 'chk-t01', estoqueItemId: id(504), nome: 'Fresa Metal Duro Ø10 4F – TiAlN (Sandvik)', slot: 'T01', montada: true, montadaEm: ago(1.4), operadorNome: 'Carlos Mendes' },
+                    { id: 'chk-t02', estoqueItemId: id(505), nome: 'Fresa Metal Duro Ø6 4F – TiSiN Acabamento', slot: 'T02', montada: false },
+                    { id: 'chk-t03', estoqueItemId: id(506), nome: 'Insert APKT 1604 PDTR Metal Duro (Iscar)', slot: 'T03', montada: false },
+                ],
                 total_setups: 2, setup_atual: 1,
                 nomes_setups: ['OP10 – Desbaste + Semi-acabamento P20', 'OP20 – Acabamento Geom. + Raios'],
                 nx_import: {
@@ -339,6 +351,8 @@ export function createSeedDatabase() {
                 programador: 'Felipe – WEDM (Eletroerosão Fio)',
                 codigo_molde: 'MAT-TROM-PRG-009', componente_molde: 'Placa de Corte – Matriz Progressiva (D2, 62HRC)',
                 numero_programa: 'W0091',
+                programado: false,
+                link_desenho: '\\\\servidor\\desenhos\\MTZ-TROM-PF-009.dxf',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Perfil Corte Completo 4 Passadas (Ra 0,4µm)'],
                 nx_import: {
@@ -360,6 +374,8 @@ export function createSeedDatabase() {
                 programador: 'Felipe – WEDM (Eletroerosão Fio)',
                 codigo_molde: 'ELT-GER-042', componente_molde: 'Inserto Guia (6x) – Coluna e Bucha Ø25',
                 numero_programa: 'W0073',
+                programado: false,
+                link_desenho: '\\\\servidor\\desenhos\\PNC-GER-EDM-07.dxf',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Furo + Perfil Guia (M2)'],
                 nx_import: {
@@ -384,6 +400,9 @@ export function createSeedDatabase() {
                 timestamp_entrada_setup: ago(0.8),
                 codigo_molde: 'STMP-SCH-003', componente_molde: 'Macho de Dobramento Ø80 – Aço D6',
                 numero_programa: 'W0032',
+                programado: true,
+                link_desenho: '\\\\servidor\\desenhos\\MTZ-SCH-PF-003.dxf',
+                link_programa: '\\\\servidor\\wedm\\programas\\W0032.NC',
                 total_setups: 1, setup_atual: 1,
                 nomes_setups: ['WEDM – Desbaste + 2 Acabamentos (ângulo cônico 3°)'],
                 nx_import: {
@@ -393,7 +412,7 @@ export function createSeedDatabase() {
                 },
                 created_at: ago(16), is_pausado: false,
                 historico_pausas: [
-                    { fase: 'setup', motivo: 'Passagem de Fio (Threading)', observacao: 'Ajuste de alinhamento vertical de guias superior/inferior', inicio: ago(1), duracaoHoras: 0.5 }
+                    { fase: 'setup', motivo: 'Troca de Insumo', observacao: 'Ajuste de alinhamento vertical de guias superior/inferior', inicio: ago(1), duracaoHoras: 0.5 }
                 ],
                 tempos_fases: { setup: 0.8, emCorte: 0, afericao: 0 },
             },
@@ -419,7 +438,7 @@ export function createSeedDatabase() {
                 },
                 created_at: ago(12), is_pausado: false,
                 historico_pausas: [
-                    { fase: 'emCorte', motivo: 'Quebra de Fio', observacao: 'Rompimento por descarga no canto vivo – auto-enfiamento OK', inicio: ago(3), duracaoHoras: 0.3 }
+                    { fase: 'emCorte', motivo: 'Troca de Resina / Filtro', observacao: 'Troca de filtro após queda de condutividade no corte', inicio: ago(3), duracaoHoras: 0.3 }
                 ],
                 tempos_fases: { setup: 0.5, emCorte: 3.8, afericao: 0 },
             },
@@ -477,10 +496,10 @@ export function createSeedDatabase() {
                 codigo_peca: 'MLD-0981-TT-1',
                 cliente: 'Marcopolo S.A. (Carrocerias)',
                 setor: 'EXTERNO', status: colKeyToStatus('emCorte'),
-                fornecedor_nome: 'Têmpera São Leopoldo', tipo_servico_externo: 'tempera',
+                fornecedor_nome: 'TT São Leopoldo', tipo_servico_externo: 'tratamento',
                 enviado_em: ago(48),
                 quantidade: 1, valor_orcado: 2100,
-                codigo_molde: 'MLG-MARCO-009', componente_molde: 'Têmpera bloco inferior',
+                codigo_molde: 'MLG-MARCO-009', componente_molde: 'Tratamento térmico bloco inferior',
                 created_at: ago(60), is_pausado: false,
                 historico_pausas: [],
                 tempos_fases: { setup: 0, emCorte: 0, afericao: 0 },

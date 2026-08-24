@@ -8,6 +8,7 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
     const [motivoRefugo, setMotivoRefugo] = useState('');
     const [inspecaoConfirmada, setInspecaoConfirmada] = useState(true);
     const [avancarProximoSetup, setAvancarProximoSetup] = useState(false);
+    const [criarRetrabalho, setCriarRetrabalho] = useState(true);
 
     const setupAtual = osData?.setup_atual || osData?.setupAtual || 1;
     const totalSetups = osData?.total_setups || osData?.totalSetups || 1;
@@ -22,11 +23,13 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
                 motivoRefugo: resultado === 'Refugo' ? motivoRefugo : null,
                 dataAfericao: new Date().toISOString(),
                 avancarProximoSetup: resultado === 'Aprovada' ? avancarProximoSetup : false,
+                criarRetrabalho: resultado === 'Refugo' ? criarRetrabalho : false,
             });
             setResultado(null);
             setMotivoRefugo('');
             setInspecaoConfirmada(true);
             setAvancarProximoSetup(false);
+            setCriarRetrabalho(true);
         }
     };
 
@@ -107,7 +110,7 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
                     )}
 
                     {resultado === 'Refugo' && (
-                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                             <label className="block text-[10px] font-semibold text-[#565B68] mb-2 uppercase tracking-widest">
                                 Motivo do Refugo (Opcional)
                             </label>
@@ -118,6 +121,20 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
                                 rows={3}
                                 className="w-full p-3 bg-[#111318] border border-[#262A33] rounded-[7px] text-[#E7E9ED] placeholder:text-[#565B68] focus:border-[#C85558]/50 outline-none text-sm transition-all resize-none"
                             />
+                            <label className="flex items-start gap-3 text-xs font-medium text-[#E7E9ED] cursor-pointer bg-[rgba(201,154,74,0.08)] border border-[#C99A4A]/30 p-3 rounded-[8px]">
+                                <input
+                                    type="checkbox"
+                                    checked={criarRetrabalho}
+                                    onChange={(e) => setCriarRetrabalho(e.target.checked)}
+                                    className="w-4 h-4 mt-0.5 rounded border-[#333844] focus:ring-0 cursor-pointer accent-[#C99A4A]"
+                                />
+                                <span>
+                                    Criar kanban de retrabalho
+                                    <span className="block text-[11px] font-normal text-[#7B808F] mt-0.5">
+                                        A O.S. refugada vai para Concluído. Abre um cartão novo na fila, ligado a esta peça, para usinar de novo.
+                                    </span>
+                                </span>
+                            </label>
                         </div>
                     )}
                 </div>
@@ -131,7 +148,11 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
                         className="w-2/3"
                         disabled={!resultado || !inspecaoConfirmada}
                     >
-                        {avancarProximoSetup ? `Ir para ${proximoSetupNome}` : 'Concluir O.S.'}
+                        {avancarProximoSetup
+                            ? `Ir para ${proximoSetupNome}`
+                            : resultado === 'Refugo' && criarRetrabalho
+                                ? 'Concluir e abrir retrabalho'
+                                : 'Concluir O.S.'}
                     </Button>
                 </div>
             </form>

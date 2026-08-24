@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
-import { TIPOS_SERVICO_EXTERNO } from '../../constants/osWorkflow';
+import { TIPOS_SERVICO_EXTERNO, rotuloTipoServicoExterno } from '../../constants/osWorkflow';
 
 export default function EnviarExternoModal({ isOpen, onClose, onConfirm, fornecedores }) {
     const [fornecedorId, setFornecedorId] = useState('');
-    const [tipo, setTipo] = useState('tempera');
+    const [tipo, setTipo] = useState('tratamento');
 
     if (!isOpen) return null;
 
@@ -27,7 +27,7 @@ export default function EnviarExternoModal({ isOpen, onClose, onConfirm, fornece
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Enviar ao terceiro" maxWidth="max-w-md">
             <div className="space-y-4">
-                <p className="text-xs text-[#7B808F]">Grava quem recebeu a peça e a data de saída — para comparar lead time de têmpera e achar gargalo lá.</p>
+                <p className="text-xs text-[#7B808F]">Registra quem recebeu a peça e a data de saída — para comparar prazo de tratamento térmico e achar gargalo.</p>
                 <div>
                     <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#565B68] mb-1.5">Fornecedor</label>
                     <select
@@ -37,7 +37,7 @@ export default function EnviarExternoModal({ isOpen, onClose, onConfirm, fornece
                     >
                         <option value="">— Selecionar —</option>
                         {(fornecedores || []).map((f) => (
-                            <option key={f.id} value={f.id}>{f.nome}{f.tipo ? ` (${f.tipo})` : ''}</option>
+                            <option key={f.id} value={f.id}>{f.nome}{f.tipo ? ` (${rotuloTipoServicoExterno(f.tipo)})` : ''}</option>
                         ))}
                     </select>
                     {(!fornecedores || !fornecedores.length) && (

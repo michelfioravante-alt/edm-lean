@@ -28,10 +28,17 @@ const Column = ({ id, title, cards, onTransitionRequest, onReorderRequest, onPau
 
         const sortable = Sortable.create(sortableRef.current, {
             group: 'kanban',
-            animation: 150,
+            animation: 120,
             delay: 250,
             delayOnTouchOnly: true,
             filter: '.kanban-no-drag',
+            preventOnFilter: true,
+            forceFallback: true,
+            fallbackOnBody: true,
+            fallbackTolerance: 4,
+            ghostClass: 'kanban-ghost',
+            dragClass: 'kanban-drag',
+            chosenClass: 'kanban-chosen',
             onEnd: (evt) => {
                 const itemEl = evt.item;
                 const osId = itemEl.dataset.osId;
@@ -63,7 +70,7 @@ const Column = ({ id, title, cards, onTransitionRequest, onReorderRequest, onPau
 
     return (
         <div
-            className="flex-none w-full sm:w-auto sm:flex-1 sm:min-w-[280px] max-w-[340px] rounded-[10px] flex flex-col transition-colors border bg-[#111318] border-[#262A33] mb-4 min-h-[500px]"
+            className="w-full md:w-[300px] md:min-w-[300px] md:shrink-0 rounded-[10px] flex flex-col transition-colors border bg-[#111318] border-[#262A33] mb-4 min-h-[500px]"
         >
             {/* Header da Coluna */}
             <div className="px-3.5 py-3 flex items-center justify-between border-b border-[#262A33] sticky top-[115px] md:top-[52px] z-30 bg-[#181B22] rounded-t-[9px]">
@@ -97,7 +104,7 @@ const Column = ({ id, title, cards, onTransitionRequest, onReorderRequest, onPau
                         <div
                             key={card.id}
                             data-os-id={card.id}
-                            className="cursor-grab active:cursor-grabbing transition-transform will-change-transform rounded-[10px] p-0 kanban-item-draggable"
+                            className="cursor-grab active:cursor-grabbing rounded-[10px] p-0 kanban-item-draggable"
                         >
                             <Card
                                 data={card}

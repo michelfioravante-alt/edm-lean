@@ -14,6 +14,7 @@ const Estoque = lazy(() => import('./pages/Estoque'))
 const Registros = lazy(() => import('./pages/Registros'))
 const Clientes = lazy(() => import('./pages/Clientes'))
 const Ferramental = lazy(() => import('./pages/Ferramental'))
+const HomeGerente = lazy(() => import('./pages/HomeGerente'))
 const Carteira = lazy(() => import('./pages/Carteira'))
 const JoinCompany = lazy(() => import('./pages/JoinCompany'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -63,7 +64,7 @@ function App() {
         if (!user || !role) return;
         const prev = prevRoleRef.current;
         if (prev !== role) {
-            setActiveView(role === 'admin' ? 'carteira' : 'kanban');
+            setActiveView(role === 'admin' ? 'home' : 'kanban');
             prevRoleRef.current = role;
         }
     }, [user, role]);
@@ -219,6 +220,7 @@ function App() {
                     <div className="w-8 h-8 border-4 border-kanban-amber/20 border-t-kanban-amber rounded-full animate-spin"></div>
                 </div>
             }>
+                {activeView === 'home' && role === 'admin' && <HomeGerente onNavigate={setActiveView} />}
                 {activeView === 'carteira' && role === 'admin' && <Carteira onNavigate={setActiveView} />}
                 {activeView === 'dashboard' && <Dashboard />}
                 {activeView === 'kanban' && <Board />}
@@ -228,7 +230,7 @@ function App() {
                 {activeView === 'clientes' && role === 'admin' && <Clientes />}
                 {activeView === 'ferramental' && <Ferramental />}
 
-                {(activeView === 'configuracoes' || activeView === 'clientes' || activeView === 'carteira') && role !== 'admin' && (
+                {(activeView === 'configuracoes' || activeView === 'clientes' || activeView === 'carteira' || activeView === 'home') && role !== 'admin' && (
                     <Board />
                 )}
             </Suspense>

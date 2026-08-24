@@ -9,6 +9,7 @@ import { formatarHoras } from '../../utils/formatters';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { kanbanPrecisaProgramar, labelSetor, custoHoraKanban, listarKanbansDoGrupo, horasKanban } from '../../constants/osWorkflow';
+import { lerChecklistFerramentas, progressoChecklist, lerLinkPrograma } from '../../utils/ferramentasChecklist';
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function observacaoLegivel(obs, maquinas) {
@@ -64,6 +65,8 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     const irmaos = listarKanbansDoGrupo(kanban, data);
     const custoInfo = custoHoraKanban(data, configuracoesGlobais || {});
     const temposPrev = horasKanban(data);
+    const chkFerr = progressoChecklist(lerChecklistFerramentas(data));
+    const caminhoPrograma = lerLinkPrograma(data);
     const role = useAuthStore((s) => s.role);
     const isGestor = role === 'admin';
 
@@ -120,6 +123,9 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
         if (isPausadoFinal) {
             return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Pausado</span>;
         }
+        if (data.is_retrabalho || data.isRetrabalho) {
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Retrabalho</span>;
+        }
         if (isPrioridadeFinal) {
             return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C85558] bg-[rgba(200,85,88,0.1)] border border-[#C85558]/30">Prioridade</span>;
         }
@@ -149,14 +155,14 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
         }
     };
 
-    const hasMetaTable = molde || programa || (data.total_setups > 1);
+    const hasMetaTable = molde || programa || (data.total_setups > 1) || chkFerr.total > 0;
     const qtdTotal = quantidade || 1;
     const qtdProntas = quantidade_concluida || 0;
     const progressPct = Math.min(100, Math.round((qtdProntas / qtdTotal) * 100));
 
     return (
         <div
-            className={`bg-[#181B22] border rounded-[10px] overflow-hidden transition-all duration-150 hover:border-[#333844] group ${
+            className={`bg-[#181B22] border rounded-[10px] overflow-hidden transition-colors duration-150 hover:border-[#333844] group ${
                 isDestaque ? 'border-[#D97D3D] ring-1 ring-[#D97D3D]/40' : (isPrioridadeFinal ? 'border-[#C85558]/50' : 'border-[#262A33]')
             } ${isPrioridadeFinal ? 'border-l-[3px] border-l-[#C85558]' : ''} ${isOptimistic ? 'opacity-80 cursor-wait' : 'cursor-grab active:cursor-grabbing'}`}
             onDoubleClick={() => !isOptimistic && onViewRequest?.(data)}
@@ -169,7 +175,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
             {/* 1. CARD HEADER (Identificação Técnica) */}
             <div className="flex items-center justify-between px-3.5 py-2.5 bg-[#1F232B] border-b border-[#262A33]">
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex items-center gap-1 text-[10.5px] font-semibold text-[#D97D3D] uppercase tracking-[0.3px] shrink-0">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-[#D97D3D] uppercase tracking-[0.3px] shrink-0">
                         <MachineIcon className="w-3 h-3 stroke-[1.8]" />
                         <span>{getMachineLabel()}</span>
                     </div>
@@ -185,19 +191,22 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
             {/* 2. CARD BODY (Conteúdo & Metadados) */}
             <div className="p-3.5">
                 {/* Nome do Cliente */}
-                <h4 className="font-['Space_Grotesk'] font-semibold text-[14.5px] text-[#E7E9ED] leading-tight mb-1 truncate" title={cliente}>
+                <h4 className="font-['Space_Grotesk'] font-semibold text-[15px] text-[#E7E9ED] leading-tight mb-1 truncate" title={cliente}>
                     {cliente || 'Cliente não informado'}
                 </h4>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#333844] text-[#9DA2AE]">{labelSetor(osSetor)}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#333844] text-[#9DA2AE]">{labelSetor(osSetor)}</span>
                     {precisaProgramar && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C99A4A]/40 text-[#C99A4A]">A programar</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C99A4A]/40 text-[#C99A4A]">A programar</span>
+                    )}
+                    {!precisaProgramar && data.programado === true && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#4A9D74]/40 text-[#4A9D74]">Programado</span>
                     )}
                     {irmaos.length > 1 && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#262A33] text-[#7B808F]">{irmaos.length} kanbans nesta O.S.</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#262A33] text-[#7B808F]">{irmaos.length} kanbans nesta O.S.</span>
                     )}
                     {isGestor && custoInfo.custo > 0 && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#262A33] text-[#D97D3D]">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#262A33] text-[#D97D3D]">
                             R$ {custoInfo.custo.toFixed(0)} ({custoInfo.horas.toFixed(1)}h)
                         </span>
                     )}
@@ -217,7 +226,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
 
                 {/* Mini-tabela de dados técnicos */}
                 {hasMetaTable && (
-                    <div className="border border-[#262A33] rounded-[7px] overflow-hidden mb-3 text-[11.5px]">
+                    <div className="border border-[#262A33] rounded-[7px] overflow-hidden mb-3 text-[12px]">
                         {molde && (
                             <div className="flex justify-between items-center px-2.5 py-1.5 border-b border-[#262A33] bg-[rgba(255,255,255,0.015)]">
                                 <span className="text-[#565B68] font-medium">Molde</span>
@@ -238,6 +247,12 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                                 </span>
                             </div>
                         )}
+                        {chkFerr.total > 0 && (
+                            <div className="flex justify-between items-center px-2.5 py-1.5 bg-transparent">
+                                <span className="text-[#565B68] font-medium">Ferramentas</span>
+                                <span className="font-['IBM_Plex_Mono'] text-[#9DA2AE] text-right font-medium">{chkFerr.feitas}/{chkFerr.total}</span>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -248,7 +263,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                         <div className="flex-1 h-[4px] bg-[#1F232B] rounded-[2px] overflow-hidden border border-[#262A33]">
                             <div className="h-full bg-[#4A9D74]" style={{ width: `${progressPct}%` }}></div>
                         </div>
-                        <span className="font-['IBM_Plex_Mono'] text-[10.5px] text-[#9DA2AE] font-medium">
+                        <span className="font-['IBM_Plex_Mono'] text-[11px] text-[#9DA2AE] font-medium">
                             {qtdProntas}/{qtdTotal}
                         </span>
                         {status === 'Em Corte' && !isPausadoFinal && (
@@ -264,7 +279,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                 )}
 
                 {/* Linhas de Informações Secundárias */}
-                <div className="space-y-1.5 text-[11.5px] text-[#7B808F] mb-3">
+                <div className="space-y-1.5 text-[12px] text-[#7B808F] mb-3">
                     {prazoFinal && (
                         <div className={`flex items-center gap-2 ${isOverdue ? 'text-[#C85558] font-semibold' : isDueToday ? 'text-[#C99A4A] font-semibold' : ''}`}>
                             <Calendar className="w-3.5 h-3.5 shrink-0 opacity-70" />
@@ -283,10 +298,12 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                         </div>
                     )}
                     {temposPrev.estimadas > 0 && (
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-3.5 h-3.5 shrink-0 opacity-70" />
-                            <span className="truncate">
-                                Prev. {formatarHoras(temposPrev.setupEst)} setup · {formatarHoras(temposPrev.corteEst)} corte
+                        <div className="flex items-start gap-2 min-w-0">
+                            <Clock className="w-3.5 h-3.5 shrink-0 opacity-70 mt-0.5" />
+                            <span className="min-w-0 leading-snug">
+                                Prev. {formatarHoras(temposPrev.setupEst)} setup
+                                <span className="text-[#565B68]"> · </span>
+                                {formatarHoras(temposPrev.corteEst)} corte
                             </span>
                         </div>
                     )}
@@ -323,7 +340,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                 {/* Alerta de Pausa */}
                 {isPausadoFinal && (
                     <div className="mb-3 p-2.5 bg-[rgba(201,154,74,0.1)] border-l-2 border-[#C99A4A] rounded-r-[6px] text-xs">
-                        <div className="flex items-center gap-1.5 text-[#C99A4A] font-semibold text-[10.5px] uppercase tracking-wider mb-0.5">
+                        <div className="flex items-center gap-1.5 text-[#C99A4A] font-semibold text-[11px] uppercase tracking-wider mb-0.5">
                             <AlertCircle className="w-3 h-3" />
                             <span>Pausa: {data.motivo_pausa || data.motivoPausa || 'Não informado'}</span>
                         </div>
@@ -338,7 +355,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                 {/* Link do Desenho (se houver) */}
                 {linkFinal && (
                     <div
-                        className="flex items-center justify-between bg-[#111318] border border-[#262A33] rounded-[6px] px-2.5 py-1.5 mb-3 text-[10.5px] font-['IBM_Plex_Mono'] text-[#7B808F] hover:text-[#E7E9ED] cursor-pointer transition-colors"
+                        className="flex items-center justify-between bg-[#111318] border border-[#262A33] rounded-[6px] px-2.5 py-1.5 mb-3 text-[11px] font-['IBM_Plex_Mono'] text-[#7B808F] hover:text-[#E7E9ED] cursor-pointer transition-colors"
                         onClick={(e) => {
                             e.stopPropagation();
                             navigator.clipboard.writeText(linkFinal);
@@ -355,13 +372,13 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                     </div>
                 )}
 
-                {/* 3. CARD ACTIONS (Side-by-side: Detalhes + Mover) */}
-                <div className="flex items-center gap-2 pt-2 border-t border-[#262A33] kanban-no-drag">
+                {/* 3. CARD ACTIONS */}
+                <div className="flex items-center gap-1.5 pt-2 border-t border-[#262A33] kanban-no-drag min-w-0">
                     {prevStage && (
                         <button
                             type="button"
                             onClick={(e) => handleMoveAction(e, prevStage)}
-                            className="p-2 bg-transparent text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] border border-[#333844] rounded-[7px] transition-all active:scale-95 cursor-pointer"
+                            className="shrink-0 p-2 bg-transparent text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] border border-[#333844] rounded-[7px] transition-all active:scale-95 cursor-pointer"
                             title="Voltar etapa anterior"
                         >
                             <ArrowLeft className="w-3.5 h-3.5" />
@@ -374,10 +391,10 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                             e.stopPropagation();
                             onViewRequest?.(data);
                         }}
-                        className="flex-1 py-1.5 px-3 bg-transparent text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] border border-[#333844] rounded-[7px] text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="min-w-0 flex-1 py-1.5 px-1.5 bg-transparent text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] border border-[#333844] rounded-[7px] text-[11px] font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer"
                     >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Detalhes</span>
+                        <Eye className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">Detalhes</span>
                     </button>
 
                     {precisaProgramar && onProgramarRequest && (
@@ -387,7 +404,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                                 e.stopPropagation();
                                 onProgramarRequest(data);
                             }}
-                            className="flex-1 py-1.5 px-3 bg-[#1F232B] text-[#C99A4A] border border-[#C99A4A]/40 rounded-[7px] text-[12px] font-semibold cursor-pointer"
+                            className="min-w-0 flex-1 py-1.5 px-1.5 bg-[#1F232B] text-[#C99A4A] border border-[#C99A4A]/40 rounded-[7px] text-[11px] font-semibold cursor-pointer truncate"
                         >
                             Programar
                         </button>
@@ -397,10 +414,10 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                         <button
                             type="button"
                             onClick={(e) => handleMoveAction(e, nextStage)}
-                            className="flex-1 py-1.5 px-3 bg-[#D97D3D] hover:bg-[#c46d32] text-[#111318] border border-[#D97D3D] rounded-[7px] text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                            className="min-w-0 flex-1 py-1.5 px-1.5 bg-[#D97D3D] hover:bg-[#c46d32] text-[#111318] border border-[#D97D3D] rounded-[7px] text-[11px] font-semibold transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer"
                         >
-                            <span>Mover</span>
-                            <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
+                            <span className="truncate">Mover</span>
+                            <ArrowRight className="w-3.5 h-3.5 shrink-0 stroke-[2.2]" />
                         </button>
                     )}
                 </div>

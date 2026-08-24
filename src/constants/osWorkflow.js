@@ -4,7 +4,7 @@ import { SECTORS } from './sectorConstants';
 export const ETAPAS_ROTEIRO = [
     { id: 'CNC', kind: 'kanban', label: 'CNC', geraCartao: true },
     { id: 'EDM_FIO', kind: 'kanban', label: 'Eletrofio', geraCartao: true },
-    { id: 'EXTERNO', kind: 'externo', label: 'Têmpera / terceiro', geraCartao: true },
+    { id: 'EXTERNO', kind: 'externo', label: 'Externo', geraCartao: true },
     { id: 'LASER', kind: 'marco', label: 'Laser', geraCartao: false },
     { id: 'RETIFICA', kind: 'marco', label: 'Retífica', geraCartao: false },
     { id: 'TORNO', kind: 'marco', label: 'Torno', geraCartao: false },
@@ -14,11 +14,15 @@ export const ETAPAS_ROTEIRO = [
 export const TIPOS_KANBAN_GESTOR = ETAPAS_ROTEIRO;
 
 export const TIPOS_SERVICO_EXTERNO = [
-    { id: 'tempera', label: 'Têmpera' },
     { id: 'tratamento', label: 'Tratamento térmico' },
     { id: 'usinagem', label: 'Usinagem terceira' },
     { id: 'outro', label: 'Outro' },
 ];
+
+export function rotuloTipoServicoExterno(tipo) {
+    if (tipo === 'tempera') return 'Tratamento térmico';
+    return TIPOS_SERVICO_EXTERNO.find((t) => t.id === tipo)?.label || tipo || '—';
+}
 
 export function slugEtapaPersonalizada(label) {
     const base = String(label || '')
@@ -78,7 +82,7 @@ export function montarRoteiro(etapasIds, personalizadas) {
     });
 }
 
-function statusEhConcluido(os) {
+export function statusEhConcluido(os) {
     const s = os?.statusLocal || os?.status || '';
     return s === 'Concluído';
 }
@@ -232,6 +236,18 @@ export function atrasadaOs(os) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return d.getTime() < today.getTime();
+}
+
+export function venceHojeOs(os) {
+    const prazo = prazoOs(os);
+    if (!prazo || statusEhConcluido(os)) return false;
+    const safe = prazo.includes('T') ? prazo : `${prazo}T12:00:00`;
+    const d = new Date(safe);
+    if (Number.isNaN(d.getTime())) return false;
+    const today = new Date();
+    return d.getFullYear() === today.getFullYear()
+        && d.getMonth() === today.getMonth()
+        && d.getDate() === today.getDate();
 }
 
 export function agruparCarteira(kanban, config = {}) {

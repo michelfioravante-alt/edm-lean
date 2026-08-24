@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import Button from '../components/common/Button';
 import { 
     Plus, Trash2, Settings2, Zap, ShieldCheck, Users, Monitor, 
-    Bot, DollarSign, Copy, Wrench, Clock, RefreshCw, Cpu, Layers 
+    DollarSign, Copy, Wrench, Clock, RefreshCw, Cpu, Layers 
 } from 'lucide-react';
 import { ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../constants/cncProcess';
-import { TIPOS_SERVICO_EXTERNO, slugEtapaPersonalizada } from '../constants/osWorkflow';
+import { TIPOS_SERVICO_EXTERNO, rotuloTipoServicoExterno, slugEtapaPersonalizada } from '../constants/osWorkflow';
+import { PAPEIS_CONVITE, papelFromId, rotuloPapelConvite, gerarPinConvite, pinConviteLivre } from '../utils/papeisAcesso';
+import { rotinasParaSetor, rotinaPorId, rotuloSetorMaquina, agruparMaquinasPorSetor } from '../constants/rotinasManutencao';
 
 export default function ConfigSettings() {
     const {
         configuracoesGlobais, salvarConfiguracoes, salvarEtapasPersonalizadas,
-        fetchConfiguracoes, fetchMaquinas, fetchOperadores, fetchProgramadores, fetchAutoKanbans, fetchUsuarios,
+        fetchConfiguracoes, fetchMaquinas, fetchOperadores, fetchProgramadores, fetchAutoKanbans, fetchUsuarios, fetchConvites,
         maquinas, addMaquina, removeMaquina,
         operadores, addOperador, removeOperador,
         programadores, addProgramador, removeProgramador,
         kanbansAutomaticos, addKanbanAutomatico, removeKanbanAutomatico,
-        usuarios,
+        usuarios, convites, criarConvite, revogarConvite, atualizarPinConvite,
         fornecedores, addFornecedor, removeFornecedor, fetchFornecedores,
     } = useAppStore();
 
@@ -33,6 +35,7 @@ export default function ConfigSettings() {
         fetchProgramadores();
         fetchAutoKanbans();
         fetchUsuarios();
+        fetchConvites();
         fetchFornecedores();
     }, []);
 
@@ -47,6 +50,11 @@ export default function ConfigSettings() {
         { id: 't3', nome: 'Turno 3', inicio: '23:30', fim: '07:30' }
     ]);
     const [pinLocal, setPinLocal] = useState(configuracoesGlobais?.pinOnboarding ?? '1234');
+    const [conviteNome, setConviteNome] = useState('');
+    const [convitePapel, setConvitePapel] = useState('cnc');
+    const [convitePin, setConvitePin] = useState(() => gerarPinConvite([], '1234'));
+    const [pinGeradoAgora, setPinGeradoAgora] = useState(null);
+    const [pinEdicao, setPinEdicao] = useState({});
     const [modoMagazineLocal, setModoMagazineLocal] = useState(configuracoesGlobais?.modoMagazineDefault || 'individual');
     const [baixaEstoqueSetupLocal, setBaixaEstoqueSetupLocal] = useState(configuracoesGlobais?.baixaEstoqueNoSetup ?? false);
     const [novaEtapaCfg, setNovaEtapaCfg] = useState('');
@@ -166,8 +174,7 @@ export default function ConfigSettings() {
     const [novoProgramadorSetor, setNovoProgramadorSetor] = useState('CNC');
     const [novoTurnoNome, setNovoTurnoNome] = useState('');
     const [novoFornecedorNome, setNovoFornecedorNome] = useState('');
-    const [novoFornecedorTipo, setNovoFornecedorTipo] = useState('tempera');
-    const [novoFornecedorPrazo, setNovoFornecedorPrazo] = useState('');
+    const [novoFornecedorTipo, setNovoFornecedorTipo] = useState('tratamento');
 
     // Kanban Automático State
     const [kbTipo, setKbTipo] = useState('');
@@ -208,9 +215,8 @@ export default function ConfigSettings() {
         const nomeTrim = novoFornecedorNome.trim();
         if (!nomeTrim) return;
         try {
-            await addFornecedor({ nome: nomeTrim, tipo: novoFornecedorTipo, prazoDias: novoFornecedorPrazo });
+            await addFornecedor({ nome: nomeTrim, tipo: novoFornecedorTipo });
             setNovoFornecedorNome('');
-            setNovoFornecedorPrazo('');
             setToastMsg('Fornecedor cadastrado.');
             setTimeout(() => setToastMsg(''), 2500);
         } catch (err) {
@@ -263,24 +269,103 @@ export default function ConfigSettings() {
         }
     };
 
+    const pinMestre = pinLocal || configuracoesGlobais?.pinOnboarding || '1234';
+    const pinsEmUso = (convites || []).map((c) => c.pin);
+
+    const sugerirPinConvite = () => {
+        setConvitePin(gerarPinConvite(pinsEmUso, pinMestre));
+    };
+
+    const handleCriarConvite = async (e) => {
+        e.preventDefault();
+        const nome = conviteNome.trim();
+        if (!nome) return;
+        const papel = papelFromId(convitePapel);
+        const conflito = pinConviteLivre(convitePin, pinsEmUso, pinMestre);
+        if (conflito) {
+            setToastMsg(conflito);
+            setTimeout(() => setToastMsg(''), 3500);
+            return;
+        }
+        try {
+            const created = await criarConvite({
+                nome,
+                funcao: papel.funcao,
+                setorPadrao: papel.setor,
+                pin: String(convitePin),
+            });
+            setConviteNome('');
+            setConvitePin(gerarPinConvite([created.pin, ...pinsEmUso], pinMestre));
+            setPinGeradoAgora({ nome: created.nome, pin: created.pin, papel: rotuloPapelConvite(created) });
+            setToastMsg('Convite criado. Entregue o PIN em mãos — sem e-mail.');
+            setTimeout(() => setToastMsg(''), 3500);
+        } catch (err) {
+            setToastMsg('Erro ao criar convite: ' + (err?.message || ''));
+            setTimeout(() => setToastMsg(''), 4000);
+        }
+    };
+
+    const handleSalvarPinConvite = async (convite) => {
+        const novo = pinEdicao[convite.id] ?? convite.pin;
+        const conflito = pinConviteLivre(novo, pinsEmUso, pinMestre, convite.pin);
+        if (conflito) {
+            setToastMsg(conflito);
+            setTimeout(() => setToastMsg(''), 3500);
+            return;
+        }
+        try {
+            await atualizarPinConvite(convite.id, String(novo));
+            setPinEdicao((prev) => {
+                const next = { ...prev };
+                delete next[convite.id];
+                return next;
+            });
+            setToastMsg('PIN atualizado.');
+            setTimeout(() => setToastMsg(''), 2500);
+        } catch (err) {
+            setToastMsg('Erro ao salvar PIN: ' + (err?.message || ''));
+            setTimeout(() => setToastMsg(''), 3500);
+        }
+    };
+
+    const maquinaRotina = useMemo(
+        () => (maquinas || []).find((m) => m.nome === kbMaquina) || null,
+        [maquinas, kbMaquina]
+    );
+    const setorRotina = maquinaRotina?.setor || 'CNC';
+    const opcoesRotina = useMemo(() => rotinasParaSetor(setorRotina), [setorRotina]);
+    const maquinasPorSetor = useMemo(() => agruparMaquinasPorSetor(maquinas), [maquinas]);
+
     const handleAddKanbanAuto = async (e) => {
         e.preventDefault();
         if (!kbTipo || !kbDias) {
-            setToastMsg('Erro: Preencha a rotina e a quantidade de dias.');
+            setToastMsg('Erro: Escolha a rotina, a máquina e o intervalo.');
             setTimeout(() => setToastMsg(''), 3000);
             return;
         }
-        const diasInt = parseInt(kbDias);
+        const diasInt = parseInt(kbDias, 10);
         if (isNaN(diasInt) || diasInt <= 0) {
             setToastMsg('Erro: Informe um número de dias maior que zero.');
             setTimeout(() => setToastMsg(''), 3000);
             return;
         }
+        if (!kbMaquina) {
+            setToastMsg('Erro: Vincule a rotina a uma máquina.');
+            setTimeout(() => setToastMsg(''), 3000);
+            return;
+        }
+        const rotina = rotinaPorId(kbTipo, setorRotina);
+        const titulo = kbTipo === 'outros'
+            ? (kbOutros.trim() || 'Rotina personalizada')
+            : (rotina?.label || kbTipo);
+        const descricao = kbOutros.trim() && kbTipo !== 'outros'
+            ? `${titulo} — ${kbOutros.trim()}`
+            : titulo;
 
         try {
             await addKanbanAutomatico({
                 tipo: kbTipo,
-                descricao: kbTipo === 'Outros' ? kbOutros : kbOutros || kbTipo,
+                descricao,
                 maquinaNome: kbMaquina,
                 diasIntervalo: diasInt
             });
@@ -288,15 +373,15 @@ export default function ConfigSettings() {
             setKbOutros('');
             setKbMaquina('');
             setKbDias('');
-            setToastMsg('Rotina de Kanban Automático adicionada!');
-            setTimeout(() => setToastMsg(''), 2500);
+            setToastMsg('Rotina criada. O cartão entra no quadro do setor da máquina, no vencimento.');
+            setTimeout(() => setToastMsg(''), 3500);
         } catch (err) {
             setToastMsg('Erro: ' + (err?.message || 'Falha ao adicionar rotina'));
             setTimeout(() => setToastMsg(''), 3500);
         }
     };
 
-    const inputClasses = "w-full p-3 border border-[#262A33] rounded-xl focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-[#E7E9ED] text-sm font-bold bg-[#111318] placeholder-[#565B68] transition-colors";
+    const inputClasses = "w-full p-2.5 border border-[#262A33] rounded-xl focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-[#E7E9ED] text-sm font-medium bg-[#111318] placeholder-[#565B68] transition-colors";
     const titleClasses = "block text-xs font-semibold uppercase tracking-wider text-[#7B808F] mb-2";
     const cardClasses = "bg-[#181B22]/90 rounded-2xl shadow-lg border border-[#262A33]/80 overflow-hidden";
     const headerClasses = "bg-[#111318]/80 px-6 py-4 border-b border-[#262A33]/80 flex items-center justify-between";
@@ -304,13 +389,13 @@ export default function ConfigSettings() {
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-12">
             {/* Header da Página */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#181B22]/60 p-6 rounded-2xl border border-[#262A33]/80">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#181B22]/60 p-4 rounded-2xl border border-[#262A33]/80">
                 <div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-white flex items-center gap-3">
-                        <Settings2 className="w-8 h-8 text-kanban-amber" />
-                        Configurações da Fábrica
+                    <h2 className="text-xl font-semibold text-white flex items-center gap-3">
+                        <Settings2 className="w-5 h-5 text-kanban-amber" />
+                        Configurações da fábrica
                     </h2>
-                    <p className="text-[#7B808F] mt-1 text-sm font-medium">
+                    <p className="text-[#7B808F] mt-0.5 text-xs font-medium">
                         Gerencie parâmetros de custos, máquinas CNC/EDM/Torno, equipe e rotinas de manutenção.
                     </p>
                 </div>
@@ -321,7 +406,7 @@ export default function ConfigSettings() {
                         { id: 'geral', label: 'Geral & Custos', icon: DollarSign },
                         { id: 'recursos', label: 'Máquinas & CAM', icon: Cpu },
                         { id: 'equipe', label: 'Equipe & Acessos', icon: Users },
-                        { id: 'automacao', label: 'Rotinas / Automação', icon: Bot },
+                        { id: 'automacao', label: 'Rotinas de máquina', icon: Wrench },
                     ].map(tab => {
                         const Icon = tab.icon;
                         const active = activeTab === tab.id;
@@ -351,7 +436,7 @@ export default function ConfigSettings() {
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
                                 <DollarSign className="text-[#4A9D74] w-5 h-5" />
-                                <h3 className="text-lg font-bold text-white">Taxas Horárias por Setor (R$/h)</h3>
+                                <h3 className="text-sm font-semibold text-white">Valor hora por setor (R$/h)</h3>
                             </div>
                             <span className="text-[10px] font-mono bg-[rgba(74,157,116,0.1)] text-[#4A9D74] px-2.5 py-1 rounded-full border border-[#4A9D74]/30 font-semibold">
                                 BASE FINANCEIRA
@@ -373,7 +458,6 @@ export default function ConfigSettings() {
                                                 className={`${inputClasses} pl-10 border-[#7B808F]/30 focus:border-[#D97D3D]`}
                                             />
                                         </div>
-                                        <span className="block text-[10px] text-[#565B68] mt-2">Centro de Usinagem 3, 4 e 5 eixos.</span>
                                     </div>
 
                                     <div className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33]/80">
@@ -389,7 +473,6 @@ export default function ConfigSettings() {
                                                 className={`${inputClasses} pl-10 border-[#4A9D74]/30 focus:border-[#4A9D74]`}
                                             />
                                         </div>
-                                        <span className="block text-[10px] text-[#565B68] mt-2">Inclui fio de latão + desionizador.</span>
                                     </div>
 
                                     <div className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33]/80">
@@ -405,13 +488,12 @@ export default function ConfigSettings() {
                                                 className={`${inputClasses} pl-10`}
                                             />
                                         </div>
-                                        <span className="block text-[10px] text-[#565B68] mt-2">Torno CNC, bancada e ajuste.</span>
                                     </div>
                                 </div>
 
                                 <div className="flex justify-end pt-2">
                                     <Button type="submit" variant="primary" size="md" className="px-6 shadow-sm">
-                                        Salvar Custos por Setor
+                                        Salvar valor hora
                                     </Button>
                                 </div>
                             </form>
@@ -422,7 +504,7 @@ export default function ConfigSettings() {
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
                                 <Layers className="text-[#D97D3D] w-5 h-5" />
-                                <h3 className="text-lg font-bold text-white">Etapas do roteiro da peça</h3>
+                                <h3 className="text-sm font-semibold text-white">Etapas do roteiro da peça</h3>
                             </div>
                             <span className="text-[10px] font-mono bg-[rgba(217,125,61,0.1)] text-[#D97D3D] px-2.5 py-1 rounded-full border border-[#D97D3D]/30 font-semibold">
                                 CAMINHO
@@ -499,7 +581,7 @@ export default function ConfigSettings() {
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
                                 <Wrench className="text-kanban-amber w-5 h-5" />
-                                <h3 className="text-lg font-bold text-white">Estratégia Ferramental & Magazine CNC</h3>
+                                <h3 className="text-sm font-semibold text-white">Estratégia Ferramental & Magazine CNC</h3>
                             </div>
                         </div>
                         <div className="p-6">
@@ -544,7 +626,7 @@ export default function ConfigSettings() {
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
                                 <Clock className="text-[#7B808F] w-5 h-5" />
-                                <h3 className="text-lg font-bold text-white">Dimensionamento de Turnos</h3>
+                                <h3 className="text-sm font-semibold text-white">Dimensionamento de Turnos</h3>
                             </div>
                         </div>
                         <div className="p-6">
@@ -646,7 +728,7 @@ export default function ConfigSettings() {
                             <div className="flex items-center gap-3">
                                 <Monitor className="text-[#9DA2AE] w-5 h-5" />
                                 <div>
-                                    <h3 className="text-lg font-bold text-white">Máquinas do Parque Fabril</h3>
+                                    <h3 className="text-sm font-semibold text-white">Máquinas do Parque Fabril</h3>
                                     <p className="text-xs font-bold text-[#565B68]">
                                         {maquinas.length} máquinas cadastradas
                                     </p>
@@ -731,7 +813,7 @@ export default function ConfigSettings() {
                             <div className="flex items-center gap-3">
                                 <Layers className="text-[#D97D3D] w-5 h-5" />
                                 <div>
-                                    <h3 className="text-lg font-bold text-white">Programadores CAM</h3>
+                                    <h3 className="text-sm font-semibold text-white">Programadores CAM</h3>
                                     <p className="text-xs font-bold text-[#565B68]">
                                         {programadores.length} programadores cadastrados
                                     </p>
@@ -811,9 +893,9 @@ export default function ConfigSettings() {
                             <div className="flex items-center gap-3">
                                 <Wrench className="text-[#C99A4A] w-5 h-5" />
                                 <div>
-                                    <h3 className="text-lg font-bold text-white">Fornecedores de têmpera / terceiro</h3>
+                                    <h3 className="text-sm font-semibold text-white">Fornecedores externos</h3>
                                     <p className="text-xs font-bold text-[#565B68]">
-                                        {(fornecedores || []).length} cadastrados — usados na carteira (quem recebeu, lead time)
+                                        {(fornecedores || []).length} cadastrados — usados na carteira (quem recebeu a peça)
                                     </p>
                                 </div>
                             </div>
@@ -826,21 +908,17 @@ export default function ConfigSettings() {
                                         type="text"
                                         value={novoFornecedorNome}
                                         onChange={(e) => setNovoFornecedorNome(e.target.value)}
-                                        placeholder="Ex: Tempera São Leopoldo"
+                                        placeholder="Ex: TT Vale do Sinos"
                                         className={inputClasses}
                                     />
                                 </div>
-                                <div className="w-full sm:w-44">
+                                <div className="w-full sm:w-56">
                                     <label className={titleClasses}>Tipo</label>
                                     <select value={novoFornecedorTipo} onChange={(e) => setNovoFornecedorTipo(e.target.value)} className={inputClasses}>
                                         {TIPOS_SERVICO_EXTERNO.map((t) => (
                                             <option key={t.id} value={t.id}>{t.label}</option>
                                         ))}
                                     </select>
-                                </div>
-                                <div className="w-full sm:w-28">
-                                    <label className={titleClasses}>Prazo (dias)</label>
-                                    <input type="number" min="0" value={novoFornecedorPrazo} onChange={(e) => setNovoFornecedorPrazo(e.target.value)} className={inputClasses} />
                                 </div>
                                 <Button type="submit" variant="primary" size="md" className="px-4 h-[44px] w-full sm:w-auto shrink-0" disabled={!novoFornecedorNome.trim()}>
                                     <Plus className="w-5 h-5" />
@@ -851,7 +929,7 @@ export default function ConfigSettings() {
                                     <div key={f.id} className="flex items-center justify-between bg-[#111318]/80 px-4 py-3 border border-[#262A33]/80 rounded-xl">
                                         <div>
                                             <p className="font-bold text-sm text-white">{f.nome}</p>
-                                            <p className="text-[10px] text-[#7B808F] uppercase">{f.tipo}{f.prazo_dias ? ` · ${f.prazo_dias} d` : ''}</p>
+                                            <p className="text-[10px] text-[#7B808F] uppercase">{rotuloTipoServicoExterno(f.tipo)}</p>
                                         </div>
                                         <button
                                             type="button"
@@ -881,7 +959,7 @@ export default function ConfigSettings() {
                                 <div className="flex items-center gap-3">
                                     <Users className="text-kanban-amber w-5 h-5" />
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">Operadores de Chão de Fábrica</h3>
+                                        <h3 className="text-sm font-semibold text-white">Operadores de Chão de Fábrica</h3>
                                         <p className="text-xs font-bold text-[#565B68]">Usado na assinatura de setup, troca e inspeções</p>
                                     </div>
                                 </div>
@@ -964,7 +1042,7 @@ export default function ConfigSettings() {
                                 <div className="flex items-center gap-3">
                                     <Zap className="text-[#D97D3D] w-5 h-5" />
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">Terminais de Fábrica & PIN</h3>
+                                        <h3 className="text-sm font-semibold text-white">Terminais de Fábrica & PIN</h3>
                                         <p className="text-xs font-bold text-[#565B68]">Acesso simplificado sem necessidade de senha</p>
                                     </div>
                                 </div>
@@ -995,7 +1073,7 @@ export default function ConfigSettings() {
 
                                 <div className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33]/80 space-y-3">
                                     <label className="block text-xs font-semibold text-[#D97D3D] uppercase tracking-widest">PIN Master da Fábrica</label>
-                                    <p className="text-xs text-[#7B808F]">PIN de 4 dígitos para liberação do Kanban nos tablets e autorizações administrativas.</p>
+                                    <p className="text-xs text-[#7B808F]">PIN mestre da fábrica (tablets genéricos e autorizações). Convites individuais da equipe ficam abaixo — cada pessoa tem o próprio PIN.</p>
                                     <div className="flex items-center gap-3">
                                         <div className="relative flex-1">
                                             <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D97D3D]" />
@@ -1032,12 +1110,156 @@ export default function ConfigSettings() {
                         </div>
                     </div>
 
-                    {/* Contas de Acesso com E-mail */}
+                    {/* Convites sem e-mail */}
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
                                 <ShieldCheck className="text-[#4A9D74] w-5 h-5" />
-                                <h3 className="text-lg font-bold text-white">Contas de Acesso (Login com E-mail)</h3>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-white">Convites da equipe</h3>
+                                    <p className="text-xs font-bold text-[#565B68]">Nome + setor. Sem e-mail: a pessoa abre o link da fábrica e digita o PIN.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <form onSubmit={handleCriarConvite} className="flex flex-col sm:flex-row gap-3 items-end bg-[#111318]/80 p-4 border border-[#262A33]/80 rounded-xl">
+                                <div className="flex-1 w-full">
+                                    <label className={titleClasses}>Nome da pessoa</label>
+                                    <input
+                                        type="text"
+                                        value={conviteNome}
+                                        onChange={(e) => setConviteNome(e.target.value)}
+                                        placeholder="Ex: Ana Silva"
+                                        className={inputClasses}
+                                    />
+                                </div>
+                                <div className="w-full sm:w-52">
+                                    <label className={titleClasses}>Setor / papel</label>
+                                    <select
+                                        value={convitePapel}
+                                        onChange={(e) => setConvitePapel(e.target.value)}
+                                        className={inputClasses}
+                                    >
+                                        {PAPEIS_CONVITE.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="w-full sm:w-36">
+                                    <label className={titleClasses}>PIN (4 dígitos)</label>
+                                    <div className="flex gap-1.5">
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={4}
+                                            value={convitePin}
+                                            onChange={(e) => setConvitePin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                            className={`${inputClasses} font-mono tracking-[0.25em] text-center`}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={sugerirPinConvite}
+                                            className="p-2.5 bg-[#1F232B] hover:bg-[#333844] rounded-xl text-[#E7E9ED] shrink-0"
+                                            title="Sugerir outro PIN"
+                                        >
+                                            <RefreshCw className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <Button type="submit" variant="primary" size="md" className="px-4 h-[44px] w-full sm:w-auto shrink-0" disabled={!conviteNome.trim() || String(convitePin).length !== 4}>
+                                    <Plus className="w-5 h-5" />
+                                </Button>
+                            </form>
+
+                            {pinGeradoAgora && (
+                                <div className="bg-[rgba(74,157,116,0.1)] border border-[#4A9D74]/30 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                                    <div>
+                                        <p className="text-xs font-semibold text-[#4A9D74] uppercase tracking-widest">PIN deste convite — entregue agora</p>
+                                        <p className="text-sm text-white mt-1">
+                                            {pinGeradoAgora.nome} · {pinGeradoAgora.papel} · <span className="font-mono tracking-[0.3em] text-lg">{pinGeradoAgora.pin}</span>
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(pinGeradoAgora.pin);
+                                            setToastMsg('PIN copiado!');
+                                            setTimeout(() => setToastMsg(''), 2000);
+                                        }}
+                                        className="px-3 py-2 bg-[#1F232B] rounded-lg text-xs font-semibold text-[#E7E9ED] flex items-center gap-2"
+                                    >
+                                        <Copy className="w-4 h-4" /> Copiar PIN
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                {(convites || []).map((c) => {
+                                    const pinAtual = pinEdicao[c.id] ?? c.pin;
+                                    const pinMudou = String(pinAtual) !== String(c.pin);
+                                    return (
+                                    <div key={c.id} className="flex items-center justify-between gap-3 bg-[#111318]/80 px-4 py-3 border border-[#262A33]/80 rounded-xl">
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-sm text-white truncate">{c.nome}</p>
+                                            <p className="text-[10px] text-[#7B808F] uppercase tracking-widest">
+                                                {rotuloPapelConvite(c)}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                maxLength={4}
+                                                value={pinAtual}
+                                                onChange={(e) => setPinEdicao((prev) => ({ ...prev, [c.id]: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                                                className="w-[88px] bg-[#181B22] border border-[#262A33] rounded-lg py-1.5 px-2 text-white font-mono font-semibold tracking-[0.25em] text-center text-sm focus:border-kanban-amber outline-none"
+                                                title="PIN editável"
+                                            />
+                                            {pinMudou && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSalvarPinConvite(c)}
+                                                    disabled={String(pinAtual).length !== 4}
+                                                    className="px-2 py-1.5 bg-kanban-amber text-[#111318] text-[10px] font-semibold uppercase rounded-lg disabled:opacity-40"
+                                                >
+                                                    Salvar
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    if (!window.confirm(`Revogar acesso de ${c.nome}?`)) return;
+                                                    try {
+                                                        await revogarConvite(c.id);
+                                                        setToastMsg('Convite revogado.');
+                                                    } catch (err) {
+                                                        setToastMsg('Erro: ' + err.message);
+                                                    }
+                                                    setTimeout(() => setToastMsg(''), 2500);
+                                                }}
+                                                className="p-1.5 text-[#565B68] hover:text-[#C85558] rounded-lg"
+                                                title="Revogar"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    );
+                                })}
+                                {(!convites || !convites.length) && (
+                                    <p className="text-xs text-[#565B68] border border-dashed border-[#262A33] rounded-xl py-6 text-center">Nenhum convite ativo.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {usuarios?.length > 0 && (
+                    <div className={cardClasses}>
+                        <div className={headerClasses}>
+                            <div className="flex items-center gap-3">
+                                <Users className="text-[#7B808F] w-5 h-5" />
+                                <h3 className="text-sm font-semibold text-white">Contas já vinculadas</h3>
                             </div>
                         </div>
 
@@ -1050,15 +1272,15 @@ export default function ConfigSettings() {
                                                 <Users className="w-4 h-4" />
                                             </div>
                                             <div className="overflow-hidden">
-                                                <p className="text-xs font-bold text-white truncate max-w-[140px]">{u.email || 'Usuário'}</p>
-                                                <p className="text-[9px] font-semibold text-[#565B68] uppercase tracking-widest">{u.funcao === 'admin' ? 'Gerente' : 'Programador'}</p>
+                                                <p className="text-xs font-bold text-white truncate max-w-[140px]">{u.nome || u.email || 'Usuário'}</p>
+                                                <p className="text-[9px] font-semibold text-[#565B68] uppercase tracking-widest">{u.funcao === 'admin' ? 'Gestor' : 'Programador'}</p>
                                             </div>
                                         </div>
 
                                         {u.id !== user?.id && (
                                             <button
                                                 onClick={async () => {
-                                                    if (!window.confirm(`Remover ${u.email}?`)) return;
+                                                    if (!window.confirm(`Remover ${u.email || u.nome}?`)) return;
                                                     const { removeUserFromEquipe } = useAppStore.getState();
                                                     try {
                                                         await removeUserFromEquipe(u.id);
@@ -1079,85 +1301,114 @@ export default function ConfigSettings() {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
             )}
 
-            {/* ========== ABA 4: AUTOMAÇÃO & MANUTENÇÃO ========== */}
+            {/* ========== ABA 4: ROTINAS DE MANUTENÇÃO ========== */}
             {activeTab === 'automacao' && (
                 <div className="space-y-6 animate-modal-in">
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <div className="flex items-center gap-3">
-                                <Bot className="text-[#4A9D74] w-5 h-5" />
+                                <Wrench className="text-[#4A9D74] w-5 h-5" />
                                 <div>
-                                    <h3 className="text-lg font-bold text-white">Nova Rotina Periódica Automática</h3>
-                                    <p className="text-xs font-bold text-[#565B68]">O sistema criará automaticamente cartões no Kanban no ciclo programado</p>
+                                    <h3 className="text-sm font-semibold text-white">Rotina de manutenção por máquina</h3>
+                                    <p className="text-xs font-bold text-[#565B68]">
+                                        Não é O.S. de peça. No vencimento, o cartão entra no quadro do setor da máquina (CNC, eletrofio, torno…).
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="p-6">
-                            <form onSubmit={handleAddKanbanAuto} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <form onSubmit={handleAddKanbanAuto} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
                                 <div>
-                                    <label className={titleClasses}>Tipo de Rotina</label>
+                                    <label className={titleClasses}>Máquina</label>
                                     <select
-                                        value={kbTipo}
-                                        onChange={(e) => setKbTipo(e.target.value)}
+                                        value={kbMaquina}
+                                        onChange={(e) => {
+                                            const nome = e.target.value;
+                                            setKbMaquina(nome);
+                                            const setor = (maquinas || []).find((m) => m.nome === nome)?.setor || 'CNC';
+                                            const ids = rotinasParaSetor(setor).map((r) => r.id);
+                                            if (kbTipo && !ids.includes(kbTipo)) {
+                                                setKbTipo('');
+                                                setKbDias('');
+                                            }
+                                        }}
                                         className={inputClasses}
                                         required
                                     >
-                                        <option value="" disabled>Selecione uma rotina...</option>
-                                        <option value="Manutenção Preditiva">Manutenção Preditiva</option>
-                                        <option value="Alinhamento de Fio">Alinhamento de Fio</option>
-                                        <option value="Manutenção Corretiva">Manutenção Corretiva</option>
-                                        <option value="Outros">Outros</option>
+                                        <option value="">Selecione a máquina…</option>
+                                        {maquinasPorSetor.map((g) => (
+                                            <optgroup key={g.setor} label={g.label}>
+                                                {g.maquinas.map((m) => (
+                                                    <option key={m.id} value={m.nome}>{m.nome}</option>
+                                                ))}
+                                            </optgroup>
+                                        ))}
                                     </select>
-                                    {kbTipo === 'Outros' && (
-                                        <div className="mt-3">
-                                            <input
-                                                type="text"
-                                                value={kbOutros}
-                                                onChange={(e) => setKbOutros(e.target.value)}
-                                                className={inputClasses}
-                                                placeholder="Descrição personalizada"
-                                                required
-                                            />
-                                        </div>
+                                    {maquinaRotina && (
+                                        <p className="text-[10px] text-[#7B808F] mt-1.5 uppercase tracking-wider">
+                                            Quadro: {rotuloSetorMaquina(setorRotina)}
+                                        </p>
                                     )}
                                 </div>
 
                                 <div>
-                                    <label className={titleClasses}>Máquina Vinculada</label>
+                                    <label className={titleClasses}>Serviço</label>
                                     <select
-                                        value={kbMaquina}
-                                        onChange={(e) => setKbMaquina(e.target.value)}
+                                        value={kbTipo}
+                                        onChange={(e) => {
+                                            const id = e.target.value;
+                                            setKbTipo(id);
+                                            const r = rotinaPorId(id, setorRotina);
+                                            if (r?.dias) setKbDias(String(r.dias));
+                                        }}
                                         className={inputClasses}
                                         required
+                                        disabled={!kbMaquina}
                                     >
-                                        <option value="" disabled>Selecione a máquina...</option>
-                                        {maquinas.map(m => (
-                                            <option key={m.id} value={m.nome}>{m.nome}</option>
+                                        <option value="" disabled>{kbMaquina ? 'Selecione o serviço…' : 'Escolha a máquina primeiro'}</option>
+                                        {opcoesRotina.map((r) => (
+                                            <option key={r.id} value={r.id}>{r.label}</option>
                                         ))}
                                     </select>
+                                    {rotinaPorId(kbTipo, setorRotina)?.hint && (
+                                        <p className="text-[10px] text-[#7B808F] mt-1.5">{rotinaPorId(kbTipo, setorRotina).hint}</p>
+                                    )}
                                 </div>
 
                                 <div>
-                                    <label className={titleClasses}>Intervalo do Gatilho</label>
+                                    <label className={titleClasses}>Repetir a cada</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={kbDias}
+                                            onChange={(e) => setKbDias(e.target.value)}
+                                            min="1"
+                                            className={inputClasses + ' pr-12'}
+                                            placeholder="30"
+                                            required
+                                        />
+                                        <span className="absolute right-3 top-3 text-[#565B68] font-bold text-xs">dias</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <label className={titleClasses}>{kbTipo === 'outros' ? 'Descrição' : 'Obs. (opcional)'}</label>
                                     <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <input
-                                                type="number"
-                                                value={kbDias}
-                                                onChange={(e) => setKbDias(e.target.value)}
-                                                min="1"
-                                                className={inputClasses + " pr-12"}
-                                                placeholder="30"
-                                                required
-                                            />
-                                            <span className="absolute right-3 top-3 text-[#565B68] font-bold text-xs">dias</span>
-                                        </div>
-                                        <Button type="submit" variant="primary" size="md" className="px-4 shrink-0">
-                                            <Plus className="w-5 h-5 mr-1" /> Criar
+                                        <input
+                                            type="text"
+                                            value={kbOutros}
+                                            onChange={(e) => setKbOutros(e.target.value)}
+                                            className={inputClasses}
+                                            placeholder={kbTipo === 'outros' ? 'Ex: troca de encoder' : 'Detalhe, se precisar'}
+                                            required={kbTipo === 'outros'}
+                                        />
+                                        <Button type="submit" variant="primary" size="md" className="px-4 shrink-0 h-[46px]">
+                                            <Plus className="w-5 h-5" />
                                         </Button>
                                     </div>
                                 </div>
@@ -1165,19 +1416,28 @@ export default function ConfigSettings() {
                         </div>
                     </div>
 
-                    {/* Lista de Rotinas Ativas */}
                     <div className="space-y-3">
                         <h4 className="text-xs font-semibold text-[#565B68] uppercase tracking-widest px-1">
-                            Rotinas Ativas ({kanbansAutomaticos.length})
+                            Rotinas ativas ({kanbansAutomaticos.length})
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {kanbansAutomaticos.map((kb) => (
-                                <div key={kb.id} className="flex flex-col justify-between bg-[#181B22]/90 p-5 border border-[#262A33]/80 rounded-xl hover:border-[#333844] transition-colors group">
+                            {kanbansAutomaticos.map((kb) => {
+                                const maq = (maquinas || []).find((m) => m.nome === kb.maquinaNome);
+                                const setor = maq?.setor || null;
+                                return (
+                                <div key={kb.id} className="flex flex-col justify-between bg-[#181B22]/90 p-5 border border-[#262A33]/80 rounded-xl hover:border-[#333844] transition-colors">
                                     <div>
-                                        <div className="flex items-start justify-between mb-3">
-                                            <span className="inline-flex items-center gap-1.5 bg-kanban-teal/10 text-[#4A9D74] border border-[#4A9D74]/20 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                                                <RefreshCw className="w-3 h-3" /> A cada {kb.diasIntervalo} dias
-                                            </span>
+                                        <div className="flex items-start justify-between mb-3 gap-2">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-kanban-teal/10 text-[#4A9D74] border border-[#4A9D74]/20 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                                    <RefreshCw className="w-3 h-3" /> A cada {kb.diasIntervalo} d
+                                                </span>
+                                                {setor && (
+                                                    <span className="inline-flex items-center text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider border border-[#333844] text-[#9DA2AE]">
+                                                        {rotuloSetorMaquina(setor)}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <button
                                                 onClick={() => removerComAviso(() => removeKanbanAutomatico(kb.id), 'rotina')}
                                                 className="text-[#565B68] hover:text-[#C85558] rounded p-1 transition-colors"
@@ -1193,11 +1453,12 @@ export default function ConfigSettings() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
 
                             {kanbansAutomaticos.length === 0 && (
                                 <p className="col-span-full text-xs text-[#565B68] border border-dashed border-[#262A33] rounded-xl text-center py-8">
-                                    Nenhuma rotina automática programada.
+                                    Nenhuma rotina. Cadastre por máquina: preventiva CNC, resina do fio, lubrificação do torno…
                                 </p>
                             )}
                         </div>

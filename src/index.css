@@ -31,7 +31,9 @@
     font-family: 'IBM Plex Sans', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+    text-rendering: geometricPrecision;
   }
 
   /* Override browser autofill background logic */
@@ -130,6 +132,20 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Arraste do kanban: clone em DOM (não bitmap 1x do Windows) — evita cartão borrado */
+.kanban-ghost {
+  opacity: 0.32;
+}
+.kanban-drag,
+.sortable-fallback {
+  cursor: grabbing;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  z-index: 80;
+}
+.kanban-item-draggable {
+  transform: none;
 }
 
 /* Specific Industrial MES Layout Helpers */
@@ -293,6 +309,11 @@ html {
   max-width: 100%;
 }
 
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
 @media print {
   body * { visibility: hidden; }
   #folha-print-root,
@@ -304,7 +325,16 @@ html {
     overflow: visible;
   }
   .folha-a4 {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
     page-break-after: always;
+    break-after: page;
     box-shadow: none;
+  }
+  .folha-a4:last-child {
+    page-break-after: auto;
+    break-after: auto;
   }
 }

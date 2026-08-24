@@ -47,7 +47,7 @@ export default function RoteiroFluxo({ os, irmaos, onToggleMarco, somenteLeitura
                 })}
             </div>
             <p className="text-[10px] text-[#565B68]">
-                CNC e fio são kanban. Laser, retífica, torno e montagem são etapas da peça. Terceiro (têmpera) tem fornecedor e datas.
+                CNC e fio são kanban. Laser, retífica, torno e montagem são etapas da peça. Externo (tratamento térmico) tem fornecedor e datas.
             </p>
         </div>
     );

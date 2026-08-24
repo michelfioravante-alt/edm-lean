@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { COLUMN_LABELS, ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
 import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { lerChecklistFerramentas, marcarItensChecklist, progressoChecklist } from '../../utils/ferramentasChecklist';
 
 export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, targetColumnTitle, destCol, osData }) {
     const close = onClose || onCancel;
@@ -19,6 +20,8 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
     const [selectedMaquina, setSelectedMaquina] = useState('');
     const [selectedOperador, setSelectedOperador] = useState('');
     const [checkedCamTools, setCheckedCamTools] = useState({});
+    const [idsFerramentasAgora, setIdsFerramentasAgora] = useState([]);
+    const checklistFerramentas = lerChecklistFerramentas(osData);
 
     const filteredMaquinas = maquinas.filter(m => {
         if (!m.setor || m.setor === 'TODOS' || osSector === 'TODOS') return true;
@@ -49,6 +52,7 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
             setEstrategiaFerramental(configuracoesGlobais?.modoMagazineDefault || 'individual');
             setBaixarEstoqueSetup(configuracoesGlobais?.baixaEstoqueNoSetup ?? false);
             setCheckedCamTools({});
+            setIdsFerramentasAgora([]);
         }
     }, [isOpen, isSetup, configuracoesGlobais?.modoMagazineDefault, configuracoesGlobais?.baixaEstoqueNoSetup]);
 
@@ -98,6 +102,13 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
 
             if (isSetup) {
                 payload.estrategia_ferramental = estrategiaFerramental;
+                if (checklistFerramentas.length > 0) {
+                    payload.checklistFerramentas = marcarItensChecklist(
+                        checklistFerramentas,
+                        idsFerramentasAgora,
+                        selectedOperador
+                    );
+                }
                 if (estrategiaFerramental === 'lote') {
                     const itensValidos = itensMagazine
                         .filter((i) => i.estoqueItemId && i.quantidade > 0)
@@ -225,26 +236,30 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
                                     ))}
                                 </div>
 
-                                {ferramentasCam.length > 0 && (
-                                    <div className="bg-[#0e1014] border border-[#D97D3D]/30 rounded-[8px] p-3.5 space-y-2 mt-3 animate-in fade-in duration-200">
-                                        <div className="flex items-center justify-between">
-                                            <h5 className="font-semibold text-[#D97D3D] text-xs uppercase tracking-wider flex items-center gap-1.5">
-                                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                                Ferramentas Exigidas pelo CAM ({ferramentasCam.length})
-                                            </h5>
-                                        </div>
-                                        <p className="text-[11px] text-[#7B808F]">Marque as ferramentas conforme for conferindo a presença no magazine da máquina:</p>
-                                        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                                            {ferramentasCam.map((f, i) => (
-                                                <label key={i} className="flex items-center gap-2.5 bg-[#1F232B] p-2 rounded-[6px] border border-[#262A33] text-xs text-[#E7E9ED] cursor-pointer hover:border-[#333844] transition-colors">
+                                {checklistFerramentas.length > 0 && (
+                                    <div className="bg-[#0e1014] border border-[#D97D3D]/30 rounded-[8px] p-3.5 space-y-2 mt-3">
+                                        <h5 className="font-semibold text-[#D97D3D] text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            Ferramentas desta programação ({progressoChecklist(checklistFerramentas).feitas}/{progressoChecklist(checklistFerramentas).total})
+                                        </h5>
+                                        <p className="text-[11px] text-[#7B808F]">Marque só o que você montou agora. Depois pode ir para usinagem; para a próxima ferramenta, traga o cartão de volta para set-up.</p>
+                                        <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                                            {checklistFerramentas.map((f) => (
+                                                <label key={f.id} className={`flex items-center gap-2.5 p-2 rounded-[6px] border text-xs ${f.montada ? 'bg-[#1a2a22] border-[#4A9D74]/40 text-[#9DA2AE]' : 'bg-[#1F232B] border-[#262A33] text-[#E7E9ED] cursor-pointer hover:border-[#333844]'}`}>
                                                     <input
                                                         type="checkbox"
-                                                        checked={!!checkedCamTools[i]}
-                                                        onChange={(e) => setCheckedCamTools(prev => ({ ...prev, [i]: e.target.checked }))}
-                                                        className="w-4 h-4 rounded border-[#333844] focus:ring-0 cursor-pointer accent-[#D97D3D]"
+                                                        disabled={f.montada}
+                                                        checked={f.montada || idsFerramentasAgora.includes(f.id)}
+                                                        onChange={(e) => {
+                                                            setIdsFerramentasAgora((prev) => (
+                                                                e.target.checked ? [...prev, f.id] : prev.filter((id) => id !== f.id)
+                                                            ));
+                                                        }}
+                                                        className="w-4 h-4 rounded accent-[#D97D3D]"
                                                     />
-                                                    <span className="font-['IBM_Plex_Mono'] text-[#D97D3D] font-bold">{f.codigoT || `T${String(i + 1).padStart(2, '0')}`}</span>
-                                                    <span className="font-medium text-[#9DA2AE] truncate">{f.nome || 'Ferramenta de usinagem'}</span>
+                                                    <span className="font-['IBM_Plex_Mono'] text-[#D97D3D] font-bold">{f.slot || '—'}</span>
+                                                    <span className="font-medium truncate flex-1">{f.nome || 'Ferramenta'}</span>
+                                                    {f.montada && <span className="text-[10px] text-[#4A9D74]">pronta</span>}
                                                 </label>
                                             ))}
                                         </div>

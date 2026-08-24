@@ -140,7 +140,7 @@ export const localApi = {
     },
     fornecedores: {
         async fetchAll() { return loadDb().fornecedores || []; },
-        async create({ nome, tipo = 'tempera', prazoDias }) {
+        async create({ nome, tipo = 'tratamento', prazoDias }) {
             let created;
             mutateDb((db) => {
                 if (!db.fornecedores) db.fornecedores = [];
@@ -148,7 +148,7 @@ export const localApi = {
                     id: uuid(),
                     empresa_id: LOCAL_EMPRESA_ID,
                     nome,
-                    tipo: tipo || 'tempera',
+                    tipo: tipo || 'tratamento',
                     prazo_dias: prazoDias ? parseInt(prazoDias, 10) : null,
                     created_at: new Date().toISOString(),
                 };
@@ -159,14 +159,44 @@ export const localApi = {
         async remove(id) { mutateDb((db) => { db.fornecedores = (db.fornecedores || []).filter((f) => f.id !== id); }); },
     },
     estoque: {
-        async fetchAll() { return loadDb().estoque_itens; },
-        async create(nome, quantidade, alertaMinimo, setor = 'TODOS') {
+        async fetchAll() { return loadDb().estoque_itens || loadDb().estoque_itens || []; },
+        async create(nome, quantidade, alertaMinimo, setor = 'TODOS', unidade = 'un') {
+            const chave = `${String(nome || '').trim().toLowerCase()}|${setor || 'TODOS'}`;
             let created;
             mutateDb((db) => {
-                created = { id: uuid(), empresa_id: LOCAL_EMPRESA_ID, nome, quantidade: parseInt(quantidade) || 0, alerta_minimo: parseInt(alertaMinimo) || 0, setor, created_at: new Date().toISOString() };
+                const lista = db.estoque_itens || db.estoque_itens || [];
+                db.estoque_itens = lista;
+                const existente = lista.find((i) => `${String(i.nome || '').trim().toLowerCase()}|${i.setor || 'TODOS'}` === chave);
+                if (existente) {
+                    existente.quantidade = (existente.quantidade || 0) + (parseInt(quantidade) || 0);
+                    existente.alerta_minimo = parseInt(alertaMinimo) || existente.alerta_minimo || 0;
+                    existente.unidade = unidade || existente.unidade || 'un';
+                    created = { ...existente, _merged: true };
+                    return;
+                }
+                created = {
+                    id: uuid(),
+                    empresa_id: LOCAL_EMPRESA_ID,
+                    nome,
+                    quantidade: parseInt(quantidade) || 0,
+                    alerta_minimo: parseInt(alertaMinimo) || 0,
+                    setor,
+                    unidade: unidade || 'un',
+                    created_at: new Date().toISOString(),
+                };
                 db.estoque_itens.push(created);
             });
             return created;
+        },
+        async update(id, patch) {
+            let updated = null;
+            mutateDb((db) => {
+                const item = (db.estoque_itens || []).find((i) => i.id === id);
+                if (!item) throw new Error('Item não encontrado');
+                Object.assign(item, patch);
+                updated = { ...item };
+            });
+            return updated;
         },
 
         async decrementar(id, delta = 1) {
@@ -359,7 +389,7 @@ export const localApi = {
         async create(payload) {
             let created;
             mutateDb((db) => {
-                created = { id: uuid(), empresa_id: LOCAL_EMPRESA_ID, nome: payload.nome, tipo: payload.tipo || 'Fresa', codigo: payload.codigo || null, vida_util_horas: parseFloat(payload.vidaUtilHoras) || 0, alerta_horas: parseFloat(payload.alertaHoras) || 0, horas_usadas: 0, status: 'disponivel', maquina_id: null, observacao: payload.observacao || null, created_at: new Date().toISOString() };
+                created = { id: uuid(), empresa_id: LOCAL_EMPRESA_ID, nome: payload.nome, tipo: payload.tipo || 'Fresa', codigo: payload.codigo || null, vida_util_horas: parseFloat(payload.vidaUtilHoras) || 0, alerta_horas: parseFloat(payload.alertaHoras) || 0, horas_usadas: 0, status: 'disponivel', maquina_id: null, observacao: payload.observacao || null, estoque_item_id: payload.estoqueItemId || payload.estoque_item_id || null, created_at: new Date().toISOString() };
                 db.ferramental.push(created);
             });
             return created;
@@ -403,6 +433,62 @@ export const localApi = {
         async updateRole(userId, newRole) { mutateDb((db) => { const p = db.perfis.find((x) => x.id === userId); if (p) p.funcao = newRole; }); },
         async detachUser(userId) { mutateDb((db) => { const p = db.perfis.find((x) => x.id === userId); if (p) { p.empresa_id = null; p.funcao = 'programmer'; } }); },
     },
+    convites: {
+        async fetchAll() {
+            const db = loadDb();
+            return (db.convites_acesso || []).filter((c) => c.ativo !== false);
+        },
+        async create({ nome, funcao, setorPadrao, pin }) {
+            let created;
+            mutateDb((db) => {
+                if (!db.convites_acesso) db.convites_acesso = [];
+                created = {
+                    id: uuid(),
+                    empresa_id: LOCAL_EMPRESA_ID,
+                    nome: String(nome).trim(),
+                    funcao,
+                    setor_padrao: setorPadrao,
+                    pin: String(pin),
+                    ativo: true,
+                    usado_em: null,
+                    created_at: new Date().toISOString(),
+                };
+                db.convites_acesso.unshift(created);
+            });
+            return created;
+        },
+        async revoke(id) {
+            mutateDb((db) => {
+                const c = (db.convites_acesso || []).find((x) => x.id === id);
+                if (c) c.ativo = false;
+            });
+        },
+        async updatePin(id, pin) {
+            let updated;
+            mutateDb((db) => {
+                const c = (db.convites_acesso || []).find((x) => x.id === id);
+                if (c) {
+                    c.pin = String(pin);
+                    updated = { ...c };
+                }
+            });
+            return updated;
+        },
+        async findByPin(inviteCode, pin) {
+            const db = loadDb();
+            const code = String(inviteCode || '').trim().toUpperCase();
+            if (code && db.empresa?.codigo_convite && db.empresa.codigo_convite !== code) return null;
+            const c = (db.convites_acesso || []).find((x) => x.ativo !== false && String(x.pin) === String(pin));
+            if (!c) return null;
+            return {
+                ...c,
+                empresa_id: db.empresa.id,
+                nome_fantasia: db.empresa.nome_fantasia,
+                codigo_convite: db.empresa.codigo_convite,
+                plano: db.empresa.plano,
+            };
+        },
+    },
     os: {
         async fetchAllAtivas() { return loadDb().ordens_servico.filter((o) => o.status !== 'Excluído' && o.status !== 'Excluido'); },
         async fetchExcluidos() { return loadDb().ordens_servico.filter((o) => o.status === 'Excluído' || o.status === 'Excluido'); },
@@ -415,6 +501,7 @@ export const localApi = {
                     codigo_peca: osData.codigo_peca || osData.codigoPeca, cliente: osData.cliente,
                     link_desenho: osData.link_desenho || osData.linkDesenho || null,
                     is_prioridade: osData.is_prioridade ?? osData.isPrioridade ?? false,
+                    is_retrabalho: osData.is_retrabalho ?? osData.isRetrabalho ?? false,
                     status: osData.status || 'A fazer',
                     tempo_estimado_corte_horas: parseInt(osData.tempo_estimado_corte_horas || osData.tempoEstimadoCorteHoras) || 0,
                     tempo_estimado_corte_minutos: parseInt(osData.tempo_estimado_corte_minutos || osData.tempoEstimadoCorteMinutos) || 0,
@@ -444,6 +531,8 @@ export const localApi = {
                     codigo_molde: osData.codigo_molde || osData.codigoMolde || null,
                     componente_molde: osData.componente_molde || osData.componenteMolde || null,
                     numero_programa: osData.numero_programa || osData.numeroPrograma || null,
+                    link_programa: osData.link_programa || osData.linkPrograma || null,
+                    checklist_ferramentas: osData.checklist_ferramentas || osData.checklistFerramentas || [],
                     nx_import: osData.nx_import || osData.nxImport || null,
                     estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
                     aguardando_tt: osData.aguardando_tt ?? false,
@@ -506,6 +595,8 @@ export const localApi = {
                 if (fields.programado !== undefined) os.programado = fields.programado;
                 if (fields.valorOrcado !== undefined) os.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
                 if (fields.nxImport !== undefined) os.nx_import = fields.nxImport;
+                if (fields.checklistFerramentas !== undefined) os.checklist_ferramentas = fields.checklistFerramentas;
+                if (fields.linkPrograma !== undefined) os.link_programa = fields.linkPrograma || null;
                 if (fields.observacoes !== undefined) os.observacoes = fields.observacoes;
                 if (fields.folhaImagem !== undefined) os.folha_imagem = fields.folhaImagem;
                 if (fields.folha_imagem !== undefined) os.folha_imagem = fields.folha_imagem;

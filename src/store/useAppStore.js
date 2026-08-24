@@ -8,6 +8,7 @@ import { estoqueService } from '../services/estoqueService';
 import { historicoConsumiveisService } from '../services/historicoConsumiveisService';
 import { autoKanbanService } from '../services/autoKanbanService';
 import { perfisService } from '../services/perfisService';
+import { convitesService } from '../services/convitesService';
 import { clientesService } from '../services/clientesService';
 import { fornecedoresService } from '../services/fornecedoresService';
 import { historicoQuebrasEstoqueService } from '../services/historicoQuebrasEstoqueService';
@@ -19,6 +20,7 @@ import { useAuthStore } from './useAuthStore';
 import { statusToColKey, colKeyToStatus } from '../constants/cncProcess';
 import { novoGrupoId } from '../constants/osWorkflow';
 import { isLocalMode } from '../local/mode';
+import { chaveSku, normalizarItemEstoque, qtdEstoque } from '../utils/estoque';
 
 // Normaliza um registro de historico_consumiveis (snake_case → camelCase)
 const normalizarHistoricoConsumivel = (r) => ({
@@ -78,6 +80,7 @@ export const useAppStore = create((set) => ({
     clientes: [],
     fornecedores: [],
     usuarios: [],
+    convites: [],
 
     // Kanbans Automáticos
     kanbansAutomaticos: [],
@@ -125,6 +128,9 @@ export const useAppStore = create((set) => ({
     destaqueOsId: null,
     osDeepLinkId: null,
     setOsDeepLinkId: (id) => set({ osDeepLinkId: id }),
+    carteiraFiltroPedido: null,
+    pedirFiltroCarteira: (filtro) => set({ carteiraFiltroPedido: filtro }),
+
     irParaKanban: (os) => {
         const setor = os?.setor || os?.tipo_processo || 'CNC';
         if (typeof window !== 'undefined') {
@@ -651,6 +657,30 @@ export const useAppStore = create((set) => ({
             usuarios: state.usuarios.filter(u => u.id !== userId)
         }));
     },
+    fetchConvites: async () => {
+        try {
+            const data = await convitesService.fetchAll();
+            set({ convites: data || [] });
+        } catch (e) {
+            console.warn('fetchConvites:', e.message);
+        }
+    },
+    criarConvite: async ({ nome, funcao, setorPadrao, pin }) => {
+        const created = await convitesService.create({ nome, funcao, setorPadrao, pin });
+        set((state) => ({ convites: [created, ...(state.convites || [])] }));
+        return created;
+    },
+    revogarConvite: async (id) => {
+        await convitesService.revoke(id);
+        set((state) => ({ convites: (state.convites || []).filter((c) => c.id !== id) }));
+    },
+    atualizarPinConvite: async (id, pin) => {
+        const updated = await convitesService.updatePin(id, pin);
+        set((state) => ({
+            convites: (state.convites || []).map((c) => (c.id === id ? { ...c, pin: updated?.pin ?? pin } : c)),
+        }));
+        return updated;
+    },
 
     // Carrega Kanbans Automáticos do Supabase
     fetchAutoKanbans: async () => {
@@ -966,6 +996,42 @@ export const useAppStore = create((set) => ({
         const novaOsBanco = await doCreate();
         applySuccess(novaOsBanco, null);
         return novaOsBanco;
+    },
+
+    criarKanbanRetrabalho: async (osOrigem, { motivo } = {}) => {
+        if (!osOrigem?.id) throw new Error('O.S. de origem inválida.');
+        const codigo = osOrigem.codigo_peca || osOrigem.codigoPeca;
+        const nota = [
+            `Retrabalho da peça ${codigo || osOrigem.id}.`,
+            motivo ? `Motivo do refugo: ${motivo}` : null,
+        ].filter(Boolean).join(' ');
+        return useAppStore.getState().addOrdemServico({
+            codigoPeca: codigo,
+            cliente: osOrigem.cliente,
+            setor: osOrigem.setor,
+            linkDesenho: osOrigem.link_desenho || osOrigem.linkDesenho,
+            prazoEntrega: osOrigem.prazo_entrega || osOrigem.prazoEntrega,
+            programador: osOrigem.programador,
+            quantidade: osOrigem.quantidade || 1,
+            programado: osOrigem.programado ?? true,
+            isRetrabalho: true,
+            parent_id: osOrigem.id,
+            os_grupo_id: osOrigem.os_grupo_id || osOrigem.osGrupoId || null,
+            tempoEstimadoCorteHoras: osOrigem.tempo_estimado_corte_horas || osOrigem.tempoEstimadoCorteHoras,
+            tempoEstimadoCorteMinutos: osOrigem.tempo_estimado_corte_minutos || osOrigem.tempoEstimadoCorteMinutos,
+            tempoEstimadoSetupHoras: osOrigem.tempo_estimado_setup_horas || osOrigem.tempoEstimadoSetupHoras,
+            tempoEstimadoSetupMinutos: osOrigem.tempo_estimado_setup_minutos || osOrigem.tempoEstimadoSetupMinutos,
+            totalSetups: osOrigem.total_setups || osOrigem.totalSetups || 1,
+            setupAtual: 1,
+            nomesSetups: osOrigem.nomes_setups || osOrigem.nomesSetups || [],
+            detalhesSetups: osOrigem.detalhes_setups || osOrigem.detalhesSetups || [],
+            codigoMolde: osOrigem.codigo_molde || osOrigem.codigoMolde,
+            componenteMolde: osOrigem.componente_molde || osOrigem.componenteMolde,
+            numeroPrograma: osOrigem.numero_programa || osOrigem.numeroPrograma,
+            linkPrograma: osOrigem.link_programa || osOrigem.linkPrograma,
+            estrategiaFerramental: osOrigem.estrategia_ferramental || osOrigem.estrategiaFerramental,
+            observacoes: nota,
+        });
     },
 
     addGrupoOrdensServico: async (cabecalho, kanbans) => {
@@ -1466,10 +1532,15 @@ export const useAppStore = create((set) => ({
 
             if (diferencaDias >= kb.diasIntervalo) {
                 try {
+                    const maq = (state.maquinas || []).find((m) => m.nome === kb.maquinaNome);
+                    const setor = maq?.setor || 'CNC';
                     await state.addOrdemServico({
-                        codigoPeca: `AUTO-${(kb.tipo || 'ROT').substring(0, 3).toUpperCase()}`,
-                        cliente: kb.descricao || kb.tipo,
+                        codigoPeca: `MANUT-${String(setor).replace(/_/g, '').slice(0, 6)}`,
+                        cliente: 'Manutenção interna',
                         maquina_nome: kb.maquinaNome,
+                        setor,
+                        programado: true,
+                        observacoes: `Rotina automática: ${kb.descricao || kb.tipo}. A cada ${kb.diasIntervalo} dias. Não é O.S. de peça.`,
                         quantidade: 1,
                         prazo_entrega: new Date(now.getTime() + (kb.diasIntervalo * 24 * 60 * 60 * 1000)).toISOString()
                     });
@@ -1489,16 +1560,36 @@ export const useAppStore = create((set) => ({
     fetchEstoque: async () => {
         try {
             const data = await estoqueService.fetchAll();
-            set({ estoque: data });
+            set({ estoque: (data || []).map(normalizarItemEstoque) });
         } catch (e) {
             console.warn('fetchEstoque:', e.message);
         }
     },
 
-    addEstoqueItem: async (nome, qtd, alertMin, setor = 'TODOS') => {
+    addEstoqueItem: async (nome, qtd, alertMin, setor = 'TODOS', unidade = 'un') => {
         try {
-            const novo = await estoqueService.create(nome, qtd, alertMin, setor);
-            set((state) => ({ estoque: [...state.estoque, novo] }));
+            const chave = chaveSku(nome, setor);
+            const existente = useAppStore.getState().estoque.find((i) => chaveSku(i.nome, i.setor) === chave);
+            if (existente) {
+                await useAppStore.getState().movimentarEstoque({
+                    itemId: existente.id,
+                    tipo: 'entrada',
+                    quantidade: qtd,
+                    motivo: 'Entrada em SKU já cadastrado',
+                });
+                const atualizado = await estoqueService.update(existente.id, {
+                    alerta_minimo: parseInt(alertMin, 10) || existente.alerta_minimo,
+                    unidade: unidade || existente.unidade || 'un',
+                });
+                if (atualizado) {
+                    set((state) => ({
+                        estoque: state.estoque.map((i) => (i.id === existente.id ? normalizarItemEstoque({ ...i, ...atualizado }) : i)),
+                    }));
+                }
+                return;
+            }
+            const novo = await estoqueService.create(nome, qtd, alertMin, setor, unidade);
+            set((state) => ({ estoque: [...state.estoque, normalizarItemEstoque(novo)] }));
         } catch (e) {
             console.error('addEstoqueItem:', e.message);
             throw e;
@@ -1536,14 +1627,14 @@ export const useAppStore = create((set) => ({
 
         const item = useAppStore.getState().estoque.find((i) => i.id === itemId);
         if (!item) throw new Error('Item não encontrado no inventário.');
-        if (tipo === 'saida' && qtd > item.quantidade) {
-            throw new Error(`Saída de ${qtd} maior que o saldo atual (${item.quantidade}).`);
+        if (tipo === 'saida' && qtd > qtdEstoque(item)) {
+            throw new Error(`Saída de ${qtd} maior que o saldo atual (${qtdEstoque(item)}).`);
         }
 
         const atualizado = await estoqueService.movimentar(itemId, tipo === 'entrada' ? qtd : -qtd);
         if (!atualizado) throw new Error('O banco não retornou o item atualizado.');
 
-        set((state) => ({ estoque: state.estoque.map((i) => (i.id === itemId ? atualizado : i)) }));
+        set((state) => ({ estoque: state.estoque.map((i) => (i.id === itemId ? normalizarItemEstoque(atualizado) : i)) }));
 
         const registro = await movimentacoesEstoqueService.create({
             estoqueItemId: itemId,
@@ -1560,50 +1651,45 @@ export const useAppStore = create((set) => ({
         return atualizado;
     },
 
-    consumirEstoqueItem: async (id, qtd = 1) => {
+    consumirEstoqueItem: async (id, qtd = 1, motivo = 'Consumo') => {
         try {
-            // Decremento atômico: o banco faz GREATEST(quantidade - delta, 0), evitando race condition
-            const atualizado = await estoqueService.decrementar(id, qtd);
-            if (atualizado) {
-                set((state) => ({
-                    estoque: state.estoque.map(i => i.id === id ? atualizado : i)
-                }));
-            }
+            await useAppStore.getState().movimentarEstoque({
+                itemId: id,
+                tipo: 'saida',
+                quantidade: qtd,
+                motivo,
+            });
         } catch (e) {
             console.error('consumirEstoqueItem:', e.message);
+            throw e;
         }
     },
 
     // Actions para Histórico de Trocas (Consumíveis por Máquina)
-    registrarTrocaConsumivel: async (maquinaId, itemNome, operadorNome) => {
+    registrarTrocaConsumivel: async (maquinaId, estoqueItemId, operadorNome) => {
         const state = useAppStore.getState();
         const now = new Date().toISOString();
+        const itemEstoque = state.estoque.find((i) => i.id === estoqueItemId);
+        if (!itemEstoque) throw new Error('Selecione um item do estoque.');
+        if (qtdEstoque(itemEstoque) < 1) throw new Error('Sem saldo para essa troca.');
+        const itemNome = itemEstoque.nome;
 
         try {
-            // 1. Encerra o consumível anterior ativo nesta máquina+item no Supabase
             await historicoConsumiveisService.encerrarAtivo({ maquinaId, itemNome });
-
-            // 2. Cria o novo registro de instalação no Supabase
             const novoRegistro = await historicoConsumiveisService.create({ maquinaId, itemNome, operadorNome });
+            await state.movimentarEstoque({
+                itemId: estoqueItemId,
+                tipo: 'saida',
+                quantidade: 1,
+                motivo: `Troca na máquina`,
+                operadorNome,
+            });
 
-            // 3. Consome 1 unidade do estoque via decremento atômico (evita race condition)
-            const itemEstoque = state.estoque.find(i => i.nome === itemNome);
-            if (itemEstoque) {
-                const atualizado = await estoqueService.decrementar(itemEstoque.id, 1);
-                if (atualizado) {
-                    set((s) => ({
-                        estoque: s.estoque.map(i => i.id === atualizado.id ? atualizado : i)
-                    }));
-                }
-            }
-
-            // 4. Atualiza o histórico local (normalizado para compatibilidade de UI)
             const normalizado = normalizarHistoricoConsumivel(novoRegistro);
 
             set((s) => ({
                 historicoConsumiveis: [
                     normalizado,
-                    // Encerra os ativos locais do mesmo item+maquina
                     ...s.historicoConsumiveis.map(log =>
                         log.maquinaId === maquinaId && log.itemNome === itemNome && !log.dataFim
                             ? { ...log, dataFim: now }
@@ -1625,8 +1711,31 @@ export const useAppStore = create((set) => ({
     },
 
     addFerramentalItem: async (payload) => {
-        const novo = await ferramentalService.create(payload);
+        const skuId = payload.estoqueItemId || payload.estoqueItemId || payload.estoque_item_id;
+        if (!skuId) throw new Error('Escolha o item de estoque (SKU) desta ferramenta.');
+        const sku = useAppStore.getState().estoque.find((i) => i.id === skuId);
+        if (!sku || qtdEstoque(sku) < 1) {
+            throw new Error('Sem saldo no estoque para serializar esta ferramenta. Dê entrada no SKU primeiro.');
+        }
+        await useAppStore.getState().movimentarEstoque({
+            itemId: skuId,
+            tipo: 'saida',
+            quantidade: 1,
+            motivo: 'Ferramental (instância)',
+        });
+        const novo = await ferramentalService.create({
+            ...payload,
+            nome: payload.nome || sku.nome,
+            estoqueItemId: skuId,
+        });
         set((state) => ({ ferramental: [...state.ferramental, novo] }));
+    },
+
+    vincularFerramentalAoSku: async (ferramentalId, estoqueItemId) => {
+        const atualizado = await ferramentalService.update(ferramentalId, { estoque_item_id: estoqueItemId });
+        set((state) => ({
+            ferramental: state.ferramental.map((f) => (f.id === ferramentalId ? { ...f, ...atualizado } : f)),
+        }));
     },
 
     registrarQuebraFerramenta: async (payload) => {

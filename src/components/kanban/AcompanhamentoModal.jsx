@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
-import Button from '../common/Button';
 import EditOSModal from './EditOSModal';
 import { Clock, Settings, CheckCircle2, PauseCircle, PlayCircle, History, AlertTriangle, Trash, Link as LinkIcon, Copy, Check, Pencil, Printer } from 'lucide-react';
 import FolhaProcessoModal from './FolhaProcessoModal';
@@ -88,7 +87,15 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                             </div>
                         </div>
                         <div className="text-right flex flex-col items-end gap-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFolhaOpen(true)}
+                                    className="p-1.5 rounded-md hover:bg-[#1F232B] text-[#7B808F] hover:text-[#E7E9ED] transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+                                    title="Folha de processo (imprimir)"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setIsEditOpen(true)}
@@ -106,37 +113,36 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                         <Trash className="w-5 h-5" />
                                     </button>
                                 )}
-                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${(activeData.is_pausado || activeData.isPausado) ? 'bg-[#C85558]/20 text-[#C85558]' :
-                                    (activeData.statusLocal === 'Concluído' || activeData.status === 'Concluído') ? 'bg-kanban-green/20 text-kanban-green' :
-                                        (activeData.statusLocal === 'A fazer' || activeData.status === 'A fazer') ? 'bg-[#1F232B] text-[#7B808F]' :
-                                            'bg-kanban-cyan/20 text-[#4A9D74]'
-                                    }`}>
-                                    {(activeData.is_pausado || activeData.isPausado) ? 'Em Pausa' : (activeData.statusLocal || activeData.status || 'Desconhecido')}
-                                </span>
                             </div>
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${(activeData.is_pausado || activeData.isPausado) ? 'bg-[#C85558]/20 text-[#C85558]' :
+                                (activeData.statusLocal === 'Concluído' || activeData.status === 'Concluído') ? 'bg-kanban-green/20 text-kanban-green' :
+                                    (activeData.statusLocal === 'A fazer' || activeData.status === 'A fazer') ? 'bg-[#1F232B] text-[#7B808F]' :
+                                        'bg-kanban-cyan/20 text-[#4A9D74]'
+                                }`}>
+                                {(activeData.is_pausado || activeData.isPausado) ? 'Em Pausa' : (activeData.statusLocal || activeData.status || 'Desconhecido')}
+                            </span>
                             {(activeData.resultadoAfericao || activeData.resultado_afericao) && (
-                                <div className="text-right">
-                                    <p className={`text-xs font-bold mt-1 ${(activeData.resultadoAfericao || activeData.resultado_afericao) === 'Aprovada' ? 'text-kanban-green' : 'text-[#C85558]'}`}>
-                                        Avaliação: {activeData.resultadoAfericao || activeData.resultado_afericao}
-                                    </p>
-                                </div>
+                                <p className={`text-xs font-bold ${(activeData.resultadoAfericao || activeData.resultado_afericao) === 'Aprovada' ? 'text-kanban-green' : 'text-[#C85558]'}`}>
+                                    Avaliação: {activeData.resultadoAfericao || activeData.resultado_afericao}
+                                </p>
                             )}
                         </div>
                     </div>
 
-                    <div className="space-y-3">
-                        {printSrc && (
-                            <img
-                                src={printSrc}
-                                alt="Print da peça"
-                                className="w-full max-h-56 object-contain rounded-[8px] border border-[#262A33] bg-[#111318]"
-                            />
-                        )}
-                        <Button type="button" variant="primary" className="w-full gap-2" onClick={() => setIsFolhaOpen(true)}>
-                            <Printer className="w-4 h-4" />
-                            Imprimir folha de processo
-                        </Button>
-                    </div>
+                    {printSrc && (
+                        <img
+                            src={printSrc}
+                            alt="Print da peça"
+                            className="w-full max-h-40 object-contain rounded-[8px] border border-[#262A33] bg-[#111318]"
+                        />
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setIsFolhaOpen(true)}
+                        className="text-[11px] text-[#7B808F] hover:text-[#D97D3D] underline-offset-2 hover:underline cursor-pointer"
+                    >
+                        Folha de processo (imprimir)
+                    </button>
 
                     <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-3">
                         <RoteiroFluxo
@@ -228,7 +234,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 </li>
                                 {(osData.link_desenho || osData.linkDesenho) && (
                                     <li className="pt-2 mt-2 border-t border-[#262A33]">
-                                        <span className="text-[#565B68] block mb-1">Desenho Técnico (Local/Link):</span>
+                                        <span className="text-[#565B68] block mb-1">Desenho da peça (gestão):</span>
                                         <div
                                             className="flex items-center justify-between bg-[#111318] border border-[#262A33] rounded p-2 cursor-pointer hover:bg-[#181B22] transition-colors group"
                                             onClick={() => {
@@ -245,6 +251,15 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                             <div className="shrink-0 pl-2">
                                                 {copied ? <Check className="w-4 h-4 text-kanban-green" /> : <Copy className="w-4 h-4 text-[#7B808F] group-hover:text-kanban-amber" />}
                                             </div>
+                                        </div>
+                                    </li>
+                                )}
+                                {(osData.link_programa || osData.linkPrograma || osData.nx_import?.linkPrograma || osData.nxImport?.linkPrograma) && (
+                                    <li className="pt-2 mt-2 border-t border-[#262A33]">
+                                        <span className="text-[#565B68] block mb-1">Programa CAM (depois de programar):</span>
+                                        <div className="flex items-center gap-2 bg-[#111318] border border-[#262A33] rounded p-2">
+                                            <LinkIcon className="w-4 h-4 text-[#D97D3D] shrink-0" />
+                                            <span className="text-xs font-mono text-[#9DA2AE] truncate">{osData.link_programa || osData.linkPrograma || osData.nx_import?.linkPrograma || osData.nxImport?.linkPrograma}</span>
                                         </div>
                                     </li>
                                 )}
@@ -332,30 +347,41 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                             <h5 className="text-xs font-bold uppercase text-[#565B68] mb-3 flex items-center gap-2">
                                 <Clock className="w-4 h-4" /> Tempos: previsto × real
                             </h5>
-                            <ul className="space-y-2 text-sm">
-                                <li className="flex justify-between gap-2">
-                                    <span className="text-[#565B68]">Setup</span>
-                                    <span className="font-mono text-[#E7E9ED] text-right">
-                                        {formatarHoras(tempos.setupEst)} prev. · {formatarHoras(tempos.setupReal)} real
+                            <div className="text-sm">
+                                <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-x-2 gap-y-2 items-center">
+                                    <span className="text-[10px] uppercase tracking-wide text-[#565B68]" />
+                                    <span className="text-[10px] uppercase tracking-wide text-[#565B68] text-right">Previsto</span>
+                                    <span className="text-[10px] uppercase tracking-wide text-[#565B68] text-right">Real</span>
+
+                                    <span className="text-[#565B68] truncate">Setup</span>
+                                    <span className="font-mono text-[#E7E9ED] text-right whitespace-nowrap">
+                                        {formatarHoras(tempos.setupEst)}
                                     </span>
-                                </li>
-                                <li className="flex justify-between gap-2">
-                                    <span className="text-[#565B68]">Usinagem / corte</span>
-                                    <span className="font-mono text-[#E7E9ED] text-right">
-                                        {formatarHoras(tempos.corteEst)} prev. · {formatarHoras(tempos.corteReal)} real
+                                    <span className="font-mono text-[#E7E9ED] text-right whitespace-nowrap">
+                                        {formatarHoras(tempos.setupReal)}
                                     </span>
-                                </li>
-                                <li className="flex justify-between">
-                                    <span className="text-[#565B68]">Aferição</span>
-                                    <span className="font-mono font-bold text-[#E7E9ED]">{formatarHoras(tempos.afericaoReal)}</span>
-                                </li>
-                                <li className="flex justify-between pt-2 mt-2 border-t border-[#262A33]">
+
+                                    <span className="text-[#565B68] truncate">Usinagem</span>
+                                    <span className="font-mono text-[#E7E9ED] text-right whitespace-nowrap">
+                                        {formatarHoras(tempos.corteEst)}
+                                    </span>
+                                    <span className="font-mono text-[#E7E9ED] text-right whitespace-nowrap">
+                                        {formatarHoras(tempos.corteReal)}
+                                    </span>
+
+                                    <span className="text-[#565B68] truncate">Aferição</span>
+                                    <span className="font-mono text-[#E7E9ED] text-right whitespace-nowrap">—</span>
+                                    <span className="font-mono font-bold text-[#E7E9ED] text-right whitespace-nowrap">
+                                        {formatarHoras(tempos.afericaoReal)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 pt-2 mt-2 border-t border-[#262A33]">
                                     <span className="text-[#E7E9ED] font-bold">Eficiência CAM</span>
-                                    <span className="font-mono font-bold text-kanban-amber">
+                                    <span className="font-mono font-bold text-kanban-amber whitespace-nowrap">
                                         {tempos.eficienciaCam != null ? `${tempos.eficienciaCam.toFixed(0)}%` : '—'}
                                     </span>
-                                </li>
-                            </ul>
+                                </div>
+                            </div>
                             <p className="text-[10px] text-[#565B68] mt-2 leading-relaxed">
                                 Previsto ÷ real (setup + corte). Acima de 100% = mais rápido que o CAM. Aferição não entra nessa conta.
                             </p>

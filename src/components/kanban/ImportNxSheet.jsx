@@ -84,28 +84,44 @@ export default function ImportNxSheet({ onImport, disabled }) {
     const sampleRows = preview?.rawRows ? preview.rawRows.slice(0, 5) : [];
     const maxCols = sampleRows.length > 0 ? Math.max(...sampleRows.map(r => r.length)) : 0;
 
+    const abrirArquivo = (e) => {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+        if (disabled) return;
+        inputRef.current?.click();
+    };
+
     return (
         <div className="space-y-3">
+            <input
+                ref={inputRef}
+                type="file"
+                accept=".html,.htm,.xlsx,.xls"
+                className="hidden"
+                disabled={disabled}
+                onChange={(e) => {
+                    processFile(e.target.files?.[0]);
+                    e.target.value = '';
+                }}
+            />
+            <button
+                type="button"
+                disabled={disabled || loading}
+                onClick={abrirArquivo}
+                className="w-full py-3 px-4 rounded-[8px] bg-[#D97D3D] text-[#111318] text-sm font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-[#c46d32] disabled:opacity-50"
+            >
+                <Upload className="w-4 h-4" />
+                {loading ? 'Lendo arquivo...' : 'Importar folha de processo'}
+            </button>
             <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
-                onClick={() => !disabled && inputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors ${
-                    disabled ? 'opacity-50 cursor-not-allowed border-[#262A33]' : 'border-[#333844] hover:border-kanban-amber/60 hover:bg-[#181B22]/80'
+                onClick={abrirArquivo}
+                className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+                    disabled ? 'opacity-50 cursor-not-allowed border-[#262A33]' : 'border-[#D97D3D]/50 hover:border-[#D97D3D] hover:bg-[#181B22]/80'
                 }`}
             >
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept=".html,.htm,.xlsx,.xls"
-                    className="hidden"
-                    disabled={disabled}
-                    onChange={(e) => processFile(e.target.files?.[0])}
-                />
-                <Upload className="w-8 h-8 mx-auto text-kanban-amber mb-2" />
-                <p className="text-sm font-bold text-[#E7E9ED]">Importar folha de processo CAM (Shop Doc)</p>
-                <p className="text-xs text-[#565B68] mt-1">Arraste .html ou .xlsx (Siemens NX, Mastercam, PowerMill, WorkNC...)</p>
-                {loading && <p className="text-xs text-kanban-amber mt-2">Lendo arquivo...</p>}
+                <p className="text-xs text-[#9DA2AE]">Ou arraste o Shop Doc aqui (.html / .xlsx do NX, Mastercam, PowerMill...)</p>
             </div>
 
             {error && (

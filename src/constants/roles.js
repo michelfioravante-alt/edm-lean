@@ -1,6 +1,6 @@
 export const SETORES_PROGRAMADOR = ['CNC', 'EDM_FIO'];
 
-/** Login: só gerente (admin) e programador. Qualquer outro valor vira programador. */
+/** Login: só gestor (admin) e programador. Qualquer outro valor vira programador. */
 export function normalizarRole(funcao) {
     if (funcao === 'admin') return 'admin';
     return 'programmer';

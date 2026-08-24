@@ -48,8 +48,6 @@ export const SECTORS = {
             concluido: { key: 'concluido', label: 'Concluído', dbStatus: 'Concluído', theme: 'kanban-green' },
         },
         motivosPausa: [
-            'Quebra de Fio',
-            'Passagem de Fio (Threading)',
             'Troca de Resina / Filtro',
             'Entrada de outra O.S.',
             'Troca de Insumo',
@@ -154,8 +152,6 @@ export const SECTORS = {
             'Troca de Ferramenta',
             'Quebra de Ferramenta',
             'Troca de Insert',
-            'Quebra de Fio',
-            'Passagem de Fio',
             'Troca de Resina / Filtro',
             'Ajuste de Offset / Zero',
             'Entrada de outra O.S.',

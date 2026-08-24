@@ -24,7 +24,7 @@
 - **`🏭 Visão Geral da Fábrica (Diretoria)`**: Visão consolidada de todas as células de produção e ferramentaria.
 
 ### 👑 2. Segurança Executiva & Proteção por PIN Master
-- Acesso à Visão de Gerente, Indicadores Financeiros da Planta e Parâmetros Globais protegido por **PIN Master de 4 dígitos** configurável em tempo real.
+- Acesso à Visão de Gestor, Indicadores Financeiros da Planta e Parâmetros Globais protegido por **PIN Master de 4 dígitos** configurável em tempo real.
 - Bloqueio automático de programadores ao seu setor de atuação (`🔒 KPIs Exclusivos`).
 
 ### 💰 3. Motor de Cálculo de Custos Hora por Setor

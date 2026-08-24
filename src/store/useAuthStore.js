@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../services/supabase';
 import { isLocalMode } from '../local/mode';
 import { loadDb, resetDb } from '../local/localDatabase';
+import { convitesService } from '../services/convitesService';
 import { LOCAL_EMPRESA_ID, LOCAL_USER_ID } from '../local/seedData';
 import { normalizarRole, SETORES_PROGRAMADOR } from '../constants/roles';
 
@@ -10,7 +11,7 @@ let authStateSubscription = null;
 
 export const useAuthStore = create((set, get) => ({
     user: null, // Objeto de usuário do Supabase Auth
-    role: null, // 'admin' (gerente) | 'programmer'
+    role: null, // 'admin' (gestor) | 'programmer'
     empresaId: null, // ID da empresa atrelada ao usuário
     nomeEmpresa: null, // Nome da empresa (nome_fantasia)
     codigoConvite: null,
@@ -130,8 +131,8 @@ export const useAuthStore = create((set, get) => ({
         set({ setorPadrao: setor });
     },
 
-    enterLocalStudyMode: (role = 'admin', setor = null) => {
-        const db = resetDb();
+    applyLocalSession: (role = 'admin', setor = null) => {
+        const db = loadDb();
         const roleNorm = normalizarRole(role);
         localStorage.setItem('cnc-lean-session', roleNorm);
         const savedSetor = setor
@@ -151,6 +152,11 @@ export const useAuthStore = create((set, get) => ({
             isResettingPassword: false,
         });
         return { success: true };
+    },
+
+    enterLocalStudyMode: (role = 'admin', setor = null) => {
+        resetDb();
+        return get().applyLocalSession(role, setor);
     },
 
 
@@ -263,44 +269,59 @@ export const useAuthStore = create((set, get) => ({
         try {
             const normalizedCode = (inviteCode || '').trim().toUpperCase();
 
-            // 1. Criar / obter sessão anônima do Supabase Auth para este terminal
+            if (isLocalMode()) {
+                const convite = await convitesService.findByPin(normalizedCode, pin);
+                if (convite) {
+                    return get().applyLocalSession(
+                        convite.funcao === 'admin' ? 'admin' : 'programmer',
+                        convite.setor_padrao || (convite.funcao === 'admin' ? 'TODOS' : 'CNC')
+                    );
+                }
+                const db = loadDb();
+                const master = String(db.configuracoes?.pin_onboarding || '1234');
+                if (String(pin) === master) {
+                    return get().applyLocalSession('programmer', 'CNC');
+                }
+                return { success: false, error: 'PIN incorreto.' };
+            }
+
             const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
-            if (anonError) {
-                throw anonError;
-            }
-
+            if (anonError) throw anonError;
             const anonUser = anonData?.user;
-            if (!anonUser) {
-                throw new Error('Falha ao criar sessão anônima do terminal.');
-            }
+            if (!anonUser) throw new Error('Falha ao criar sessão anônima do terminal.');
 
-            // 2. Chamar RPC segura no servidor que valida o PIN e vincula o perfil à empresa sem expor RLS
-            const { data: companyRows, error: rpcError } = await supabase.rpc('vincular_perfil_operador', {
+            let row = null;
+            const novo = await supabase.rpc('vincular_acesso_por_pin', {
                 p_invite_code: normalizedCode,
                 p_pin: pin,
-                p_nome: 'Terminal de Produção'
             });
-
-            if (rpcError) {
-                throw new Error(rpcError.message || 'PIN de Segurança incorreto.');
-            }
-
-            if (!companyRows || companyRows.length === 0) {
+            const rpcAusente = novo.error && /does not exist|schema cache|vincular_acesso_por_pin/i.test(novo.error.message || '');
+            if (!novo.error && novo.data && (Array.isArray(novo.data) ? novo.data[0] : novo.data)) {
+                row = Array.isArray(novo.data) ? novo.data[0] : novo.data;
+            } else if (rpcAusente) {
+                const { data: companyRows, error: rpcError } = await supabase.rpc('vincular_perfil_operador', {
+                    p_invite_code: normalizedCode,
+                    p_pin: pin,
+                    p_nome: 'Terminal de Produção'
+                });
+                if (rpcError) throw new Error(rpcError.message || 'PIN de Segurança incorreto.');
+                if (!companyRows || companyRows.length === 0) throw new Error('Empresa não identificada.');
+                row = { ...companyRows[0], funcao: 'programmer', setor_padrao: 'CNC' };
+            } else if (novo.error) {
+                throw new Error(novo.error.message || 'PIN de Segurança incorreto.');
+            } else {
                 throw new Error('Empresa não identificada.');
             }
 
-            const company = companyRows[0];
-
-            // 3. Define estado IMEDIATAMENTE com os dados seguros retornados pelo servidor
             set({
                 user: anonUser,
-                role: 'programmer',
-                setorPadrao: 'CNC',
-                empresaId: company.empresa_id || company.id,
-                nomeEmpresa: company.nome_fantasia || 'Fábrica',
-                codigoConvite: company.codigo_convite || normalizedCode,
-                plano: company.plano || 'piloto',
-                dataCriacao: company.created_at || null,
+                role: normalizarRole(row.funcao),
+                setorPadrao: row.setor_padrao || (row.funcao === 'admin' ? 'TODOS' : 'CNC'),
+                empresaId: row.empresa_id || row.id,
+                nomeEmpresa: row.nome_fantasia || 'Fábrica',
+                codigoConvite: row.codigo_convite || normalizedCode,
+                plano: row.plano || 'piloto',
+                dataCriacao: row.created_at || null,
                 isInitialized: true
             });
 

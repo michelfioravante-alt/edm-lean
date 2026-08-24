@@ -22,24 +22,28 @@ export const ferramentalService = {
         return data || [];
     },
 
-    async create({ nome, tipo, codigo, vidaUtilHoras, alertaHoras, observacao }) {
-        if (isLocalMode()) return localApi.ferramental.create({ nome, tipo, codigo, vidaUtilHoras, alertaHoras, observacao });
+    async create({ nome, tipo, codigo, vidaUtilHoras, alertaHoras, observacao, estoqueItemId }) {
+        if (isLocalMode()) return localApi.ferramental.create({ nome, tipo, codigo, vidaUtilHoras, alertaHoras, observacao, estoqueItemId });
         const empresaId = getEmpresaId();
-        const { data, error } = await supabase
-            .from('ferramental')
-            .insert({
-                empresa_id: empresaId,
-                nome,
-                tipo: tipo || 'Fresa',
-                codigo: codigo || null,
-                vida_util_horas: parseFloat(vidaUtilHoras) || 0,
-                alerta_horas: parseFloat(alertaHoras) || 0,
-                horas_usadas: 0,
-                status: 'disponivel',
-                observacao: observacao || null,
-            })
-            .select()
-            .single();
+        const payload = {
+            empresa_id: empresaId,
+            nome,
+            tipo: tipo || 'Fresa',
+            codigo: codigo || null,
+            vida_util_horas: parseFloat(vidaUtilHoras) || 0,
+            alerta_horas: parseFloat(alertaHoras) || 0,
+            horas_usadas: 0,
+            status: 'disponivel',
+            observacao: observacao || null,
+            estoque_item_id: estoqueItemId || null,
+        };
+        let { data, error } = await supabase.from('ferramental').insert(payload).select().single();
+        if (error && /estoque_item_id/i.test(error.message || '')) {
+            delete payload.estoque_item_id;
+            const retry = await supabase.from('ferramental').insert(payload).select().single();
+            data = retry.data;
+            error = retry.error;
+        }
         if (error) throw error;
         return data;
     },

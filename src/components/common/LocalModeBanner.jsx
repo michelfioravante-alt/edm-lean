@@ -28,7 +28,7 @@ export default function LocalModeBanner() {
                     Demonstração
                 </span>
                 <span className="text-[#9DA2AE] font-medium normal-case tracking-normal">
-                    Precision Tools no seu navegador — PIN gerente 1234. O guia laranja no canto explica cada tela.
+                    Precision Tools no seu navegador — PIN gestor 1234. O guia laranja no canto explica cada tela.
                 </span>
             </div>
             <div className="flex items-center gap-3 ml-auto">

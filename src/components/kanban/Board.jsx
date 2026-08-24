@@ -229,21 +229,37 @@ export default function Board() {
         const ctx = { ...pendingTransition };
         setPendingTransition(null);
         const nowIso = new Date().toISOString();
-        const { magazineLote, ...movePayload } = data;
+        const checklistFerramentas = data.checklistFerramentas;
+        const loteMagazine = data.magazineLote || data.magazineLote;
+        const movePayload = { ...data };
+        delete movePayload.magazineLote;
+        delete movePayload.magazineLote;
+        delete movePayload.checklistFerramentas;
+        const persistChecklist = async () => {
+            if (!checklistFerramentas) return;
+            const os = useAppStore.getState().kanban[destCol]?.find((o) => o.id === ctx.osId)
+                || ctx.osData;
+            const nx = os?.nx_import || os?.nxImport || {};
+            await useAppStore.getState().editOrdemServico(ctx.osId, {
+                checklistFerramentas,
+                nxImport: { ...nx, checklistFerramentas },
+            });
+        };
         state.moveOrdemServico(ctx.osId, ctx.sourceCol, destCol, {
             ...movePayload,
             status: COLUMN_TITLES[destCol],
             [`timestampEntrada_${destCol}`]: nowIso
         }).then(async () => {
-            if (magazineLote?.itens?.length > 0) {
+            await persistChecklist();
+            if (loteMagazine?.itens?.length > 0) {
                 const os = useAppStore.getState().kanban[destCol]?.find((o) => o.id === ctx.osId);
                 await useAppStore.getState().montarMagazineLote({
                     maquinaNome: movePayload.maquina_nome,
                     osId: ctx.osId,
                     codigoPeca: os?.codigo_peca || os?.codigoPeca || ctx.osData?.codigo_peca,
                     operadorNome: movePayload.operador_atual,
-                    itens: magazineLote.itens,
-                    baixarEstoque: magazineLote.baixarEstoque,
+                    itens: loteMagazine.itens,
+                    baixarEstoque: loteMagazine.baixarEstoque,
                 });
             }
         }).catch((err) => {
@@ -374,6 +390,18 @@ export default function Board() {
             ...afericaoData,
             status: COLUMN_TITLES[ctx.destCol],
             [`timestampEntrada_${ctx.destCol}`]: nowIso
+        }).then(async () => {
+            if (afericaoData?.criarRetrabalho && afericaoData?.resultadoAfericao === 'Refugo') {
+                try {
+                    await useAppStore.getState().criarKanbanRetrabalho(ctx.osData, {
+                        motivo: afericaoData.motivoRefugo,
+                    });
+                } catch (err) {
+                    console.error('Erro ao criar kanban de retrabalho:', err);
+                    setTransitionError(err?.message || 'O.S. refugada, mas o retrabalho não foi criado.');
+                    setTimeout(() => setTransitionError(null), 5000);
+                }
+            }
         }).catch((err) => {
             console.error("Erro na aferição:", err);
             setPendingAfericao(ctx);
@@ -513,7 +541,8 @@ export default function Board() {
                 </div>
 
                 {/* 3. KANBAN COLUMNS */}
-                <div className="flex flex-col md:flex-row gap-3 pb-12 items-center md:items-stretch flex-1 w-full md:w-max md:min-w-full md:snap-scroll-x justify-center">
+                <div className="w-full min-w-0 overflow-x-auto overflow-y-visible pb-4">
+                <div className="flex flex-col md:flex-row gap-3 pb-8 items-stretch w-full md:w-max md:min-w-full">
                     {Object.entries(COLUMN_TITLES)
                         .filter(([key]) => window.innerWidth >= 768 || key === kanbanStage)
                         .map(([columnKey, title]) => (
@@ -544,7 +573,7 @@ export default function Board() {
                                             return;
                                         }
                                         if (destCol === 'setup' && sourceCol === 'emCorte') {
-                                            setPendingDevolverCorteSetup({ osId, sourceCol, destCol, osData: osToMove });
+                                            setPendingTransition({ osId, sourceCol, destCol, osData: osToMove });
                                         } else if (destCol === 'setup' && sourceCol === 'afericao') {
                                             setExtraSetupContext({ osId, sourceCol, destCol, osData: osToMove });
                                         } else if (sourceCol === 'afericao' && destCol === 'emCorte') {
@@ -706,6 +735,7 @@ export default function Board() {
                         onClose={() => setSplitContext(null)}
                     />
                 )}
+            </div>
             </div>
         </ErrorBoundary>
     );

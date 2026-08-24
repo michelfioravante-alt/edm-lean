@@ -22,7 +22,7 @@ export const fornecedoresService = {
         return data || [];
     },
 
-    async create({ nome, tipo = 'tempera', prazoDias }) {
+    async create({ nome, tipo = 'tratamento', prazoDias }) {
         if (isLocalMode()) return localApi.fornecedores.create({ nome, tipo, prazoDias });
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
@@ -30,7 +30,7 @@ export const fornecedoresService = {
             .insert({
                 empresa_id: empresaId,
                 nome,
-                tipo: tipo || 'tempera',
+                tipo: tipo || 'tratamento',
                 prazo_dias: prazoDias ? parseInt(prazoDias, 10) : null,
             })
             .select()

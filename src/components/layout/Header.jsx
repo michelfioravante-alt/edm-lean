@@ -24,7 +24,7 @@ export default function Header({ onMenuToggle }) {
         setIsPinModalOpen(true);
     };
 
-    const getRoleLabel = () => (role === 'admin' ? 'Gerente' : 'Programador');
+    const getRoleLabel = () => (role === 'admin' ? 'Gestor' : 'Programador');
 
     return (
         <header className="bg-[#111318] border-b border-[#262A33] sticky top-0 z-50 h-[52px] flex items-center px-4 md:px-6">
@@ -88,7 +88,7 @@ export default function Header({ onMenuToggle }) {
                                     className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
                                     title="Carteira e fábrica inteira. PIN desta demo: 1234"
                                 >
-                                    <ShieldCheck className="w-3 h-3" /> Gerente
+                                    <ShieldCheck className="w-3 h-3" /> Gestor
                                 </button>
                                 <button
                                     type="button"

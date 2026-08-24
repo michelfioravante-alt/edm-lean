@@ -3,8 +3,9 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { setorEfetivoProgramador, filtrarEstoqueDoPerfil } from '../constants/roles';
 import Button from '../components/common/Button';
-import { Plus, Package, Archive, AlertTriangle, PenTool, Clock, Trash2, Wrench, Monitor, ArrowDownCircle, ArrowUpCircle, History, Lock } from 'lucide-react';
+import { Plus, Package, Archive, AlertTriangle, PenTool, Clock, Trash2, Wrench, Monitor, ArrowDownCircle, ArrowUpCircle, History, Lock, Search } from 'lucide-react';
 import { formatarDataBR, formatarHoras } from '../utils/formatters';
+import { UNIDADES_ESTOQUE, precisaPedirEstoque, qtdEstoque, unidadeEstoque } from '../utils/estoque';
 import InsumosLifeChart from '../components/dashboard/InsumosLifeChart';
 import MachineConsumptionChart from '../components/dashboard/MachineConsumptionChart';
 import ConfirmDeleteEstoqueModal from '../components/estoque/ConfirmDeleteEstoqueModal';
@@ -23,7 +24,8 @@ export default function Estoque() {
         ferramentasMaquina,
         registrarTrocaConsumivel,
         movimentacoesEstoque,
-        fetchMovimentacoesEstoque
+        fetchMovimentacoesEstoque,
+        movimentarEstoque,
     } = useAppStore();
 
     const role = useAuthStore(state => state.role);
@@ -51,7 +53,9 @@ export default function Estoque() {
     const [novaQtd, setNovaQtd] = useState('');
     const [novoAlerta, setNovoAlerta] = useState('');
     const [novoSetor, setNovoSetor] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
+    const [novaUnidade, setNovaUnidade] = useState('un');
     const [setorFiltro, setSetorFiltro] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
+    const [buscaEstoque, setBuscaEstoque] = useState('');
 
     // Estado Deleção de Estoque
     const [itemParaDeletar, setItemParaDeletar] = useState(null);
@@ -70,7 +74,7 @@ export default function Estoque() {
         if (novoNome.trim() && novaQtd && novoAlerta) {
             setErro('');
             try {
-                await addEstoqueItem(novoNome.trim(), novaQtd, novoAlerta, isProgrammerLocked ? effectiveSector : novoSetor);
+                await addEstoqueItem(novoNome.trim(), novaQtd, novoAlerta, isProgrammerLocked ? effectiveSector : novoSetor, novaUnidade);
                 setNovoNome('');
                 setNovaQtd('');
                 setNovoAlerta('');
@@ -82,13 +86,31 @@ export default function Estoque() {
     };
 
 
-    const handleRegistrarTroca = (e) => {
+    const handleRegistrarTroca = async (e) => {
         e.preventDefault();
-        if (trocaMaquina && trocaInsumo && trocaOperador) {
-            registrarTrocaConsumivel(trocaMaquina, trocaInsumo, trocaOperador);
+        if (!trocaMaquina || !trocaInsumo || !trocaOperador) return;
+        setErro('');
+        try {
+            await registrarTrocaConsumivel(trocaMaquina, trocaInsumo, trocaOperador);
             setTrocaMaquina('');
             setTrocaInsumo('');
             setTrocaOperador('');
+        } catch (err) {
+            setErro(err.message || 'Não foi possível registrar a troca.');
+        }
+    };
+
+    const handleConsumoAvulso = async (item) => {
+        setErro('');
+        try {
+            await movimentarEstoque({
+                itemId: item.id,
+                tipo: 'saida',
+                quantidade: 1,
+                motivo: 'Consumo avulso',
+            });
+        } catch (err) {
+            setErro(err.message || 'Não foi possível baixar 1 unidade.');
         }
     };
 
@@ -102,10 +124,10 @@ export default function Estoque() {
         setItemParaDeletar(null);
     };
 
-    const inputClasses = "w-full p-3 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-[#E7E9ED] text-base font-bold bg-[#111318] placeholder-[#565B68] transition-colors";
-    const titleClasses = "block text-sm font-bold text-[#E7E9ED] mb-2 tracking-wide";
+    const inputClasses = "w-full p-2.5 border border-[#262A33] rounded-lg focus:outline-none focus:border-kanban-amber focus:ring-1 focus:ring-kanban-amber/50 text-[#E7E9ED] text-sm font-medium bg-[#111318] placeholder-[#565B68] transition-colors";
+    const titleClasses = "block text-xs font-semibold uppercase tracking-wider text-[#7B808F] mb-1.5";
     const cardClasses = "bg-[#181B22] rounded-xl shadow-md border border-[#262A33] overflow-hidden";
-    const headerClasses = "bg-[#111318]/80 px-5 py-4 border-b border-[#262A33] flex items-center gap-3";
+    const headerClasses = "bg-[#111318]/80 px-4 py-3 border-b border-[#262A33] flex items-center gap-2.5";
 
     const ferramentasPorMaquina = (ferramentasMaquina || []).reduce((acc, f) => {
         const key = f.maquinaNome || f.maquina_nome || 'Sem máquina';
@@ -115,15 +137,15 @@ export default function Estoque() {
     }, {});
 
     return (
-        <div className="w-full space-y-8 pb-10">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181B22] p-6 rounded-xl border border-[#262A33]">
+        <div className="w-full space-y-6 pb-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#181B22] p-4 rounded-xl border border-[#262A33]">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-kanban-amber/10 rounded-xl border border-kanban-amber/30">
-                        <Package className="w-8 h-8 text-kanban-amber" />
+                    <div className="p-2 bg-kanban-amber/10 rounded-lg border border-kanban-amber/30">
+                        <Package className="w-5 h-5 text-kanban-amber" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-semibold text-white">Estoque de Ferramentas</h2>
-                        <p className="text-[#7B808F] text-sm mt-0.5">Controle por tipo e quantidade (ex: 10 fresas D8). Quebras no Kanban descontam automaticamente.</p>
+                        <h2 className="text-xl font-semibold text-white">Estoque de insumos</h2>
+                        <p className="text-[#7B808F] text-xs mt-0.5">SKU (caixa) · saldo e unidade. Instância serializada fica em Ferramental. Quebra no Kanban e troca na máquina baixam com histórico.</p>
                     </div>
                 </div>
             </div>
@@ -131,8 +153,8 @@ export default function Estoque() {
             {Object.keys(ferramentasPorMaquina).length > 0 && (
                 <div className={cardClasses}>
                     <div className={headerClasses}>
-                        <Monitor className="text-[#4A9D74] w-6 h-6" />
-                        <h3 className="text-xl font-bold text-white">Ferramentas nas máquinas (agora)</h3>
+                        <Monitor className="text-[#4A9D74] w-4 h-4" />
+                        <h3 className="text-sm font-semibold text-white">Nas máquinas agora</h3>
                     </div>
                     <div className="p-5 grid md:grid-cols-2 gap-4 bg-[#181B22]">
                         {Object.entries(ferramentasPorMaquina).map(([maq, itens]) => (
@@ -163,11 +185,11 @@ export default function Estoque() {
                 {/* ---------- INVENTÁRIO ---------- */}
                 <div className={`${cardClasses} flex flex-col`}>
                     <div className={headerClasses}>
-                        <Archive className="text-[#E7E9ED] w-6 h-6" />
-                        <h3 className="text-xl font-bold text-white">{isProgrammerLocked ? 'Inventário do setor' : 'Inventário Global'}</h3>
+                        <Archive className="text-[#E7E9ED] w-4 h-4" />
+                        <h3 className="text-sm font-semibold text-white">{isProgrammerLocked ? 'Inventário do setor' : 'Inventário'}</h3>
                     </div>
 
-                    <div className="p-5 flex-1 space-y-8 bg-[#181B22]">
+                    <div className="p-4 flex-1 space-y-6 bg-[#181B22]">
                         {erro && (
                             <p className="bg-[rgba(200,85,88,0.1)] border border-[#C85558]/30 text-[#C85558] text-sm font-bold rounded-lg px-4 py-3">
                                 {erro}
@@ -175,8 +197,9 @@ export default function Estoque() {
                         )}
 
                         {/* Formulário Novo Item */}
-                        <form onSubmit={handleAddItem} className="bg-[#111318]/80 p-5 rounded-xl border border-[#262A33] shadow-sm space-y-4">
-                            <h4 className="font-semibold text-lg text-[#E7E9ED]">Adicionar / Atualizar Insumo</h4>
+                        <form onSubmit={handleAddItem} className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33] space-y-3">
+                            <h4 className="font-semibold text-sm text-[#E7E9ED]">Cadastrar ou somar SKU</h4>
+                            <p className="text-[11px] text-[#565B68]">Mesmo nome + setor soma a quantidade. Não cria duplicata.</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Nome do Item</label>
@@ -207,20 +230,29 @@ export default function Estoque() {
                                     <input type="number" value={novaQtd} onChange={e => setNovaQtd(e.target.value)} className={inputClasses} min="0" required />
                                 </div>
                                 <div>
-                                    <label className={titleClasses}>Alerta Mín.</label>
+                                    <label className={titleClasses}>Alerta mín.</label>
                                     <input type="number" value={novoAlerta} onChange={e => setNovoAlerta(e.target.value)} className={inputClasses} min="0" required />
                                 </div>
+                                <div className="col-span-2">
+                                    <label className={titleClasses}>Unidade</label>
+                                    <select value={novaUnidade} onChange={(e) => setNovaUnidade(e.target.value)} className={inputClasses}>
+                                        {UNIDADES_ESTOQUE.map((u) => (
+                                            <option key={u.id} value={u.id}>{u.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-kanban-amber text-[#111318] rounded-lg px-6 py-3 font-bold uppercase tracking-widest cursor-pointer transition-colors hover:bg-[#c46d32] shadow-sm mt-4">
-                                <Plus className="w-5 h-5" />
-                                <span>Cadastrar Item</span>
+                            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-kanban-amber text-[#111318] rounded-lg px-4 py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:bg-[#c46d32] mt-2">
+                                <Plus className="w-4 h-4" />
+                                <span>Cadastrar</span>
                             </button>
                         </form>
 
                         {/* Listagem de Estoque com Filtro por Setor */}
                         <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#262A33] pb-3">
-                                <h4 className="font-semibold text-lg text-white uppercase tracking-wider">Insumos Disponíveis</h4>
+                            <div className="flex flex-col gap-2 border-b border-[#262A33] pb-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <h4 className="font-semibold text-sm text-white">Insumos</h4>
                                 {isProgrammerLocked ? (
                                     <div className="flex items-center gap-2 bg-[#111318] px-3 py-1.5 rounded-lg border border-[#262A33] text-xs font-bold text-[#E7E9ED]">
                                         <Lock className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
@@ -259,31 +291,47 @@ export default function Estoque() {
                                     </div>
                                 )}
                             </div>
+                            <div className="relative">
+                                <Search className="w-3.5 h-3.5 text-[#565B68] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="search"
+                                    value={buscaEstoque}
+                                    onChange={(e) => setBuscaEstoque(e.target.value)}
+                                    placeholder="Buscar por nome…"
+                                    className="w-full pl-8 pr-3 py-2 bg-[#111318] border border-[#262A33] rounded-lg text-xs text-[#E7E9ED] placeholder-[#565B68]"
+                                />
+                            </div>
+                            </div>
 
                             {(() => {
-                                const estoqueFiltrado = isProgrammerLocked
+                                const estoqueFiltrado = (isProgrammerLocked
                                     ? estoqueDoPerfil
                                     : estoque.filter(i => {
                                     if (setorFiltro === 'TODOS') return true;
                                     if (!i.setor || i.setor === 'TODOS') return true;
                                     return i.setor === setorFiltro;
+                                })).filter((i) => {
+                                    const q = buscaEstoque.trim().toLowerCase();
+                                    if (!q) return true;
+                                    return String(i.nome || '').toLowerCase().includes(q);
                                 });
 
                                 if (estoqueFiltrado.length === 0) {
                                     return (
-                                        <p className="text-sm font-bold tracking-widest uppercase text-[#565B68] border border-dashed border-[#333844] rounded-xl py-8 text-center bg-[#181B22]/80">
-                                            Nenhum insumo encontrado para este setor.
+                                        <p className="text-xs text-[#565B68] border border-dashed border-[#333844] rounded-xl py-6 text-center">
+                                            Nenhum insumo neste filtro.
                                         </p>
                                     );
                                 }
 
                                 return estoqueFiltrado.map((item) => {
-                                    const baixoEstoque = item.quantidade <= item.alerta_minimo;
+                                    const baixoEstoque = precisaPedirEstoque(item);
+                                    const un = unidadeEstoque(item);
                                     return (
                                         <div key={item.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 border rounded-xl bg-[#111318]/80 shadow-sm transition-colors hover:border-[#333844] gap-3 ${baixoEstoque ? 'border-red-500/50' : 'border-[#262A33]'}`}>
                                             <div className="min-w-0 flex-1 w-full sm:w-auto">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <p className="font-semibold text-base sm:text-lg text-white leading-snug">{item.nome}</p>
+                                                    <p className="font-medium text-sm text-white leading-snug">{item.nome}</p>
                                                     <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border shrink-0 ${
                                                         item.setor === 'EDM_FIO' 
                                                             ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]' 
@@ -295,15 +343,18 @@ export default function Estoque() {
                                                     }`}>
                                                         {item.setor === 'EDM_FIO' ? 'EDM Fio' : item.setor === 'TORNO' ? 'Torno' : item.setor === 'CNC' ? 'CNC' : 'Geral'}
                                                     </span>
+                                                    {baixoEstoque && (
+                                                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border border-[#C99A4A]/50 text-[#C99A4A]">Precisa pedir</span>
+                                                    )}
                                                     {baixoEstoque && <AlertTriangle className="w-4 h-4 text-[#C85558] shrink-0" />}
                                                 </div>
-                                                <p className="text-xs text-[#565B68] font-bold mt-1">Alerta: {item.alerta_minimo} unid.</p>
+                                                <p className="text-[11px] text-[#565B68] mt-0.5">Pedir abaixo de {item.alerta_minimo} {un}</p>
                                             </div>
 
                                             <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#262A33]">
                                                 <div className="flex items-center gap-2 sm:flex-col sm:items-center">
-                                                    <span className={`text-2xl sm:text-3xl font-semibold ${baixoEstoque ? 'text-[#C85558]' : 'text-white'}`}>{item.quantidade}</span>
-                                                    <span className="text-[10px] sm:text-xs font-bold text-[#7B808F] uppercase tracking-widest">unid</span>
+                                                    <span className={`text-lg font-semibold tabular-nums ${baixoEstoque ? 'text-[#C85558]' : 'text-white'}`}>{qtdEstoque(item)}</span>
+                                                    <span className="text-[10px] font-medium text-[#7B808F]">{un}</span>
                                                 </div>
                                                 <div className="flex gap-1.5 sm:gap-2 shrink-0">
                                                     <button onClick={() => setMovimentacao({ item, tipo: 'entrada' })} className="bg-[#181B22] hover:bg-kanban-green/10 text-[#7B808F] hover:text-kanban-green p-2 sm:p-3 rounded-lg border border-[#333844] hover:border-kanban-green/30 transition-colors shadow-sm active:scale-95" title="Dar entrada (compra, devolução, ajuste)">
@@ -312,7 +363,7 @@ export default function Estoque() {
                                                     <button onClick={() => setMovimentacao({ item, tipo: 'saida' })} className="bg-[#181B22] hover:bg-[#1F232B] text-[#7B808F] hover:text-[#E7E9ED] p-2 sm:p-3 rounded-lg border border-[#333844] transition-colors shadow-sm active:scale-95" title="Dar saída (consumo, perda, ajuste)">
                                                         <ArrowUpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                                                     </button>
-                                                    <button onClick={() => consumirEstoqueItem(item.id, 1)} className="bg-[#181B22] hover:bg-[#1F232B] text-[#7B808F] hover:text-[#E7E9ED] p-2 sm:p-3 rounded-lg border border-[#333844] font-bold transition-colors shadow-sm active:scale-95 flex items-center justify-center min-w-[36px] sm:min-w-[44px]" title="Retirar 1 unid. sem vincular a máquina">
+                                                    <button onClick={() => handleConsumoAvulso(item)} className="bg-[#181B22] hover:bg-[#1F232B] text-[#7B808F] hover:text-[#E7E9ED] p-2 sm:p-3 rounded-lg border border-[#333844] font-bold transition-colors shadow-sm active:scale-95 flex items-center justify-center min-w-[36px] sm:min-w-[44px]" title="Saída de 1 com motivo consumo avulso">
                                                         <span className="text-base sm:text-lg leading-none font-semibold">-1</span>
                                                     </button>
                                                     <button onClick={() => setItemParaDeletar(item.id)} className="bg-[#181B22] hover:bg-[rgba(200,85,88,0.1)] text-[#C85558]/70 hover:text-[#C85558] p-2 sm:p-3 rounded-lg border border-[#262A33] hover:border-[#C85558]/30 transition-colors shadow-sm active:scale-95" title="Excluir item do inventário">
@@ -329,12 +380,12 @@ export default function Estoque() {
 
                         {/* Movimentações recentes */}
                         <div className="space-y-3">
-                            <h4 className="font-semibold text-lg text-white mb-2 px-1 uppercase tracking-wider flex items-center gap-2">
-                                <History className="w-5 h-5 text-[#7B808F]" />
+                            <h4 className="font-semibold text-sm text-white mb-2 flex items-center gap-2">
+                                <History className="w-4 h-4 text-[#7B808F]" />
                                 Movimentações
                             </h4>
                             {movimentacoesEstoque.length === 0 ? (
-                                <p className="text-sm font-bold tracking-widest uppercase text-[#565B68] border border-dashed border-[#333844] rounded-xl py-8 text-center bg-[#181B22]/80">
+                                <p className="text-xs text-[#565B68] border border-dashed border-[#333844] rounded-xl py-6 text-center">
                                     Nenhuma entrada ou saída registrada.
                                 </p>
                             ) : (
@@ -373,15 +424,15 @@ export default function Estoque() {
                 <div className="space-y-6">
                     <div className={cardClasses}>
                         <div className={headerClasses}>
-                            <PenTool className="text-kanban-blue w-6 h-6" />
-                            <h3 className="text-xl font-bold text-white">Registrar Troca na Máquina</h3>
+                            <PenTool className="text-kanban-blue w-4 h-4" />
+                            <h3 className="text-sm font-semibold text-white">Troca na máquina</h3>
                         </div>
 
                         <div className="p-5">
                             <form onSubmit={handleRegistrarTroca} className="space-y-5">
-                                <div className="p-4 bg-[#7B808F]/10 border-2 border-kanban-blue/20 rounded-xl">
-                                    <p className="text-sm font-bold text-white leading-snug">
-                                        Vincule a retirada de um insumo a uma máquina. O sistema encerrará a contagem do insumo antigo e passará a monitorar a <strong>vida útil real</strong> deste novo item baseado no tempo da máquina Em Corte.
+                                <div className="p-3 bg-[#7B808F]/10 border border-kanban-blue/20 rounded-lg">
+                                    <p className="text-xs text-[#E7E9ED] leading-relaxed">
+                                        Baixa 1 unidade e inicia o ciclo de vida na máquina, com horas de corte até a próxima troca.
                                     </p>
                                 </div>
 
@@ -397,7 +448,7 @@ export default function Estoque() {
                                     <label className={titleClasses}>Consumível Instalado (Retirado do Estoque)</label>
                                     <select value={trocaInsumo} onChange={e => setTrocaInsumo(e.target.value)} className={inputClasses} required>
                                         <option value="" disabled>Selecione o insumo do estoque...</option>
-                                        {estoqueDoPerfil.map(i => <option key={i.id} value={i.nome}>{i.nome} (Disp: {i.quantidade})</option>)}
+                                        {estoqueDoPerfil.map(i => <option key={i.id} value={i.id}>{i.nome} ({qtdEstoque(i)} {unidadeEstoque(i)})</option>)}
                                     </select>
                                 </div>
 
@@ -409,9 +460,9 @@ export default function Estoque() {
                                     </select>
                                 </div>
 
-                                <button type="submit" className="w-full flex items-center justify-center gap-2 bg-kanban-amber text-[#111318] rounded-lg px-6 py-3 font-bold uppercase tracking-widest cursor-pointer transition-colors hover:bg-[#c46d32] shadow-sm mt-4">
-                                    <PenTool className="w-5 h-5" />
-                                    <span>Confirmar Troca e Iniciar Ciclo</span>
+                                <button type="submit" className="w-full flex items-center justify-center gap-2 bg-kanban-amber text-[#111318] rounded-lg px-4 py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:bg-[#c46d32] mt-2">
+                                    <PenTool className="w-4 h-4" />
+                                    <span>Confirmar troca</span>
                                 </button>
                             </form>
                         </div>
@@ -420,8 +471,8 @@ export default function Estoque() {
                     {/* ---------- MÉTRICAS / HISTÓRICO RECENTE ---------- */}
                     <div className={cardClasses}>
                         <div className={headerClasses}>
-                            <Clock className="text-[#D97D3D] w-6 h-6" />
-                            <h3 className="text-xl font-bold text-white">Visão de Rendimento</h3>
+                            <Clock className="text-[#D97D3D] w-4 h-4" />
+                            <h3 className="text-sm font-semibold text-white">Ciclos de insumo</h3>
                         </div>
 
                         <div className="p-5 bg-[#181B22] space-y-3 max-h-[400px] overflow-y-auto">
@@ -466,7 +517,7 @@ export default function Estoque() {
                     <div className={cardClasses}>
                         <div className={headerClasses}>
                             <Wrench className="w-5 h-5 text-[#C85558]" />
-                            <h3 className="font-semibold text-white text-lg">Histórico de Quebras (estoque)</h3>
+                            <h3 className="font-semibold text-white text-sm">Quebras (Kanban)</h3>
                         </div>
                         <div className="p-5 space-y-3 max-h-[320px] overflow-y-auto">
                             {historicoQuebrasEstoque.length === 0 ? (

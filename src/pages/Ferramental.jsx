@@ -17,9 +17,12 @@ export default function Ferramental() {
         addFerramentalItem,
         registrarQuebraFerramenta,
         removeFerramentalItem,
+        vincularFerramentalAoSku,
+        estoque,
     } = useAppStore();
 
     const [nome, setNome] = useState('');
+    const [skuId, setSkuId] = useState('');
     const [tipo, setTipo] = useState('Fresa');
     const [registrarCodigo, setRegistrarCodigo] = useState(false);
     const [codigo, setCodigo] = useState('');
@@ -45,17 +48,23 @@ export default function Ferramental() {
 
     const handleAdd = async (e) => {
         e.preventDefault();
-        if (!nome.trim()) return;
+        if (!skuId) {
+            alert('Escolha o SKU do estoque. Ferramental é a peça física; o saldo fica no estoque.');
+            return;
+        }
         try {
+            const sku = estoque.find((i) => i.id === skuId);
             await addFerramentalItem({
-                nome: nome.trim(),
+                nome: nome.trim() || sku?.nome,
                 tipo,
                 codigo: registrarCodigo ? codigo.trim() : '',
                 observacao: registrarCodigo ? motivoCodigo.trim() : '',
                 vidaUtilHoras: vidaUtil,
                 alertaHoras,
+                estoqueItemId: skuId,
             });
             setNome('');
+            setSkuId('');
             setRegistrarCodigo(false);
             setCodigo('');
             setMotivoCodigo('');
@@ -64,7 +73,7 @@ export default function Ferramental() {
             setSchemaMissing(false);
         } catch (err) {
             console.error(err);
-            alert('Erro ao cadastrar ferramenta. Verifique a conexão.');
+            alert(err.message || 'Erro ao cadastrar ferramenta.');
         }
     };
 
@@ -109,16 +118,17 @@ export default function Ferramental() {
         : [];
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-semibold text-white tracking-tight flex items-center gap-3">
-                    <Wrench className="text-kanban-amber w-7 h-7" />
-                    Ferramental CNC
-                </h1>
-                <p className="text-[#7B808F] text-sm mt-2 max-w-2xl">
-                    Controle de ferramentas de usinagem (fresas, brocas, inserts, mandris).
-                    Clique em qualquer card do inventário para ver **detalhes de localização, O.S. em andamento e quem registrou quebras**.
-                </p>
+        <div className="w-full space-y-6 pb-10">
+            <div className="flex items-start gap-3 bg-[#181B22] p-4 rounded-xl border border-[#262A33]">
+                <div className="p-2 bg-kanban-amber/10 rounded-lg border border-kanban-amber/30 shrink-0">
+                    <Wrench className="text-kanban-amber w-5 h-5" />
+                </div>
+                <div>
+                    <h1 className="text-xl font-semibold text-white">Ferramental</h1>
+                    <p className="text-[#7B808F] text-xs mt-0.5 max-w-2xl">
+                        Instância física ligada a um SKU do estoque. Cadastrar aqui baixa 1 do saldo. Sem saldo, dê entrada no estoque primeiro.
+                    </p>
+                </div>
             </div>
 
             {schemaMissing && (
@@ -131,17 +141,33 @@ export default function Ferramental() {
                 </div>
             )}
 
-            <div className="grid lg:grid-cols-2 gap-6">
-                <section className="bg-[#181B22]/60 border border-[#262A33] rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-1">Cadastrar ferramenta</h2>
-                    <p className="text-xs text-[#565B68] mb-4">Insira o nome e tipo. Marque a opção se desejar registrar um código especificando o motivo.</p>
+            <div className="grid lg:grid-cols-2 gap-5">
+                <section className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
+                    <h2 className="text-sm font-semibold text-white mb-1">Serializar do estoque</h2>
+                    <p className="text-xs text-[#565B68] mb-4">Obrigatório escolher o SKU. Baixa 1 unidade e cria esta ferramenta com vida útil própria.</p>
                     <form onSubmit={handleAdd} className="space-y-3">
+                        <select
+                            className="w-full bg-[#111318] border border-[#333844] rounded-xl px-4 py-2.5 text-sm text-white focus:border-kanban-amber outline-none"
+                            value={skuId}
+                            onChange={(e) => {
+                                setSkuId(e.target.value);
+                                const sku = estoque.find((i) => i.id === e.target.value);
+                                if (sku && !nome) setNome(sku.nome);
+                            }}
+                            required
+                        >
+                            <option value="">SKU do estoque…</option>
+                            {estoque.map((i) => (
+                                <option key={i.id} value={i.id} disabled={(i.quantidade || 0) < 1}>
+                                    {i.nome} · {i.quantidade || 0} {i.unidade || 'un'} {(i.quantidade || 0) < 1 ? '(sem saldo)' : ''}
+                                </option>
+                            ))}
+                        </select>
                         <input
                             className="w-full bg-[#111318] border border-[#333844] rounded-xl px-4 py-2.5 text-sm text-white focus:border-kanban-amber outline-none"
-                            placeholder="Nome da ferramenta (ex: Broca Ø6 HSS ou Fresa D10 4F)"
+                            placeholder="Nome desta peça (opcional — usa o do SKU)"
                             value={nome}
                             onChange={(e) => setNome(e.target.value)}
-                            required
                         />
                         <div className="grid grid-cols-1 gap-3">
                             <select
@@ -221,10 +247,10 @@ export default function Ferramental() {
                     </form>
                 </section>
 
-                <section className="bg-[#181B22]/60 border border-[#262A33] rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                        <AlertTriangle className="text-[#C85558] w-5 h-5" />
-                        Registrar quebra de ferramenta
+                <section className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
+                    <h2 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                        <AlertTriangle className="text-[#C85558] w-4 h-4" />
+                        Registrar quebra
                     </h2>
                     <p className="text-xs text-[#565B68] mb-4">Registre incidentes diretos com máquina e operador para histórico da oficina.</p>
                     <form onSubmit={handleQuebra} className="space-y-3">
@@ -271,9 +297,9 @@ export default function Ferramental() {
                 </section>
             </div>
 
-            <section className="bg-[#181B22]/60 border border-[#262A33] rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-white">Inventário ({ferramental.length})</h2>
+            <section className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-white">Inventário ({ferramental.length})</h2>
                     <span className="text-xs text-[#565B68] font-medium">Clique no card para abrir detalhes e rastreamento</span>
                 </div>
                 {ferramental.length === 0 ? (
@@ -284,7 +310,8 @@ export default function Ferramental() {
                             const statusInfo = STATUS_FERRAMENTAL[f.status] || STATUS_FERRAMENTAL.disponivel;
                             const pct = pctVida(f);
                             const emAlerta = f.alerta_horas > 0 && (f.vida_util_horas - f.horas_usadas) <= f.alerta_horas;
-                            const maq = f.maquina_id ? maquinas.find(m => m.id === f.maquina_id) : null;
+                            const sku = estoque.find((i) => i.id === (f.estoque_item_id || f.estoqueItemId));
+                            const maq = f.maquina_id ? maquinas.find((m) => m.id === f.maquina_id) : null;
                             return (
                                 <div
                                     key={f.id}
@@ -293,7 +320,7 @@ export default function Ferramental() {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <div className="font-bold text-white group-hover:text-kanban-amber transition-colors flex items-center gap-2">
+                                            <div className="font-medium text-sm text-white group-hover:text-kanban-amber transition-colors flex items-center gap-2">
                                                 {f.nome}
                                                 {f.codigo && (
                                                     <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-kanban-amber/20 text-kanban-amber border border-kanban-amber/30">
@@ -303,18 +330,39 @@ export default function Ferramental() {
                                             </div>
                                             <div className="text-xs text-[#565B68] mt-0.5 flex items-center gap-2">
                                                 <span>{f.tipo}</span>
+                                                {sku ? (
+                                                    <span className="text-[#4A9D74]">· SKU {sku.nome}</span>
+                                                ) : (
+                                                    <span className="text-[#C99A4A]">· sem SKU</span>
+                                                )}
                                                 {maq && (
                                                     <span className="text-[#7B808F] font-semibold flex items-center gap-1">
                                                         · <Cpu className="w-3 h-3 text-[#4A9D74]" /> {maq.nome}
                                                     </span>
                                                 )}
                                             </div>
-                                            {f.observacao && (
+                                            {!sku && (
+                                                <select
+                                                    className="mt-2 w-full bg-[#111318] border border-[#333844] rounded-lg px-2 py-1.5 text-[11px] text-white"
+                                                    defaultValue=""
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        if (e.target.value) vincularFerramentalAoSku(f.id, e.target.value);
+                                                    }}
+                                                >
+                                                    <option value="">Vincular a um SKU (sem baixar saldo)</option>
+                                                    {estoque.map((i) => (
+                                                        <option key={i.id} value={i.id}>{i.nome}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                            {f.observacao ? (
                                                 <div className="text-xs text-[#7B808F] bg-[#181B22]/80 p-2 rounded-lg mt-2 border border-[#262A33]">
                                                     <span className="font-bold text-[#565B68] block text-[10px] uppercase">Motivo do código:</span>
                                                     {f.observacao}
                                                 </div>
-                                            )}
+                                            ) : null}
                                         </div>
                                         <button
                                             onClick={(e) => {
@@ -357,8 +405,8 @@ export default function Ferramental() {
             </section>
 
             {historicoFerramental.length > 0 && (
-                <section className="bg-[#181B22]/60 border border-[#262A33] rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <section className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
+                    <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                         <History className="w-5 h-5 text-kanban-violet" />
                         Histórico recente de ferramentas
                     </h2>
