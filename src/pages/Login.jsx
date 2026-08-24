@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
 import { Mail, Lock, Factory, Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-react';
 
 export default function Login({ initialMode = 'login', onBack }) {
@@ -138,9 +137,9 @@ export default function Login({ initialMode = 'login', onBack }) {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {isLocalMode() && mode === 'login' && (
+                        {mode === 'login' && (
                             <div className="space-y-2 border-b border-[#262A33] pb-5">
-                                <p className="text-[12px] text-[#7B808F]">Modo local — dados de exemplo</p>
+                                <p className="text-[12px] text-[#7B808F]">Fábrica de exemplo — sem conta</p>
                                 <button
                                     type="button"
                                     onClick={() => enterLocalStudyMode('admin')}

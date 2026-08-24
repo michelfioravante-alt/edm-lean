@@ -66,6 +66,13 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
+                            onClick={() => enterLocalStudyMode('admin')}
+                            className="hidden text-[13px] text-[#7B808F] hover:text-[#E7E9ED] sm:inline"
+                        >
+                            Ver exemplo
+                        </button>
+                        <button
+                            type="button"
                             onClick={onLogin}
                             className="rounded-md border border-[#333844] px-3.5 py-1.5 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/50 hover:text-white"
                         >
@@ -97,6 +104,13 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 {item.label}
                             </a>
                         ))}
+                        <button
+                            type="button"
+                            onClick={() => { setMenuOpen(false); enterLocalStudyMode('admin'); }}
+                            className="mt-2 w-full rounded-md border border-[#333844] py-2 text-[13px] text-[#E7E9ED]"
+                        >
+                            Abrir fábrica de exemplo
+                        </button>
                     </div>
                 )}
             </header>
@@ -115,20 +129,19 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <div className="mt-10 flex flex-wrap items-center gap-4">
                         <button
                             type="button"
-                            onClick={onLogin}
+                            onClick={() => enterLocalStudyMode('admin')}
                             className="rounded-md bg-[#D97D3D] px-5 py-2.5 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32]"
+                        >
+                            Abrir fábrica de exemplo
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onLogin}
+                            className="text-[13px] text-[#9DA2AE] underline-offset-4 hover:text-[#E7E9ED] hover:underline"
                         >
                             Entrar
                         </button>
-                        {local ? (
-                            <button
-                                type="button"
-                                onClick={() => enterLocalStudyMode('admin')}
-                                className="text-[13px] text-[#9DA2AE] underline-offset-4 hover:text-[#E7E9ED] hover:underline"
-                            >
-                                Abrir exemplo
-                            </button>
-                        ) : (
+                        {!local && (
                             <button
                                 type="button"
                                 onClick={onRegister}
@@ -196,20 +209,18 @@ export default function LandingPage({ onLogin, onRegister }) {
                             <div className="mt-10 flex flex-wrap gap-4">
                                 <button
                                     type="button"
-                                    onClick={onLogin}
+                                    onClick={() => enterLocalStudyMode('admin')}
                                     className="rounded-md border border-[#333844] px-4 py-2 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/40"
+                                >
+                                    Ver com dados de exemplo
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={onLogin}
+                                    className="text-[13px] text-[#7B808F] hover:text-[#E7E9ED]"
                                 >
                                     Entrar
                                 </button>
-                                {local && (
-                                    <button
-                                        type="button"
-                                        onClick={() => enterLocalStudyMode('admin')}
-                                        className="text-[13px] text-[#7B808F] hover:text-[#E7E9ED]"
-                                    >
-                                        Ver com dados de exemplo
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>

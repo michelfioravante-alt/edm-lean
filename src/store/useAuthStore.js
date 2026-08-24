@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
-import { isLocalMode } from '../local/mode';
+import { isDemoSession, isLocalMode } from '../local/mode';
 import { loadDb, resetDb } from '../local/localDatabase';
 import { convitesService } from '../services/convitesService';
 import { LOCAL_EMPRESA_ID, LOCAL_USER_ID } from '../local/seedData';
@@ -48,11 +48,12 @@ export const useAuthStore = create((set, get) => ({
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
                 // No mobile, SIGNED_IN pode disparar no refresh de token anônimo.
                 // Só buscamos perfil se houver usuário e não estivermos já no meio de um cadastro.
-                if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress) {
+                if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress && !isDemoSession()) {
                     setTimeout(() => {
                         get().fetchUserProfile(session.user);
                     }, 0);
                 } else if (event === 'SIGNED_OUT') {
+                    if (isDemoSession()) return;
                     set({ user: null, role: null, empresaId: null, nomeEmpresa: null, codigoConvite: null, signUpInProgress: false });
                 } else if (event === 'PASSWORD_RECOVERY') {
                     set({ isResettingPassword: true });
@@ -87,6 +88,7 @@ export const useAuthStore = create((set, get) => ({
 
     // Busca o perfil estendido (empresa_id e funcao) no banco de dados
     fetchUserProfile: async (authUser) => {
+        if (isDemoSession()) return;
         try {
             const { data, error } = await supabase
                 .from('perfis')
