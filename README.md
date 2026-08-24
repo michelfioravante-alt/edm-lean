@@ -19,7 +19,7 @@
 ## 🔥 Principais Recursos da Aplicação
 
 ### 🌀 1. Arquitetura Multi-Setor Produtivo
-- **`🌀 Centro de Usinagem CNC`**: Kanban, OEE e cálculo de horas direcionados a centros de usinagem de 3 e 5 eixos.
+- **`🌀 Centro de Usinagem CNC`**: Kanban, OEE e cálculo de horas direcionados a centros de usinagem.
 - **`⚡ Eletroerosão a Fio (EDM)`**: Gestão especializada de WEDM, com controle de consumo de fio e acabamento.
 - **`🏭 Visão Geral da Fábrica (Diretoria)`**: Visão consolidada de todas as células de produção e ferramentaria.
 

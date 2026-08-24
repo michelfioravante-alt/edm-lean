@@ -29,8 +29,9 @@ import {
 } from '../utils/dashboardMetrics';
 import {
     Activity, AlertTriangle, Clock, Cpu, DollarSign, Factory, Filter, LayoutDashboard,
-    Lock, PauseCircle, Target, Timer, TrendingUp, Zap,
+    Lock, PauseCircle, Target, Timer, TrendingUp, Zap, FileSpreadsheet,
 } from 'lucide-react';
+import ExportarDadosModal from '../components/common/ExportarDadosModal';
 
 const SETOR_LABEL = { CNC: 'CNC', EDM_FIO: 'Eletrofio', EXTERNO: 'Externo' };
 
@@ -54,6 +55,7 @@ export default function Dashboard() {
     const [periodo, setPeriodo] = useState('mes');
     const [turno, setTurno] = useState('todos');
     const [setorFilter, setSetorFilter] = useState(initialSector);
+    const [exportOpen, setExportOpen] = useState(false);
 
     const concluidas = useMemo(
         () => filtrarConcluidas(kanban.concluido || [], {
@@ -139,6 +141,15 @@ export default function Dashboard() {
                                 ))}
                             </select>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => setExportOpen(true)}
+                            className="inline-flex items-center gap-1.5 bg-[#111318] px-3 py-2 rounded-[7px] border border-[#262A33] text-xs font-medium text-[#E7E9ED] hover:border-[#D97D3D]/40"
+                            title="Importar dados"
+                        >
+                            <FileSpreadsheet className="w-3.5 h-3.5 text-[#D97D3D]" />
+                            Importar dados
+                        </button>
                     </div>
                 </div>
 
@@ -263,6 +274,7 @@ export default function Dashboard() {
                     <ProducaoPorOperadorChart concluidas={concluidas} />
                 </div>
             </div>
+            <ExportarDadosModal open={exportOpen} onClose={() => setExportOpen(false)} />
         </ErrorBoundary>
     );
 }

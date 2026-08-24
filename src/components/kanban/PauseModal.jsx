@@ -285,7 +285,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                     Ao confirmar o envio para Tratamento Térmico externo, esta peça sairá da máquina atual e voltará para a coluna **&quot;A fazer&quot;** com a etiqueta <span className="px-1.5 py-0.5 rounded bg-[rgba(200,85,88,0.12)] text-[#C85558] font-bold border border-[#C85558]/40">[Aguardando Retorno T.T.]</span>.
                                 </p>
                                 <p className="text-[#7B808F] text-[11px]">
-                                    Isso libera a máquina para receber outros componentes e não polui o fluxo ativo de corte da oficina.
+                                    Isso libera a máquina para receber outros componentes e não polui o fluxo ativo de corte da ferramentaria.
                                 </p>
                             </div>
                         )}

@@ -252,7 +252,7 @@ export default function Ferramental() {
                         <AlertTriangle className="text-[#C85558] w-4 h-4" />
                         Registrar quebra
                     </h2>
-                    <p className="text-xs text-[#565B68] mb-4">Registre incidentes diretos com máquina e operador para histórico da oficina.</p>
+                    <p className="text-xs text-[#565B68] mb-4">Registre incidentes diretos com máquina e operador para histórico da ferramentaria.</p>
                     <form onSubmit={handleQuebra} className="space-y-3">
                         <select
                             className="w-full bg-[#111318] border border-[#333844] rounded-xl px-4 py-2.5 text-sm text-white"

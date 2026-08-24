@@ -317,8 +317,11 @@ html {
 @media print {
   body * { visibility: hidden; }
   #folha-print-root,
-  #folha-print-root * { visibility: visible; }
-  #folha-print-root {
+  #folha-print-root *,
+  #ajuda-print-root,
+  #ajuda-print-root * { visibility: visible; }
+  #folha-print-root,
+  #ajuda-print-root {
     position: absolute;
     inset: 0;
     background: white;

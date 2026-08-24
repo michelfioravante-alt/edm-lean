@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { isLocalMode } from '../local/mode';
+import { HelpButton } from '../components/common/HelpModal';
 
 const NAV = [
     { id: 'produto', label: 'Produto' },
@@ -64,6 +65,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                     </nav>
 
                     <div className="flex items-center gap-3">
+                        <HelpButton className="hidden items-center gap-1 text-[13px] text-[#7B808F] hover:text-[#E7E9ED] sm:inline-flex" />
                         <button
                             type="button"
                             onClick={() => enterLocalStudyMode('admin')}
@@ -118,13 +120,13 @@ export default function LandingPage({ onLogin, onRegister }) {
             <main>
                 <section id="home" className="mx-auto max-w-[1080px] px-6 pb-24 pt-20 sm:pt-28">
                     <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">
-                        Produção · Matrizaria · CNC · Eletrofio
+                        Produção · Ferramentaria · CNC · Eletrofio
                     </p>
                     <h1 className="mt-5 max-w-[18ch] font-['Space_Grotesk'] text-[40px] font-medium leading-[1.12] tracking-tight text-white sm:text-[56px]">
-                        Ordem na oficina. Sem o peso de um ERP.
+                        Ordem na ferramentaria. Sem o peso de um ERP.
                     </h1>
                     <p className="mt-6 max-w-[540px] text-[17px] leading-relaxed text-[#9DA2AE]">
-                        Software de chão de fábrica para pequenas matrizarias: kanban por setor, roteiro da peça, folha de processo e estoque de ferramenta — no mesmo lugar.
+                        Software de chão de fábrica para equipes pequenas: kanban por setor, roteiro da peça, folha de processo e estoque de ferramenta — no mesmo lugar.
                     </p>
                     <div className="mt-10 flex flex-wrap items-center gap-4">
                         <button
@@ -157,7 +159,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <div className="mx-auto max-w-[1080px] px-6 py-20">
                         <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">Produto</p>
                         <h2 className="mt-3 max-w-[22ch] font-['Space_Grotesk'] text-[28px] font-medium tracking-tight text-white sm:text-[32px]">
-                            O que a oficina precisa acompanhar, e nada além disso.
+                            O que a ferramentaria precisa acompanhar, e nada além disso.
                         </h2>
                         <div className="mt-14 divide-y divide-[#262A33] border-y border-[#262A33]">
                             {[
@@ -182,7 +184,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         <div>
                             <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">Uso</p>
                             <h2 className="mt-3 font-['Space_Grotesk'] text-[28px] font-medium tracking-tight text-white">
-                                Três pessoas, um fluxo.
+                                Três perfis, um fluxo.
                             </h2>
                             <ol className="mt-10 space-y-8">
                                 <li>
@@ -201,7 +203,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         </div>
                         <div className="lg:pt-10">
                             <p className="text-[14px] leading-relaxed text-[#9DA2AE]">
-                                Pensado para ferramentarias de poucas pessoas — CNC 3 e 5 eixos, eletrofio e um pouco de serviço fora de casa. Não substitui contabilidade nem ERP fiscal.
+                                Pensado para equipes pequenas — centros de usinagem, eletrofio e um pouco de serviço fora de casa. Não substitui contabilidade nem ERP fiscal.
                             </p>
                             <p className="mt-6 text-[14px] leading-relaxed text-[#7B808F]">
                                 Acesso por conta e PIN no terminal. Equipe entra por convite.
@@ -230,7 +232,10 @@ export default function LandingPage({ onLogin, onRegister }) {
             <footer className="border-t border-[#262A33]">
                 <div className="mx-auto flex max-w-[1080px] flex-col gap-2 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-[12px] text-[#565B68]">© 2026 EDM Lean</p>
-                    <p className="text-[12px] text-[#565B68]">Pequenas matrizarias · CNC · Eletroerosão a fio</p>
+                    <div className="flex items-center gap-4">
+                        <HelpButton className="inline-flex items-center gap-1 text-[12px] text-[#565B68] hover:text-[#E7E9ED]" />
+                        <p className="text-[12px] text-[#565B68]">Pequenas ferramentarias · centros de usinagem · eletrofio</p>
+                    </div>
                 </div>
             </footer>
         </div>

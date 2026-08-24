@@ -279,7 +279,7 @@ export function createSeedDatabase() {
                 },
                 created_at: ago(72), is_pausado: false,
                 historico_pausas: [
-                    { fase: 'setup', motivo: 'Ajuste de Offset / Zero', observacao: 'Alinhamento 5 eixos apalpador Renishaw', inicio: ago(40), duracaoHoras: 0.6 }
+                    { fase: 'setup', motivo: 'Ajuste de Offset / Zero', observacao: 'Alinhamento com apalpador Renishaw', inicio: ago(40), duracaoHoras: 0.6 }
                 ],
                 tempos_fases: { setup: 1.2, emCorte: 18.6, afericao: 0.5 },
             },

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { Mail, Lock, Factory, Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-react';
+import { HelpButton } from '../components/common/HelpModal';
 
 export default function Login({ initialMode = 'login', onBack }) {
     const { login, signUp, requestPasswordReset, updatePassword, isResettingPassword, enterLocalStudyMode } = useAuthStore();
@@ -69,10 +70,10 @@ export default function Login({ initialMode = 'login', onBack }) {
     };
 
     const titles = {
-        register: { title: 'Criar conta', subtitle: 'Nome da oficina e acesso do gestor' },
+        register: { title: 'Criar conta', subtitle: 'Nome da ferramentaria e acesso do gestor' },
         forgot_password: { title: 'Recuperar acesso', subtitle: 'Enviamos um link por e-mail' },
         reset_password: { title: 'Nova senha', subtitle: 'Defina a senha de acesso' },
-        login: { title: 'Entrar', subtitle: 'Acesso à oficina' },
+        login: { title: 'Entrar', subtitle: 'Acesso à ferramentaria' },
     };
     const header = titles[mode] || titles.login;
 
@@ -96,16 +97,19 @@ export default function Login({ initialMode = 'login', onBack }) {
                         </span>
                         <span className="font-['Space_Grotesk'] text-[15px] tracking-tight text-[#E7E9ED]">EDM Lean</span>
                     </div>
-                    {onBack && (
-                        <button
-                            type="button"
-                            onClick={onBack}
-                            className="inline-flex items-center gap-1.5 text-[13px] text-[#7B808F] hover:text-[#E7E9ED]"
-                        >
-                            <ArrowLeft size={14} />
-                            Voltar
-                        </button>
-                    )}
+                    <div className="flex items-center gap-4">
+                        {onBack && (
+                            <button
+                                type="button"
+                                onClick={onBack}
+                                className="inline-flex items-center gap-1.5 text-[13px] text-[#7B808F] hover:text-[#E7E9ED]"
+                            >
+                                <ArrowLeft size={14} />
+                                Voltar
+                            </button>
+                        )}
+                        <HelpButton className="inline-flex items-center gap-1 text-[13px] text-[#7B808F] hover:text-[#E7E9ED]" />
+                    </div>
                 </div>
             </header>
 
@@ -175,14 +179,14 @@ export default function Login({ initialMode = 'login', onBack }) {
 
                         {mode === 'register' && (
                             <div>
-                                <label className={labelCls}>Oficina</label>
+                                <label className={labelCls}>Ferramentaria</label>
                                 <div className="relative">
                                     <Factory className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#565B68]" />
                                     <input
                                         type="text"
                                         value={companyName}
                                         onChange={(e) => setCompanyName(e.target.value)}
-                                        placeholder="Nome da matrizaria"
+                                        placeholder="Nome da ferramentaria"
                                         className={inputCls}
                                         required
                                     />
@@ -199,7 +203,7 @@ export default function Login({ initialMode = 'login', onBack }) {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="nome@oficina.com"
+                                        placeholder="nome@ferramentaria.com"
                                         className={inputCls}
                                         required
                                     />

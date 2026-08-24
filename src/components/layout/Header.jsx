@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { Briefcase, LogOut, ShieldCheck, Cpu, Zap, Menu } from 'lucide-react';
+import { Briefcase, LogOut, ShieldCheck, Cpu, Zap, Menu, HelpCircle, FileSpreadsheet } from 'lucide-react';
 import { isLocalMode } from '../../local/mode';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import ManagerPinModal from '../common/ManagerPinModal';
+import { HelpModal } from '../common/HelpModal';
+import ExportarDadosModal from '../common/ExportarDadosModal';
 
 export default function Header({ onMenuToggle }) {
     const { nomeEmpresa, logout, role, setorPadrao, enterLocalStudyMode, setSetorPadrao } = useAuthStore();
     const demoMode = isLocalMode();
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+    const [helpOpen, setHelpOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
 
     const entrarProgramador = (setor) => {
         if (role === 'programmer') {
@@ -115,6 +119,26 @@ export default function Header({ onMenuToggle }) {
                         <span>ONLINE</span>
                     </div>
 
+                    <button
+                        type="button"
+                        onClick={() => setExportOpen(true)}
+                        className="p-1.5 text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] rounded-md"
+                        aria-label="Importar dados"
+                        title="Importar dados"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setHelpOpen(true)}
+                        className="p-1.5 text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] rounded-md"
+                        aria-label="Ajuda"
+                        title="Ajuda e acesso na fábrica"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                    </button>
+
                     {/* Botão Sair no mobile */}
                     <button
                         onClick={() => logout()}
@@ -132,6 +156,8 @@ export default function Header({ onMenuToggle }) {
                 onClose={() => setIsPinModalOpen(false)}
                 onSuccess={() => enterLocalStudyMode('admin', 'TODOS')}
             />
+            <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+            <ExportarDadosModal open={exportOpen} onClose={() => setExportOpen(false)} />
         </header>
     );
 }
