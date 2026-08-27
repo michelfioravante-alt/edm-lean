@@ -151,6 +151,7 @@ export const osService = {
             estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
             aguardando_tt: osData.aguardando_tt ?? false,
             observacao_tt: osData.observacao_tt || null,
+            em_fila: osData.em_fila ?? osData.emFila ?? false,
             observacoes: osData.observacoes || osData.observacao || null,
             folha_imagem: null,
         };
@@ -177,6 +178,7 @@ export const osService = {
                 dropIfMissing('voltou_em', 'voltou_em');
                 dropIfMissing('checklist_ferramentas', 'checklist_ferramentas');
                 dropIfMissing('link_programa', 'link_programa');
+                dropIfMissing('em_fila', 'em_fila');
                 if (msg.includes('is_retrabalho') || msg.includes('parent_id')) {
                     delete payload.is_retrabalho;
                     delete payload.parent_id;
@@ -346,6 +348,7 @@ export const osService = {
         // Campos do módulo CNC (requer supabase_cnc_campos.sql aplicado)
         if (fields.codigoMolde !== undefined) payload.codigo_molde = fields.codigoMolde || null;
         if (fields.componenteMolde !== undefined) payload.componente_molde = fields.componenteMolde || null;
+        if (fields.setor !== undefined) payload.setor = fields.setor || null;
         if (fields.numeroPrograma !== undefined) payload.numero_programa = fields.numeroPrograma || null;
         if (fields.totalSetups !== undefined) payload.total_setups = parseInt(fields.totalSetups) || 1;
         if (fields.setupAtual !== undefined) payload.setup_atual = parseInt(fields.setupAtual) || 1;
@@ -353,7 +356,13 @@ export const osService = {
         if (fields.detalhesSetups !== undefined) payload.detalhes_setups = fields.detalhesSetups;
         if (fields.programado !== undefined) payload.programado = fields.programado;
         if (fields.valorOrcado !== undefined) payload.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
+        if (fields.aguardando_tt !== undefined) payload.aguardando_tt = fields.aguardando_tt;
+        if (fields.observacao_tt !== undefined) payload.observacao_tt = fields.observacao_tt;
+        if (fields.em_fila !== undefined || fields.emFila !== undefined) {
+            payload.em_fila = fields.em_fila ?? fields.emFila;
+        }
         if (fields.nxImport !== undefined) payload.nx_import = fields.nxImport;
+        if (fields.nx_import !== undefined) payload.nx_import = fields.nx_import;
         if (fields.checklistFerramentas !== undefined) payload.checklist_ferramentas = fields.checklistFerramentas;
         if (fields.linkPrograma !== undefined) payload.link_programa = fields.linkPrograma || null;
         if (fields.observacoes !== undefined) payload.observacoes = fields.observacoes || null;
@@ -380,6 +389,15 @@ export const osService = {
 
         if (error) {
             const msg = `${error.message || ''} ${error.details || ''}`;
+            if (msg.includes('em_fila')) {
+                delete payload.em_fila;
+                if (payload.nx_import && typeof payload.nx_import === 'object') {
+                    payload.nx_import = {
+                        ...payload.nx_import,
+                        em_fila: fields.em_fila ?? fields.emFila,
+                    };
+                }
+            }
             if (msg.includes('checklist_ferramentas') || msg.includes('link_programa')) {
                 delete payload.checklist_ferramentas;
                 delete payload.link_programa;
@@ -388,6 +406,11 @@ export const osService = {
                     checklistFerramentas: fields.checklistFerramentas,
                     linkPrograma: fields.linkPrograma,
                 };
+                const retry = await supabase.from('ordens_servico').update(payload).eq('id', id).eq('empresa_id', empresaId).select().single();
+                if (retry.error) throw retry.error;
+                return retry.data;
+            }
+            if (msg.includes('em_fila')) {
                 const retry = await supabase.from('ordens_servico').update(payload).eq('id', id).eq('empresa_id', empresaId).select().single();
                 if (retry.error) throw retry.error;
                 return retry.data;

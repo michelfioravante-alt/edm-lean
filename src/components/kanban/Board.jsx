@@ -20,7 +20,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { KANBAN_COLUMNS } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
-import { kanbanPrecisaProgramar, todosKanbans } from '../../constants/osWorkflow';
+import { kanbanPrecisaProgramar, todosKanbans, kanbanEmFila } from '../../constants/osWorkflow';
 import { SETORES_PROGRAMADOR, setorPermitido, filtrarEstoqueDoPerfil, setorEfetivoProgramador } from '../../constants/roles';
 
 export default function Board() {
@@ -185,7 +185,8 @@ export default function Board() {
 
     const getFilteredCards = (colKey, cards) => {
         if (!cards) return [];
-        let list = cards;
+        // Peças ainda na fila do molde ficam só na aba Moldes até liberar
+        let list = cards.filter((os) => !kanbanEmFila(os));
         if (activeSector !== 'TODOS') {
             list = list.filter((os) => {
                 const osSetor = os.setor || os.tipo_processo || 'CNC';

@@ -341,3 +341,16 @@ html {
     break-after: auto;
   }
 }
+
+/* Campo de data — calendário nativo visível no tema escuro */
+input[type="date"].edm-date-input {
+  color-scheme: dark;
+}
+input[type="date"].edm-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+  filter: invert(0.85);
+}
+input[type="date"].edm-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

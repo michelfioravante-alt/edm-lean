@@ -1050,11 +1050,15 @@ export const useAppStore = create((set) => ({
                 tempoEstimadoCorteMinutos: k.tempoEstimadoCorteMinutos,
                 tempoEstimadoSetupHoras: k.tempoEstimadoSetupHoras,
                 tempoEstimadoSetupMinutos: k.tempoEstimadoSetupMinutos,
-                programado: k.setor === 'EXTERNO',
+                programado: k.setor === 'EXTERNO' ? true : (k.programado ?? cabecalho.programado ?? false),
                 os_grupo_id: grupoId,
                 roteiro_ordem: i + 1,
                 roteiro: k.roteiro || cabecalho.roteiro || [],
                 status: 'A fazer',
+                em_fila: k.em_fila ?? k.emFila ?? cabecalho.em_fila ?? cabecalho.emFila ?? false,
+                nxImport: k.nxImport || k.nx_import || cabecalho.nxImport || cabecalho.nx_import || null,
+                folhaBlob: k.folhaBlob || cabecalho.folhaBlob || null,
+                observacoes: k.observacoes != null ? k.observacoes : cabecalho.observacoes,
             }, { optimistic: false });
             criados.push(created);
         }
@@ -1065,10 +1069,24 @@ export const useAppStore = create((set) => ({
         try {
             const updated = await osService.editOs(id, fields);
             set((state) => {
+                const patch = { ...updated };
+                if (fields.em_fila !== undefined || fields.emFila !== undefined) {
+                    const v = fields.em_fila ?? fields.emFila;
+                    patch.em_fila = v;
+                    patch.emFila = v;
+                }
+                if (fields.nxImport !== undefined) {
+                    patch.nx_import = fields.nxImport;
+                    patch.nxImport = fields.nxImport;
+                }
+                if (fields.setor !== undefined) {
+                    patch.setor = fields.setor;
+                    patch.tipo_processo = fields.setor;
+                }
                 const newKanban = {};
                 for (const col of Object.keys(state.kanban)) {
-                    newKanban[col] = (state.kanban[col] || []).map(os =>
-                        os.id === id ? { ...os, ...updated } : os
+                    newKanban[col] = (state.kanban[col] || []).map((os) =>
+                        os.id === id ? { ...os, ...patch } : os,
                     );
                 }
                 return { kanban: newKanban };

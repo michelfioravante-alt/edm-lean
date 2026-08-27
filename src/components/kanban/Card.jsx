@@ -10,6 +10,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { kanbanPrecisaProgramar, labelSetor, custoHoraKanban, listarKanbansDoGrupo, horasKanban } from '../../constants/osWorkflow';
 import { lerChecklistFerramentas, progressoChecklist, lerLinkPrograma } from '../../utils/ferramentasChecklist';
+import { resolveFolhaImagemSrc } from '../../services/osPrints';
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function observacaoLegivel(obs, maquinas) {
@@ -159,6 +160,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     const qtdTotal = quantidade || 1;
     const qtdProntas = quantidade_concluida || 0;
     const progressPct = Math.min(100, Math.round((qtdProntas / qtdTotal) * 100));
+    const thumbSrc = resolveFolhaImagemSrc(data.folha_imagem || data.folhaImagem);
 
     return (
         <div
@@ -187,6 +189,12 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                     {getStatusTag()}
                 </div>
             </div>
+
+            {thumbSrc ? (
+                <div className="h-[72px] border-b border-[#262A33] bg-white overflow-hidden flex items-center justify-center px-1">
+                    <img src={thumbSrc} alt="" className="max-w-full max-h-full object-contain opacity-95" />
+                </div>
+            ) : null}
 
             {/* 2. CARD BODY (Conteúdo & Metadados) */}
             <div className="p-3.5">

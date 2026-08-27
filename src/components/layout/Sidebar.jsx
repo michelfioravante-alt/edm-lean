@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
     LayoutDashboard, ListTodo, Settings, ChevronLeft, Package, 
-    History, LogOut, Briefcase, Wrench, Home, ShieldCheck, Code 
+    History, LogOut, Briefcase, Wrench, Home, ShieldCheck, Code, FolderKanban 
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { isLocalMode } from '../../local/mode';
@@ -118,6 +118,20 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                         >
                             <Briefcase className="h-4 w-4 shrink-0 text-[#7B808F]" />
                             <span>Carteira de O.S.</span>
+                        </button>
+                        <button
+                            onClick={() => { onViewChange('moldes'); onClose(); }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[7px] text-xs font-medium transition-all border cursor-pointer ${
+                                activeView === 'moldes'
+                                    ? 'bg-[#1F232B] border-[#D97D3D]/40 text-[#E7E9ED] font-semibold'
+                                    : 'border-transparent text-[#7B808F] hover:bg-[#181B22] hover:text-[#E7E9ED]'
+                            }`}
+                        >
+                            <FolderKanban className="h-4 w-4 shrink-0 text-[#D97D3D]" />
+                            <span>Moldes</span>
+                            <span className="ml-auto text-[8px] bg-[#D97D3D]/15 text-[#D97D3D] px-1.5 py-0.5 rounded-[4px] font-semibold uppercase tracking-wider">
+                                ZW3D
+                            </span>
                         </button>
                         </>
                         )}

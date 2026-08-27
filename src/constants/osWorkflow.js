@@ -155,6 +155,19 @@ export function kanbanPrecisaProgramar(os) {
     return false;
 }
 
+/**
+ * Peça importada ainda na fila do molde (aba Moldes) — não aparece no quadro do setor
+ * até o gestor liberar. Flag em coluna `em_fila` ou em `nx_import.em_fila`.
+ */
+export function kanbanEmFila(os) {
+    if (!os) return false;
+    const nx = os.nx_import || os.nxImport;
+    if (os.em_fila === false || os.emFila === false) return false;
+    if (nx?.em_fila === false) return false;
+    if (os.em_fila === true || os.emFila === true) return true;
+    return nx?.em_fila === true;
+}
+
 export function custoHoraDoSetor(setor, config = {}) {
     const cnc = Number(config.custoHoraCnc) || 80;
     const edm = Number(config.custoHoraEdm) || 120;

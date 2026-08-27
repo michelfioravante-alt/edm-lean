@@ -31,6 +31,9 @@ alter table public.ordens_servico add column if not exists estrategia_ferramenta
 alter table public.ordens_servico add column if not exists aguardando_tt boolean default false;
 alter table public.ordens_servico add column if not exists observacao_tt text;
 
+-- Fila do molde: import ZW3D fica fora do kanban do setor até liberar
+alter table public.ordens_servico add column if not exists em_fila boolean default false;
+
 -- --- Configurações da empresa ---
 
 alter table public.configuracoes_empresa add column if not exists modo_magazine_default text default 'individual';

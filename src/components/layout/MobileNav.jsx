@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
     Home, ListTodo, LayoutDashboard, History, Package, Briefcase, 
-    ClipboardList, Settings2, Play, Ruler, CheckCircle2, Wrench, Layers 
+    ClipboardList, Settings2, Play, Ruler, CheckCircle2, Wrench, Layers, FolderKanban 
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -16,6 +16,7 @@ export default function MobileNav({ activeView, onViewChange, role }) {
         ...(role === 'admin' ? [
             { id: 'home', label: 'Inicio', icon: Home },
             { id: 'carteira', label: 'Carteira', icon: Briefcase },
+            { id: 'moldes', label: 'Moldes', icon: FolderKanban },
         ] : []),
         { id: 'kanban', label: 'Kanban', icon: ListTodo },
         { id: 'dashboard', label: 'Dash', icon: LayoutDashboard },

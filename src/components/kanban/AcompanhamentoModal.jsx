@@ -7,7 +7,7 @@ import { resolveFolhaImagemSrc } from '../../services/osPrints';
 import { format } from 'date-fns';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { listarKanbansDoGrupo, labelSetor, custoHoraKanban, horasKanban } from '../../constants/osWorkflow';
+import { listarKanbansDoGrupo, labelSetor, custoHoraKanban, horasKanban, kanbanEmFila } from '../../constants/osWorkflow';
 import RoteiroFluxo from './RoteiroFluxo';
 import { formatarMoedaBRL } from '../../utils/formatters';
 
@@ -19,6 +19,10 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [obsDraft, setObsDraft] = useState('');
     const [isEditingTotal, setIsEditingTotal] = useState(false);
+    const [setupH, setSetupH] = useState(0);
+    const [setupM, setSetupM] = useState(0);
+    const [corteH, setCorteH] = useState(0);
+    const [corteM, setCorteM] = useState(0);
 
     // Busca a versão mais atualizada da OS do store para garantir que vemos as mudanças de Realtime
     const currentOs = useAppStore(state => {
@@ -38,12 +42,30 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     const printSrc = resolveFolhaImagemSrc(activeData.folha_imagem || activeData.folhaImagem);
     const custoInfo = custoHoraKanban(activeData, configuracoesGlobais || {});
     const tempos = horasKanban(activeData);
+    const editOrdemServico = useAppStore((s) => s.editOrdemServico);
     const isGestor = useAuthStore((s) => s.role) === 'admin';
+    const emFila = kanbanEmFila(activeData);
     const [newTotal, setNewTotal] = useState(activeData.quantidade || 1);
 
     useEffect(() => {
         setObsDraft(activeData.observacoes || '');
     }, [activeData.id, activeData.observacoes]);
+
+    useEffect(() => {
+        setSetupH(Number(activeData.tempo_estimado_setup_horas ?? activeData.tempoEstimadoSetupHoras ?? 0) || 0);
+        setSetupM(Number(activeData.tempo_estimado_setup_minutos ?? activeData.tempoEstimadoSetupMinutos ?? 0) || 0);
+        setCorteH(Number(activeData.tempo_estimado_corte_horas ?? activeData.tempoEstimadoCorteHoras ?? 0) || 0);
+        setCorteM(Number(activeData.tempo_estimado_corte_minutos ?? activeData.tempoEstimadoCorteMinutos ?? 0) || 0);
+    }, [activeData.id, activeData.tempo_estimado_setup_horas, activeData.tempoEstimadoSetupHoras, activeData.tempo_estimado_setup_minutos, activeData.tempoEstimadoSetupMinutos, activeData.tempo_estimado_corte_horas, activeData.tempoEstimadoCorteHoras, activeData.tempo_estimado_corte_minutos, activeData.tempoEstimadoCorteMinutos]);
+
+    const salvarTemposOrcados = async () => {
+        await editOrdemServico(activeData.id, {
+            tempoEstimadoSetupHoras: setupH,
+            tempoEstimadoSetupMinutos: setupM,
+            tempoEstimadoCorteHoras: corteH,
+            tempoEstimadoCorteMinutos: corteM,
+        });
+    };
 
     const temposFases = activeData.tempos_fases || activeData.temposFases || { setup: 0, emCorte: 0, afericao: 0 };
     const historicoPausas = activeData.historico_pausas || activeData.historicoPausas || [];
@@ -130,11 +152,13 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                     </div>
 
                     {printSrc && (
-                        <img
-                            src={printSrc}
-                            alt="Print da peça"
-                            className="w-full max-h-40 object-contain rounded-[8px] border border-[#262A33] bg-[#111318]"
-                        />
+                        <div className="w-full max-h-48 rounded-[8px] border border-[#262A33] bg-[#0c0d10] flex items-center justify-center overflow-hidden px-2 py-2">
+                            <img
+                                src={printSrc}
+                                alt="Desenho da peça"
+                                className="max-w-full max-h-44 object-contain object-center"
+                            />
+                        </div>
                     )}
                     <button
                         type="button"
@@ -143,6 +167,40 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                     >
                         Folha de processo (imprimir)
                     </button>
+
+                    {isGestor && emFila ? (
+                        <div className="rounded-xl border border-[#D97D3D]/35 bg-[#D97D3D]/10 p-4 space-y-3">
+                            <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#D97D3D]">Orçamento (fila do molde)</p>
+                                <p className="text-[12px] text-[#9DA2AE] mt-0.5">
+                                    Defina os tempos estimados antes de liberar a peça na lista do molde.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label className="text-[11px] text-[#7B808F]">
+                                    Setup orçado
+                                    <div className="mt-1 flex items-center gap-1.5">
+                                        <input type="number" min={0} value={setupH} onChange={(e) => setSetupH(Math.max(0, parseInt(e.target.value, 10) || 0))} className="w-14 rounded-md border border-[#333844] bg-[#111318] px-2 py-1.5 text-sm text-[#E7E9ED]" />
+                                        <span className="text-[#565B68]">h</span>
+                                        <input type="number" min={0} max={59} value={setupM} onChange={(e) => setSetupM(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)))} className="w-14 rounded-md border border-[#333844] bg-[#111318] px-2 py-1.5 text-sm text-[#E7E9ED]" />
+                                        <span className="text-[#565B68]">min</span>
+                                    </div>
+                                </label>
+                                <label className="text-[11px] text-[#7B808F]">
+                                    Usinagem orçada
+                                    <div className="mt-1 flex items-center gap-1.5">
+                                        <input type="number" min={0} value={corteH} onChange={(e) => setCorteH(Math.max(0, parseInt(e.target.value, 10) || 0))} className="w-14 rounded-md border border-[#333844] bg-[#111318] px-2 py-1.5 text-sm text-[#E7E9ED]" />
+                                        <span className="text-[#565B68]">h</span>
+                                        <input type="number" min={0} max={59} value={corteM} onChange={(e) => setCorteM(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)))} className="w-14 rounded-md border border-[#333844] bg-[#111318] px-2 py-1.5 text-sm text-[#E7E9ED]" />
+                                        <span className="text-[#565B68]">min</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <button type="button" onClick={salvarTemposOrcados} className="rounded-md bg-[#333844] px-3 py-1.5 text-[12px] font-semibold text-[#E7E9ED]">
+                                Salvar tempos orçados
+                            </button>
+                        </div>
+                    ) : null}
 
                     <div className="bg-[#181B22] border border-[#262A33] rounded-xl p-4 space-y-3">
                         <RoteiroFluxo

@@ -537,6 +537,7 @@ export const localApi = {
                     estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
                     aguardando_tt: osData.aguardando_tt ?? false,
                     observacao_tt: osData.observacao_tt || null,
+                    em_fila: osData.em_fila ?? osData.emFila ?? false,
                     observacoes: osData.observacoes || osData.observacao || null,
                     folha_imagem: osData.folha_imagem || osData.folhaImagem || null,
 
@@ -587,6 +588,7 @@ export const localApi = {
 
                 if (fields.codigoMolde !== undefined) os.codigo_molde = fields.codigoMolde || null;
                 if (fields.componenteMolde !== undefined) os.componente_molde = fields.componenteMolde || null;
+                if (fields.setor !== undefined) os.setor = fields.setor || null;
                 if (fields.numeroPrograma !== undefined) os.numero_programa = fields.numeroPrograma || null;
                 if (fields.totalSetups !== undefined) os.total_setups = parseInt(fields.totalSetups) || 1;
                 if (fields.setupAtual !== undefined) os.setup_atual = parseInt(fields.setupAtual) || 1;
@@ -600,6 +602,11 @@ export const localApi = {
                 if (fields.observacoes !== undefined) os.observacoes = fields.observacoes;
                 if (fields.folhaImagem !== undefined) os.folha_imagem = fields.folhaImagem;
                 if (fields.folha_imagem !== undefined) os.folha_imagem = fields.folha_imagem;
+                if (fields.em_fila !== undefined || fields.emFila !== undefined) {
+                    os.em_fila = fields.em_fila ?? fields.emFila;
+                }
+                if (fields.nxImport !== undefined) os.nx_import = fields.nxImport;
+                if (fields.nx_import !== undefined) os.nx_import = fields.nx_import;
                 if (fields.roteiro !== undefined) os.roteiro = fields.roteiro;
                 if (fields.fornecedor_id !== undefined) os.fornecedor_id = fields.fornecedor_id;
                 if (fields.fornecedor_nome !== undefined) os.fornecedor_nome = fields.fornecedor_nome;
