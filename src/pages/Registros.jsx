@@ -2,12 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, Filter, PlayCircle, PauseCircle, CheckCircle2, ChevronLeft, ChevronRight, Loader2, History, Calendar, Clock, Download, FileText, X, AlertOctagon, TrendingUp, Activity, Layers, Settings } from 'lucide-react';
+import { Search, Filter, PlayCircle, PauseCircle, CheckCircle2, ChevronLeft, ChevronRight, Loader2, History, Calendar, Clock, Download, FileText, X, AlertOctagon, TrendingUp, Activity, Layers, Settings, RotateCcw } from 'lucide-react';
 import AcompanhamentoModal from '../components/kanban/AcompanhamentoModal';
+import NovaOSForm from '../components/kanban/NovaOSForm';
 import { COLUMN_LABELS } from '../constants/cncProcess';
 import { osService } from '../services/osService';
 import { useAuthStore } from '../store/useAuthStore';
 import { filtrarPorSetorDoPerfil } from '../constants/roles';
+import { resumoHorasOs } from '../utils/horasProducao';
 
 
 const PAGE_SIZE = 50;
@@ -28,6 +30,7 @@ function gerarMeses() {
 
 export default function Registros() {
     const { kanban } = useAppStore();
+    const config = useAppStore((s) => s.configuracoesGlobais);
     const role = useAuthStore((s) => s.role);
     const activeSector = useAppStore((s) => s.activeSector);
     const [searchTerm, setSearchTerm] = useState('');
@@ -39,6 +42,10 @@ export default function Registros() {
     const [page, setPage] = useState(1);
     const [excluidos, setExcluidos] = useState([]);
     const [loadingExcluidos, setLoadingExcluidos] = useState(true);
+    const [historicoBanco, setHistoricoBanco] = useState([]);
+    const [loadingHistorico, setLoadingHistorico] = useState(false);
+    const [repetirOs, setRepetirOs] = useState(null);
+    const [novaOsOpen, setNovaOsOpen] = useState(false);
 
     // Carrega OS excluídas do Supabase ao abrir a aba
     useEffect(() => {
@@ -47,6 +54,23 @@ export default function Registros() {
             .catch(e => console.error('[Registros] fetchExcluidos ERRO:', e.message))
             .finally(() => setLoadingExcluidos(false));
     }, []);
+
+    // Busca no banco peças fora do kanban (ex.: concluídas há mais de 48h)
+    useEffect(() => {
+        const term = searchTerm.trim();
+        if (term.length < 2) {
+            setHistoricoBanco([]);
+            return undefined;
+        }
+        const timer = window.setTimeout(() => {
+            setLoadingHistorico(true);
+            osService.searchHistorico({ term, limit: 40 })
+                .then((rows) => setHistoricoBanco(filtrarPorSetorDoPerfil(rows, role, activeSector)))
+                .catch(() => setHistoricoBanco([]))
+                .finally(() => setLoadingHistorico(false));
+        }, 400);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm, role, activeSector]);
 
     const mesesDisponiveis = useMemo(() => gerarMeses(), []);
 
@@ -62,6 +86,13 @@ export default function Registros() {
     ], [kanban, excluidos]);
 
     const osDoPerfil = useMemo(() => filtrarPorSetorDoPerfil(todasAsOS, role, activeSector), [todasAsOS, role, activeSector]);
+
+    const idsNoKanban = useMemo(() => new Set(osDoPerfil.map((os) => os.id)), [osDoPerfil]);
+
+    const execucoesAnteriores = useMemo(() => {
+        if (!searchTerm.trim() || searchTerm.trim().length < 2) return [];
+        return historicoBanco.filter((os) => !idsNoKanban.has(os.id));
+    }, [historicoBanco, idsNoKanban, searchTerm]);
 
     // Unique values for filter dropdowns
     const maquinasUnicas = useMemo(() =>
@@ -118,6 +149,17 @@ export default function Registros() {
         setPage(1);
     };
 
+    const abrirRepetirPeca = (os, e) => {
+        e?.stopPropagation?.();
+        setRepetirOs(os);
+        setNovaOsOpen(true);
+    };
+
+    const fecharNovaOsRepetir = () => {
+        setNovaOsOpen(false);
+        setRepetirOs(null);
+    };
+
     const selectClasses = "w-full bg-[#111318] border border-[#262A33] text-[#E7E9ED] text-sm font-medium rounded-lg focus:ring-kanban-amber focus:border-kanban-amber p-2.5 [color-scheme:dark]";
 
     const getStatusBadge = (os) => {
@@ -166,7 +208,7 @@ export default function Registros() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#565B68]" />
                     <input
                         type="text"
-                        placeholder="Buscar por Peça, Cliente ou Máquina..."
+                        placeholder="Buscar por Peça, Cliente, Molde ou Máquina..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                         className="w-full bg-[#111318] border border-[#262A33] text-[#E7E9ED] text-sm rounded-lg focus:ring-kanban-amber focus:border-kanban-amber block pl-10 p-2.5 placeholder-[#565B68]"
@@ -349,6 +391,76 @@ export default function Registros() {
                 )}
             </div>
 
+            {(searchTerm.trim().length >= 2 && (loadingHistorico || execucoesAnteriores.length > 0)) ? (
+                <div className="bg-[#181B22] border border-[#262A33] rounded-xl overflow-hidden">
+                    <div className="px-5 py-3 border-b border-[#262A33] flex items-center justify-between gap-2">
+                        <div>
+                            <p className="text-sm font-semibold text-[#E7E9ED] flex items-center gap-2">
+                                <History className="w-4 h-4 text-kanban-amber" />
+                                Execuções anteriores no banco
+                            </p>
+                            <p className="text-[11px] text-[#7B808F] mt-0.5">
+                                Peças já concluídas ou fora do kanban ativo — referência de horas para orçamento.
+                            </p>
+                        </div>
+                        {loadingHistorico ? <Loader2 className="w-4 h-4 animate-spin text-[#565B68]" /> : null}
+                    </div>
+                    {!loadingHistorico && execucoesAnteriores.length === 0 ? (
+                        <p className="px-5 py-4 text-sm text-[#565B68]">Nenhuma execução anterior encontrada além do kanban atual.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left text-[#7B808F]">
+                                <thead className="text-xs text-[#E7E9ED] uppercase bg-[#111318]/80 border-b border-[#262A33]">
+                                    <tr>
+                                        <th className="px-5 py-3">Data</th>
+                                        <th className="px-5 py-3">Peça</th>
+                                        <th className="px-5 py-3">Molde</th>
+                                        <th className="px-5 py-3">Cliente</th>
+                                        <th className="px-5 py-3 text-right">Horas máq.</th>
+                                        <th className="px-5 py-3 text-right">Ref. interna</th>
+                                        <th className="px-5 py-3">Status</th>
+                                        <th className="px-5 py-3 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {execucoesAnteriores.map((os) => {
+                                        const hr = resumoHorasOs(os, config || {});
+                                        const d = new Date(os.created_at || os.createdAt);
+                                        return (
+                                            <tr
+                                                key={os.id}
+                                                className="border-b border-[#262A33] hover:bg-[#1F232B]/50 cursor-pointer"
+                                                onClick={() => setSelectedOs({ ...os, statusLocal: os.status || 'Arquivada' })}
+                                            >
+                                                <td className="px-5 py-3 text-xs whitespace-nowrap">
+                                                    {isNaN(d) ? '—' : format(d, 'dd/MM/yyyy', { locale: ptBR })}
+                                                </td>
+                                                <td className="px-5 py-3 font-mono text-[#E7E9ED]">{hr.codigo}</td>
+                                                <td className="px-5 py-3">{hr.molde}</td>
+                                                <td className="px-5 py-3">{hr.cliente}</td>
+                                                <td className="px-5 py-3 text-right font-mono text-[#D97D3D]">{hr.formatado.totalReal}</td>
+                                                <td className="px-5 py-3 text-right text-[#9DA2AE]">{hr.formatado.referenciaInterna}</td>
+                                                <td className="px-5 py-3 text-xs">{os.status || '—'}</td>
+                                                <td className="px-5 py-3 text-right">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => abrirRepetirPeca(os, e)}
+                                                        className="inline-flex items-center gap-1 rounded-md border border-[#D97D3D]/40 px-2 py-1 text-[10px] font-semibold text-[#D97D3D] hover:bg-[#D97D3D]/10"
+                                                    >
+                                                        <RotateCcw className="w-3 h-3" />
+                                                        Repetir
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            ) : null}
+
             {/* Paginação */}
             {
                 totalPages > 1 && (
@@ -403,6 +515,13 @@ export default function Registros() {
                 isOpen={!!selectedOs}
                 onClose={() => setSelectedOs(null)}
                 osData={selectedOs}
+            />
+
+            <NovaOSForm
+                isOpen={novaOsOpen}
+                onClose={fecharNovaOsRepetir}
+                initialFromHistorico={repetirOs}
+                onCreated={() => fecharNovaOsRepetir()}
             />
         </div >
     );

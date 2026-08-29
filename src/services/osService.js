@@ -96,6 +96,47 @@ export const osService = {
         return data || [];
     },
 
+    /** Busca histórico de peças/moldes no banco (inclui concluídas fora do kanban). */
+    async searchHistorico({ codigoPeca, codigoMolde, cliente, term, limit = 50 } = {}) {
+        if (!codigoPeca && !codigoMolde && !cliente && !term) return [];
+        if (isLocalMode()) return localApi.os.searchHistorico({ codigoPeca, codigoMolde, cliente, term, limit });
+        const empresaId = getEmpresaId();
+        let q = supabase
+            .from('ordens_servico')
+            .select('*')
+            .eq('empresa_id', empresaId)
+            .neq('status', 'Excluído')
+            .order('created_at', { ascending: false })
+            .limit(Math.min(limit, 100));
+
+        if (term) {
+            const t = String(term).trim();
+            q = q.or(`codigo_peca.ilike.%${t}%,cliente.ilike.%${t}%,codigo_molde.ilike.%${t}%`);
+        } else {
+            if (codigoPeca) {
+                q = q.ilike('codigo_peca', `%${String(codigoPeca).trim()}%`);
+            }
+            if (codigoMolde) {
+                q = q.ilike('codigo_molde', `%${String(codigoMolde).trim()}%`);
+            }
+            if (cliente) {
+                q = q.ilike('cliente', `%${String(cliente).trim()}%`);
+            }
+        }
+
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+    },
+
+    /** Lista concluídas recentes além do recorte do kanban (48h). */
+    async fetchConcluidasHistorico({ limit = 200, codigoPeca } = {}) {
+        return osService.searchHistorico({
+            codigoPeca,
+            limit,
+        }).then((rows) => rows.filter((o) => o.status === 'Concluído' || o.status === 'Concluido'));
+    },
+
     // Cria nova O.S
     async create(osData) {
         if (isLocalMode()) {

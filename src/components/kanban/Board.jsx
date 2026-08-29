@@ -14,6 +14,7 @@ import RegraAfericaoModal from './RegraAfericaoModal';
 import MachineOccupiedModal from './MachineOccupiedModal';
 import ExtraSetupModal from './ExtraSetupModal';
 import SplitModal from './SplitModal';
+import RelatorioEncerramentoModal from './RelatorioEncerramentoModal';
 import { Plus, Lock, Cpu, Zap, RotateCw, Factory, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -73,6 +74,7 @@ export default function Board() {
     const [transitionError, setTransitionError] = useState(null);
     const [pendingDevolverAFazer, setPendingDevolverAFazer] = useState(null);
     const [pendingDevolverCorteSetup, setPendingDevolverCorteSetup] = useState(null);
+    const [relatorioEncerramento, setRelatorioEncerramento] = useState(null);
     const destaqueOsId = useAppStore((s) => s.destaqueOsId);
     const limparDestaqueOs = useAppStore((s) => s.limparDestaqueOs);
     const osDeepLinkId = useAppStore((s) => s.osDeepLinkId);
@@ -209,6 +211,14 @@ export default function Board() {
         return filtered.slice(0, 20);
     };
 
+    const mostrarRelatorioSeConcluido = (ctx) => {
+        if (ctx?.destCol !== 'concluido') return;
+        window.setTimeout(() => {
+            const os = useAppStore.getState().kanban.concluido?.find((o) => o.id === ctx.osId) || ctx.osData;
+            if (os) setRelatorioEncerramento(os);
+        }, 350);
+    };
+
     const handleConfirmTransition = (data) => {
         if (!pendingTransition) return;
         const state = useAppStore.getState();
@@ -263,6 +273,7 @@ export default function Board() {
                     baixarEstoque: loteMagazine.baixarEstoque,
                 });
             }
+            mostrarRelatorioSeConcluido(ctx);
         }).catch((err) => {
             console.error("Erro ao mover O.S.:", err);
             setTransitionError(err?.message || "Falha ao salvar. Tente novamente.");
@@ -403,6 +414,7 @@ export default function Board() {
                     setTimeout(() => setTransitionError(null), 5000);
                 }
             }
+            mostrarRelatorioSeConcluido(ctx);
         }).catch((err) => {
             console.error("Erro na aferição:", err);
             setPendingAfericao(ctx);
@@ -734,6 +746,14 @@ export default function Board() {
                         destCol={splitContext.destCol}
                         onConfirm={handleConfirmSplit}
                         onClose={() => setSplitContext(null)}
+                    />
+                )}
+
+                {relatorioEncerramento && (
+                    <RelatorioEncerramentoModal
+                        isOpen={!!relatorioEncerramento}
+                        osData={relatorioEncerramento}
+                        onClose={() => setRelatorioEncerramento(null)}
                     />
                 )}
             </div>

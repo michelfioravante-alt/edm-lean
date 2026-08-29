@@ -1,7 +1,8 @@
 import React, { useMemo, useState, lazy, Suspense } from 'react';
 import {
-    FolderKanban, Plus, Filter, CheckCircle2, Package, ChevronRight, Send,
+    FolderKanban, Plus, Filter, CheckCircle2, Package, ChevronRight, Send, BarChart3,
 } from 'lucide-react';
+import RelatorioMoldeModal from '../components/moldes/RelatorioMoldeModal';
 import { useAppStore } from '../store/useAppStore';
 import { agruparCarteira, labelSetor, statusEhConcluido, kanbanEmFila } from '../constants/osWorkflow';
 import { resolveFolhaImagemSrc } from '../services/osPrints';
@@ -125,6 +126,7 @@ export default function Moldes({ onNavigate }) {
     const [selectedOs, setSelectedOs] = useState(null);
     const [toast, setToast] = useState('');
     const [confirmEnvio, setConfirmEnvio] = useState(null);
+    const [relatorioMoldeOpen, setRelatorioMoldeOpen] = useState(false);
 
     const grupos = useMemo(() => {
         return agruparCarteira(kanban, config || {})
@@ -216,7 +218,7 @@ export default function Moldes({ onNavigate }) {
                     <div>
                         <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Moldes</h2>
                         <p className="text-[#565B68] mt-0.5 text-xs max-w-xl">
-                            Mais recentes no topo · clique na peça para orçar tempos · use Liberar para enviar ao setor (com confirmação).
+                            Ordem de chegada (recentes no topo) · importe por PDF ou planilha CSV.
                         </p>
                     </div>
                 </div>
@@ -226,7 +228,7 @@ export default function Moldes({ onNavigate }) {
                     </button>
                     <button type="button" onClick={() => setImportOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold">
                         <Plus className="w-4 h-4" />
-                        Importar molde (ZW3D)
+                        Importar molde
                     </button>
                 </div>
             </div>
@@ -236,7 +238,7 @@ export default function Moldes({ onNavigate }) {
                     <Package className="w-8 h-8 text-[#D97D3D] mx-auto mb-3" />
                     <p className="text-sm text-[#E7E9ED] font-medium">Nenhum molde na carteira ainda</p>
                     <button type="button" onClick={() => setImportOpen(true)} className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold">
-                        Importar molde (ZW3D)
+                        Importar molde
                     </button>
                 </div>
             ) : (
@@ -301,13 +303,23 @@ export default function Moldes({ onNavigate }) {
                             <p className="p-6 text-sm text-[#7B808F]">Selecione um molde à esquerda.</p>
                         ) : (
                             <>
-                                <div className="px-4 py-3 border-b border-[#262A33]">
-                                    <p className="font-['Space_Grotesk'] text-[15px] text-[#E7E9ED]">
-                                        {detalhe.cliente || 'Cliente não informado'}
-                                    </p>
-                                    <p className="text-[11px] text-[#7B808F] mt-0.5">
-                                        Molde {codigoMoldeGrupo(detalhe)} · {detalhe.kanbans.length} peças
-                                    </p>
+                                <div className="px-4 py-3 border-b border-[#262A33] flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="font-['Space_Grotesk'] text-[15px] text-[#E7E9ED]">
+                                            {detalhe.cliente || 'Cliente não informado'}
+                                        </p>
+                                        <p className="text-[11px] text-[#7B808F] mt-0.5">
+                                            Molde {codigoMoldeGrupo(detalhe)} · {detalhe.kanbans.length} peças
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setRelatorioMoldeOpen(true)}
+                                        className="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-[#333844] px-2.5 py-1.5 text-[11px] font-medium text-[#E7E9ED] hover:bg-[#1F232B]"
+                                    >
+                                        <BarChart3 className="w-3.5 h-3.5 text-[#D97D3D]" />
+                                        Horas do molde
+                                    </button>
                                 </div>
 
                                 <div className="px-4 py-2 border-b border-[#262A33] bg-[#111318]/50">
@@ -456,6 +468,12 @@ export default function Moldes({ onNavigate }) {
                     onClose={() => setSelectedOs(null)}
                 />
             ) : null}
+
+            <RelatorioMoldeModal
+                open={relatorioMoldeOpen && !!detalhe}
+                grupo={detalhe}
+                onClose={() => setRelatorioMoldeOpen(false)}
+            />
         </div>
     );
 }

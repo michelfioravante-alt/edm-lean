@@ -492,6 +492,28 @@ export const localApi = {
     os: {
         async fetchAllAtivas() { return loadDb().ordens_servico.filter((o) => o.status !== 'Excluído' && o.status !== 'Excluido'); },
         async fetchExcluidos() { return loadDb().ordens_servico.filter((o) => o.status === 'Excluído' || o.status === 'Excluido'); },
+        async searchHistorico({ codigoPeca, codigoMolde, cliente, term, limit = 50 } = {}) {
+            const termG = term ? String(term).trim().toLowerCase() : '';
+            const termP = codigoPeca ? String(codigoPeca).trim().toLowerCase() : '';
+            const termM = codigoMolde ? String(codigoMolde).trim().toLowerCase() : '';
+            const termC = cliente ? String(cliente).trim().toLowerCase() : '';
+            return loadDb().ordens_servico
+                .filter((o) => {
+                    if (o.status === 'Excluído' || o.status === 'Excluido') return false;
+                    if (termG) {
+                        const blob = [
+                            o.codigo_peca, o.cliente, o.codigo_molde,
+                        ].map((v) => String(v || '').toLowerCase()).join(' ');
+                        return blob.includes(termG);
+                    }
+                    if (termP && !String(o.codigo_peca || '').toLowerCase().includes(termP)) return false;
+                    if (termM && !String(o.codigo_molde || '').toLowerCase().includes(termM)) return false;
+                    if (termC && !String(o.cliente || '').toLowerCase().includes(termC)) return false;
+                    return termP || termM || termC;
+                })
+                .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+                .slice(0, limit);
+        },
         async updatePositions(orderedIds) { mutateDb((db) => { orderedIds.forEach((id, index) => { const os = findOs(db, id); if (os) os.posicao = index + 1; }); }); },
         async create(osData) {
             let created;

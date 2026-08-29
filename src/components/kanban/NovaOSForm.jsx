@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { listaEtapasRoteiro, labelSetor, geraCartaoEtapa, montarRoteiro, slugEtapaPersonalizada } from '../../constants/osWorkflow';
 import { nomesClienteAutocomplete } from '../../constants/roles';
-import { Plus, Trash2, Flag, ArrowRight, X, Calculator } from 'lucide-react';
+import { Plus, Trash2, Flag, ArrowRight, X, Calculator, History, Loader2 } from 'lucide-react';
 import { compressImageFile } from '../../utils/folhaProcesso';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 import { formatarMoedaDigitacao, parseMoedaBr } from '../../utils/formatters';
+import { osService } from '../../services/osService';
+import { dadosFormularioRepetirPeca } from '../../utils/horasProducao';
 
 const novaPeca = () => ({ nome: '', etapas: [], quantidade: 1 });
 
@@ -24,8 +26,9 @@ function CamposHm({ label, horas, minutos, onHoras, onMinutos, inputCls }) {
     );
 }
 
-export default function NovaOSForm({ isOpen, onClose, onCreated }) {
+export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHistorico }) {
     const clientes = useAppStore((s) => s.clientes);
+    const config = useAppStore((s) => s.configuracoesGlobais);
     const activeSector = useAppStore((s) => s.activeSector);
     const addOrdemServico = useAppStore((s) => s.addOrdemServico);
     const addGrupoOrdensServico = useAppStore((s) => s.addGrupoOrdensServico);
@@ -63,8 +66,88 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
     const [novaEtapaNome, setNovaEtapaNome] = useState('');
     const [editandoEtapaIdx, setEditandoEtapaIdx] = useState(null);
     const [editandoEtapaTexto, setEditandoEtapaTexto] = useState('');
+    const [historicoOrigemId, setHistoricoOrigemId] = useState(null);
+    const [historicoSugestao, setHistoricoSugestao] = useState(null);
+    const [loadingHistoricoCodigo, setLoadingHistoricoCodigo] = useState(false);
 
     const nomesClientes = nomesClienteAutocomplete(clientes, nomeEmpresa);
+
+    const aplicarTemposSetor = useCallback((setor, setupHm, corteHm) => {
+        const sh = String(setupHm.horas || '');
+        const sm = String(setupHm.minutos || '');
+        const ch = String(corteHm.horas || '');
+        const cm = String(corteHm.minutos || '');
+        if (setor === 'EDM_FIO') {
+            setSetupEdmH(sh); setSetupEdmM(sm); setCorteEdmH(ch); setCorteEdmM(cm);
+            setEdmTempo(null);
+        } else if (setor === 'CNC') {
+            setSetupCncH(sh); setSetupCncM(sm); setCorteCncH(ch); setCorteCncM(cm);
+        }
+    }, []);
+
+    const preencherComHistorico = useCallback((os) => {
+        if (!os) return;
+        const dados = dadosFormularioRepetirPeca(os, config || {});
+        setModo('avulsa');
+        setHistoricoOrigemId(dados.origemId);
+        setCliente(dados.cliente);
+        setCodigoPeca(dados.codigoPeca);
+        setCodigoMolde('');
+        setLinkDesenho(dados.linkDesenho);
+        setQuantidade(dados.quantidade);
+        setObservacoes(dados.observacoes);
+        if (dados.valorOrcado != null && dados.valorOrcado !== '') {
+            setValorOrcado(formatarMoedaDigitacao(String(Math.round(Number(dados.valorOrcado) * 100))));
+        }
+        setPecas([{
+            nome: dados.componente,
+            etapas: dados.etapas.length ? dados.etapas : [dados.setor],
+            quantidade: dados.quantidade,
+        }]);
+        const setorTempos = isGestor ? dados.setor : setorPadrao;
+        aplicarTemposSetor(setorTempos, dados.setupHm, dados.corteHm);
+        setHistoricoSugestao(null);
+    }, [aplicarTemposSetor, config, isGestor, setorPadrao]);
+
+    useEffect(() => {
+        if (!isOpen || !initialFromHistorico) return;
+        preencherComHistorico(initialFromHistorico);
+    }, [isOpen, initialFromHistorico, preencherComHistorico]);
+
+    useEffect(() => {
+        if (!isOpen || modo !== 'avulsa') {
+            setHistoricoSugestao(null);
+            return undefined;
+        }
+        const cod = codigoPeca.trim();
+        if (cod.length < 3) {
+            setHistoricoSugestao(null);
+            return undefined;
+        }
+        const timer = window.setTimeout(() => {
+            setLoadingHistoricoCodigo(true);
+            osService.searchHistorico({ codigoPeca: cod, limit: 8 })
+                .then((rows) => {
+                    const norm = (r) => String(r.codigo_peca || r.codigoPeca || '').trim().toLowerCase();
+                    const alvo = cod.toLowerCase();
+                    const matches = rows.filter((r) => norm(r) === alvo || norm(r).includes(alvo));
+                    if (!matches.length) {
+                        setHistoricoSugestao(null);
+                        return;
+                    }
+                    const concluida = (r) => r.status === 'Concluído' || r.status === 'Concluido';
+                    const pick = matches.find(concluida) || matches[0];
+                    setHistoricoSugestao({
+                        os: pick,
+                        execucoes: matches.length,
+                        dados: dadosFormularioRepetirPeca(pick, config || {}),
+                    });
+                })
+                .catch(() => setHistoricoSugestao(null))
+                .finally(() => setLoadingHistoricoCodigo(false));
+        }, 450);
+        return () => window.clearTimeout(timer);
+    }, [codigoPeca, isOpen, modo, config]);
 
     if (!isOpen) return null;
 
@@ -85,6 +168,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         setObservacoes('');
         setLinkDesenho('');
         setFolhaBlob(null);
+        setHistoricoOrigemId(null);
+        setHistoricoSugestao(null);
+        setLoadingHistoricoCodigo(false);
         setFolhaPreview((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return '';
@@ -213,6 +299,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
         observacoes: observacoes.trim(),
         linkDesenho: linkDesenho.trim(),
         folhaBlob,
+        parent_id: historicoOrigemId || null,
     });
 
     const handleSubmit = async (e) => {
@@ -350,7 +437,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                         value={novaEtapaNome}
                         onChange={(e) => setNovaEtapaNome(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); criarEtapaPersonalizada(idx); } }}
-                        placeholder="Nova etapa, ex.: Corte a laser"
                         className={`${inputCls} flex-1 min-w-[160px] py-1.5 text-[12px]`}
                     />
                     <button
@@ -425,6 +511,33 @@ export default function NovaOSForm({ isOpen, onClose, onCreated }) {
                     <div>
                         <label className={labelCls}>Código da peça</label>
                         <input value={codigoPeca} onChange={(e) => setCodigoPeca(e.target.value)} placeholder="Ex: PN-123" className={`${inputCls} uppercase`} />
+                        {(loadingHistoricoCodigo || historicoSugestao) ? (
+                            <div className="mt-2 rounded-[8px] border border-[#333844] bg-[#111318] px-3 py-2.5">
+                                {loadingHistoricoCodigo ? (
+                                    <p className="text-[11px] text-[#7B808F] flex items-center gap-1.5">
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando histórico…
+                                    </p>
+                                ) : (
+                                    <>
+                                        <p className="text-[11px] text-[#9DA2AE] flex items-center gap-1.5">
+                                            <History className="w-3.5 h-3.5 text-[#D97D3D] shrink-0" />
+                                            {historicoSugestao.execucoes > 1
+                                                ? `Peça já produzida ${historicoSugestao.execucoes} vezes.`
+                                                : 'Peça já produzida antes.'}
+                                            {' '}Última ref.: {historicoSugestao.dados.resumo.formatado.totalReal} máquina
+                                            ({historicoSugestao.dados.resumo.formatado.concluidoEm}).
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => preencherComHistorico(historicoSugestao.os)}
+                                            className="mt-2 text-[11px] font-semibold text-[#D97D3D] hover:underline cursor-pointer"
+                                        >
+                                            Usar dados da última execução
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        ) : null}
                     </div>
                 )}
 

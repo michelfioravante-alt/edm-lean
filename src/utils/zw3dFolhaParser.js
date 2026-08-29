@@ -360,12 +360,17 @@ function montarPecaFromPage({
     const tratamento = campos.tratamento || '';
     const quantidade = campos.quantidade ?? 1;
     const codigoValido = pareceCodigoPeca(codigoPeca);
-    const parseOk = codigoValido;
+    const parseOk = true;
     const qtyInferida = campos.quantidade == null;
+    const leituraAutomatica = codigoValido;
 
     const setor = sugerirSetor({ processo, tratamento, material });
     const etapas = montarRoteiroSugestao({ setor, processo, tratamento });
     const codigoMolde = codigoMoldeHint || extrairMoldeDoCaminho(relativePath, fileName);
+
+    const avisoRevisao = !codigoValido
+        ? `Código "${codigoPeca}" não lido automaticamente — confira e edite abaixo.`
+        : (qtyInferida ? 'Quantidade assumida: 1 peça' : null);
 
     return {
         fileName: pageCount > 1 ? `${fileName}#p${pageIndex + 1}` : fileName,
@@ -381,13 +386,15 @@ function montarPecaFromPage({
         quantidade,
         setor,
         etapas,
-        segmento: segmentoDaPeca({ material, tratamento, setor }),
+        origemImport: 'pdf',
+        leituraAutomatica,
         textoBruto: texto.slice(0, 400),
         qtyInferida,
-        selected: parseOk,
-        precisaRevisao: !parseOk,
-        erro: parseOk ? null : `Folha ${pageIndex + 1}: código "${codigoPeca}" não reconhecido — revise manualmente`,
-        aviso: qtyInferida && parseOk ? 'Quantidade assumida: 1 peça' : null,
+        selected: true,
+        precisaRevisao: !leituraAutomatica,
+        avisoRevisao,
+        aviso: avisoRevisao,
+        erro: null,
         _page: page,
     };
 }
@@ -420,13 +427,14 @@ export async function parseZw3dPdf(file, opts = {}) {
                 pageCount,
                 codigoMoldeHint,
             });
-            if (!row.precisaRevisao) {
+            try {
                 const { blob, previewUrl } = await renderPaginaCompleta(page);
                 row.folhaBlob = blob;
                 row.previewUrl = previewUrl;
-            } else {
+            } catch {
                 row.folhaBlob = null;
                 row.previewUrl = '';
+                row.avisoRevisao = row.avisoRevisao || 'Não foi possível gerar preview desta folha.';
             }
             delete row._page;
             pecas.push(row);
@@ -436,7 +444,7 @@ export async function parseZw3dPdf(file, opts = {}) {
                 relativePath,
                 pageIndex: i - 1,
                 pageCount,
-                codigoPeca: `FOLHA-${i}`,
+                codigoPeca: extrairCodigoPeca(file.name, {}, i - 1),
                 codigoMolde: codigoMoldeHint,
                 material: '',
                 massaKg: null,
@@ -445,12 +453,15 @@ export async function parseZw3dPdf(file, opts = {}) {
                 quantidade: 1,
                 setor: 'CNC',
                 etapas: ['CNC'],
-                segmento: 'outros',
+                origemImport: 'pdf',
                 folhaBlob: null,
                 previewUrl: '',
+                leituraAutomatica: false,
                 precisaRevisao: true,
-                erro: err?.message || `Falha na folha ${i}`,
-                selected: false,
+                avisoRevisao: err?.message || `Falha na folha ${i} — preencha manualmente.`,
+                aviso: err?.message || `Falha na folha ${i}`,
+                erro: null,
+                selected: true,
             });
         }
     }
@@ -505,17 +516,20 @@ export async function parseZw3dPasta(files) {
                 quantidade: 1,
                 setor: 'CNC',
                 etapas: ['CNC'],
-                segmento: 'outros',
+                origemImport: 'pdf',
                 folhaBlob: null,
                 previewUrl: '',
+                leituraAutomatica: false,
                 precisaRevisao: true,
-                erro: err?.message || 'Falha ao ler PDF',
-                selected: false,
+                avisoRevisao: err?.message || 'Falha ao ler PDF — preencha manualmente.',
+                aviso: err?.message || 'Falha ao ler PDF',
+                erro: null,
+                selected: true,
             });
         }
     }
-    const ok = pecas.filter((p) => !p.precisaRevisao && !p.erro);
-    const revisao = pecas.filter((p) => p.precisaRevisao || p.erro);
+    const ok = pecas.filter((p) => p.leituraAutomatica);
+    const revisao = pecas.filter((p) => !p.leituraAutomatica);
     const moldes = [...new Set(pecas.map((p) => p.codigoMolde).filter(Boolean))];
     const codigoMolde = moldes.length === 1
         ? moldes[0]
@@ -531,10 +545,13 @@ export async function parseZw3dPasta(files) {
     };
 }
 
-export const SEGMENTO_LABEL = {
-    cobre: 'Cobre',
-    grafite: 'Grafite',
-    aco: 'Aço',
-    terceiro: 'Serviço fora',
-    outros: 'Outros',
-};
+/** Renderiza 1ª página do PDF como thumbnail (para vincular a linhas CSV). */
+export async function renderPdfPreview(file) {
+    const data = new Uint8Array(await file.arrayBuffer());
+    const pdf = await getDocument({ data }).promise;
+    const page = await pdf.getPage(1);
+    const { blob, previewUrl } = await renderPaginaCompleta(page);
+    return { blob, previewUrl, fileName: file.name };
+}
+
+export { montarRoteiroSugestao, sugerirSetor };

@@ -1,0 +1,4 @@
+codigo_peca;material;processo;setor;quantidade;arquivo_pdf;tratamento
+E02-DB;H13;CNC;CNC;1;E02-DB.pdf;
+E03-DB;Cobre;Eletrofio;EDM_FIO;2;;
+PLACA-01;Aço;Fresamento;CNC;1;PLACA-01.pdf;Têmpera / revenimento
