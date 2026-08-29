@@ -1,15 +1,13 @@
-import React, { useMemo, useState, lazy, Suspense } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     AlertTriangle, ArrowRight, Bell, CheckCircle2, Clock, Cpu, Factory,
-    CircleHelp, Package, PauseCircle, Plus, Zap, FolderUp,
+    CircleHelp, Package, PauseCircle, Plus, Zap,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import NovaOSForm from '../components/kanban/NovaOSForm';
 import { kanbanPrecisaProgramar, labelSetor } from '../constants/osWorkflow';
 import { formatarMoedaBRL } from '../utils/formatters';
 import { montarHomeGerente } from '../utils/homeGerente';
-
-const ImportarMoldeModal = lazy(() => import('../components/moldes/ImportarMoldeModal'));
 
 const TONE_CLS = {
     danger: 'border-[#C85558]/40 bg-[rgba(200,85,88,0.08)]',
@@ -89,7 +87,7 @@ export default function HomeGerente({ onNavigate }) {
     const irParaKanban = useAppStore((s) => s.irParaKanban);
     const pedirFiltroCarteira = useAppStore((s) => s.pedirFiltroCarteira);
     const [novaOs, setNovaOs] = useState(false);
-    const [importMolde, setImportMolde] = useState(false);
+    const [novaOsMolde, setNovaOsMolde] = useState(false);
 
     const painel = useMemo(
         () => montarHomeGerente(kanban, estoque, config || {}),
@@ -145,17 +143,10 @@ export default function HomeGerente({ onNavigate }) {
                     </button>
                     <button
                         type="button"
-                        onClick={() => setNovaOs(true)}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] border border-[#333844] text-[#9DA2AE] text-xs font-semibold cursor-pointer"
-                    >
-                        <Plus className="w-4 h-4" /> Nova O.S. manual
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setImportMolde(true)}
+                        onClick={() => { setNovaOsMolde(false); setNovaOs(true); }}
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold cursor-pointer"
                     >
-                        <FolderUp className="w-4 h-4" /> Importar molde
+                        <Plus className="w-4 h-4" /> Nova O.S.
                     </button>
                 </div>
             </div>
@@ -302,16 +293,15 @@ export default function HomeGerente({ onNavigate }) {
                 Historico de movimentos continua em Registros. Graficos da semana ficam no Dashboard executivo.
             </p>
 
-            <NovaOSForm isOpen={novaOs} onClose={() => setNovaOs(false)} />
-            {importMolde ? (
-                <Suspense fallback={null}>
-                    <ImportarMoldeModal
-                        open={importMolde}
-                        onClose={() => setImportMolde(false)}
-                        onCreated={() => onNavigate?.('moldes')}
-                    />
-                </Suspense>
-            ) : null}
+            <NovaOSForm
+                isOpen={novaOs}
+                onClose={() => { setNovaOs(false); setNovaOsMolde(false); }}
+                initialModo={novaOsMolde ? 'molde' : undefined}
+                onCreated={() => {
+                    if (novaOsMolde) onNavigate?.('moldes');
+                    setNovaOsMolde(false);
+                }}
+            />
         </div>
     );
 }
