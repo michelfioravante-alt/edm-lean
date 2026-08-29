@@ -1,4 +1,4 @@
-import React, { useMemo, useState, lazy, Suspense } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     FolderKanban, Plus, Filter, CheckCircle2, Package, ChevronRight, Send, BarChart3,
 } from 'lucide-react';
@@ -8,8 +8,6 @@ import { agruparCarteira, labelSetor, statusEhConcluido, kanbanEmFila } from '..
 import { resolveFolhaImagemSrc } from '../services/osPrints';
 import NovaOSForm from '../components/kanban/NovaOSForm';
 import AcompanhamentoModal from '../components/kanban/AcompanhamentoModal';
-
-const ImportarMoldeModal = lazy(() => import('../components/moldes/ImportarMoldeModal'));
 
 const FILTROS = [
     { id: 'todos', label: 'Todas' },
@@ -117,8 +115,8 @@ export default function Moldes({ onNavigate }) {
     const setActiveSector = useAppStore((s) => s.setActiveSector);
     const irParaKanban = useAppStore((s) => s.irParaKanban);
 
-    const [importOpen, setImportOpen] = useState(false);
     const [manualOpen, setManualOpen] = useState(false);
+    const [novaOsMolde, setNovaOsMolde] = useState(false);
     const [filtro, setFiltro] = useState('fila');
     const [selecionado, setSelecionado] = useState(null);
     const [idsMarcados, setIdsMarcados] = useState(() => new Set());
@@ -218,17 +216,18 @@ export default function Moldes({ onNavigate }) {
                     <div>
                         <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Moldes</h2>
                         <p className="text-[#565B68] mt-0.5 text-xs max-w-xl">
-                            Ordem de chegada (recentes no topo) · importe por PDF ou planilha CSV.
+                            Ordem de chegada (recentes no topo) · Nova O.S. → Molde para cadastrar ou importar peças.
                         </p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setManualOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[7px] border border-[#333844] text-[#9DA2AE] text-xs font-semibold">
-                        Nova O.S. manual
-                    </button>
-                    <button type="button" onClick={() => setImportOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold">
+                    <button
+                        type="button"
+                        onClick={() => { setNovaOsMolde(true); setManualOpen(true); }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold"
+                    >
                         <Plus className="w-4 h-4" />
-                        Importar molde
+                        Nova O.S.
                     </button>
                 </div>
             </div>
@@ -237,8 +236,16 @@ export default function Moldes({ onNavigate }) {
                 <div className="rounded-[10px] border border-dashed border-[#333844] bg-[#181B22] px-6 py-14 text-center">
                     <Package className="w-8 h-8 text-[#D97D3D] mx-auto mb-3" />
                     <p className="text-sm text-[#E7E9ED] font-medium">Nenhum molde na carteira ainda</p>
-                    <button type="button" onClick={() => setImportOpen(true)} className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold">
-                        Importar molde
+                    <p className="text-[12px] text-[#7B808F] mt-2 max-w-md mx-auto">
+                        Abra Nova O.S., escolha Molde e cadastre manualmente ou importe por CSV/PDF (beta).
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => { setNovaOsMolde(true); setManualOpen(true); }}
+                        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Nova O.S. — Molde
                     </button>
                 </div>
             ) : (
@@ -448,19 +455,16 @@ export default function Moldes({ onNavigate }) {
                 enviando={enviando}
             />
 
-            {importOpen ? (
-                <Suspense fallback={null}>
-                    <ImportarMoldeModal
-                        open={importOpen}
-                        onClose={() => setImportOpen(false)}
-                        onCreated={(criados) => {
-                            const gid = criados?.[0]?.os_grupo_id || criados?.[0]?.osGrupoId;
-                            if (gid) setSelecionado(gid);
-                        }}
-                    />
-                </Suspense>
-            ) : null}
-            <NovaOSForm isOpen={manualOpen} onClose={() => setManualOpen(false)} />
+            <NovaOSForm
+                isOpen={manualOpen}
+                onClose={() => { setManualOpen(false); setNovaOsMolde(false); }}
+                initialModo={novaOsMolde ? 'molde' : undefined}
+                onCreated={(criados) => {
+                    const gid = criados?.[0]?.os_grupo_id || criados?.[0]?.osGrupoId;
+                    if (gid) setSelecionado(gid);
+                    setNovaOsMolde(false);
+                }}
+            />
             {selectedOs ? (
                 <AcompanhamentoModal
                     isOpen={!!selectedOs}

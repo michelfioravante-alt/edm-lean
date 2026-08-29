@@ -3,11 +3,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
-/**
- * Área do desenho no template ZW3D (paisagem):
- * esquerda = título/dados; centro = viewport do desenho; direita = tabela tecnologia.
- */
-const DRAWING_CROP = { x0: 0.30, y0: 0.10, x1: 0.72, y1: 0.88 };
+import { carregarCalibracaoImport } from '../constants/calibracaoImport';
 
 /** Rótulos do bloco ZW3D — nunca usar como valor de peça/material. */
 const ROTULOS_ZW3D = new Set([
@@ -28,9 +24,17 @@ function isRotulo(s) {
     return ROTULOS_ZW3D.has(n) || /^TITULO$/.test(n);
 }
 
-function pareceCodigoPeca(s) {
+function pareceCodigoPeca(s, calibracao) {
     const v = String(s || '').trim().toUpperCase();
     if (!v || isRotulo(v)) return false;
+    const custom = calibracao?.regexCodigoPeca;
+    if (custom) {
+        try {
+            return new RegExp(custom, 'i').test(v);
+        } catch {
+            /* fallback abaixo */
+        }
+    }
     return /^[A-Z]\d{2}-[A-Z]{2}$/.test(v) || /^[A-Z0-9]{2,}-[A-Z0-9]{2,}$/.test(v);
 }
 
@@ -41,8 +45,9 @@ function textoPagina(items) {
 /**
  * Monta linhas do bloco de título (coluna esquerda) a partir das posições do PDF.
  */
-function linhasBlocoTitulo(items, pageWidth) {
-    const limiteX = pageWidth * 0.42;
+function linhasBlocoTitulo(items, pageWidth, calibracao) {
+    const limite = calibracao?.limiteColunaEsquerda ?? 0.42;
+    const limiteX = pageWidth * limite;
     const pts = (items || [])
         .map((it) => ({
             str: (it.str || '').trim(),
@@ -73,9 +78,9 @@ function linhasBlocoTitulo(items, pageWidth) {
 /**
  * Extrai campos do template ZW3D (rótulo + valor na mesma linha ou na linha seguinte).
  */
-function parseCamposZw3d(textoBruto, items, pageWidth) {
+function parseCamposZw3d(textoBruto, items, pageWidth, calibracao) {
     const texto = limparEspacos(textoBruto);
-    const linhas = linhasBlocoTitulo(items, pageWidth);
+    const linhas = linhasBlocoTitulo(items, pageWidth, calibracao);
     const campos = {};
 
     const valorAposRotulo = (line, rotuloRe) => {
@@ -91,8 +96,8 @@ function parseCamposZw3d(textoBruto, items, pageWidth) {
         if (/^T[IÍ]TULO\b/.test(up)) {
             let val = valorAposRotulo(line, /^T[IÍ]TULO\s*[:：]?\s*/i);
             if (!val && linhas[i + 1] && !isRotulo(linhas[i + 1])) val = linhas[i + 1];
-            const token = val.split(/\s+/).find((t) => pareceCodigoPeca(t)) || val.split(/\s+/)[0];
-            if (token && pareceCodigoPeca(token)) campos.titulo = token.toUpperCase();
+            const token = val.split(/\s+/).find((t) => pareceCodigoPeca(t, calibracao)) || val.split(/\s+/)[0];
+            if (token && pareceCodigoPeca(token, calibracao)) campos.titulo = token.toUpperCase();
         }
 
         if (/^QUANTIDADE\b/.test(up)) {
@@ -173,8 +178,8 @@ function parseCamposZw3d(textoBruto, items, pageWidth) {
     return campos;
 }
 
-function extrairCodigoPeca(fileName, campos, pageIndex) {
-    if (campos.titulo && pareceCodigoPeca(campos.titulo)) return campos.titulo.toUpperCase();
+function extrairCodigoPeca(fileName, campos, pageIndex, calibracao) {
+    if (campos.titulo && pareceCodigoPeca(campos.titulo, calibracao)) return campos.titulo.toUpperCase();
     const base = String(fileName || '').replace(/\.pdf$/i, '');
     const mFile = base.match(/([A-Z]\d{2}-[A-Z]{2})/i) || base.match(/([A-Z0-9]+-[A-Z0-9]+)/i);
     if (mFile) return mFile[1].toUpperCase();
@@ -350,16 +355,16 @@ async function renderPaginaCompleta(page) {
 }
 
 function montarPecaFromPage({
-    page, texto, items, pageWidth, fileName, relativePath, pageIndex, pageCount, codigoMoldeHint,
+    page, texto, items, pageWidth, fileName, relativePath, pageIndex, pageCount, codigoMoldeHint, calibracao,
 }) {
-    const campos = parseCamposZw3d(texto, items, pageWidth);
-    const codigoPeca = extrairCodigoPeca(fileName, campos, pageIndex);
+    const campos = parseCamposZw3d(texto, items, pageWidth, calibracao);
+    const codigoPeca = extrairCodigoPeca(fileName, campos, pageIndex, calibracao);
     const material = materialFromCampos(campos, texto);
     const massaKg = campos.massaKg ?? null;
     const processo = processoFromCampos(campos, texto);
     const tratamento = campos.tratamento || '';
     const quantidade = campos.quantidade ?? 1;
-    const codigoValido = pareceCodigoPeca(codigoPeca);
+    const codigoValido = pareceCodigoPeca(codigoPeca, calibracao);
     const parseOk = true;
     const qtyInferida = campos.quantidade == null;
     const leituraAutomatica = codigoValido;
@@ -403,6 +408,7 @@ function montarPecaFromPage({
  * Lê um PDF ZW3D (1 página = 1 peça, ou multi-página = N peças).
  */
 export async function parseZw3dPdf(file, opts = {}) {
+    const calibracao = carregarCalibracaoImport(opts.calibracao);
     const relativePath = opts.relativePath || file.webkitRelativePath || file.name;
     const data = new Uint8Array(await file.arrayBuffer());
     const pdf = await getDocument({ data }).promise;
@@ -426,6 +432,7 @@ export async function parseZw3dPdf(file, opts = {}) {
                 pageIndex: i - 1,
                 pageCount,
                 codigoMoldeHint,
+                calibracao,
             });
             try {
                 const { blob, previewUrl } = await renderPaginaCompleta(page);
@@ -494,13 +501,14 @@ export async function parseZw3dFolha(file, opts = {}) {
     return pecas[0] || null;
 }
 
-export async function parseZw3dPasta(files) {
+export async function parseZw3dPasta(files, opts = {}) {
+    const calibracao = carregarCalibracaoImport(opts.calibracao);
     const pdfs = [...files].filter((f) => /\.pdf$/i.test(f.name));
     const pecas = [];
     let totalFolhas = 0;
     for (const file of pdfs) {
         try {
-            const { pecas: rows, pageCount } = await parseZw3dPdf(file);
+            const { pecas: rows, pageCount } = await parseZw3dPdf(file, { calibracao });
             totalFolhas += pageCount || rows.length;
             pecas.push(...rows);
         } catch (err) {

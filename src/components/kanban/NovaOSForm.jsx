@@ -1,16 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { listaEtapasRoteiro, labelSetor, geraCartaoEtapa, montarRoteiro, slugEtapaPersonalizada } from '../../constants/osWorkflow';
 import { nomesClienteAutocomplete } from '../../constants/roles';
-import { Plus, Trash2, Flag, ArrowRight, X, Calculator, History, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Flag, ArrowRight, X, Calculator, History, Loader2, HelpCircle, FlaskConical } from 'lucide-react';
 import { compressImageFile } from '../../utils/folhaProcesso';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 import { formatarMoedaDigitacao, parseMoedaBr } from '../../utils/formatters';
 import { osService } from '../../services/osService';
 import { dadosFormularioRepetirPeca } from '../../utils/horasProducao';
+import { lerCalibracaoImportLocal, salvarCalibracaoImportLocal } from '../../constants/calibracaoImport';
+import MoldeImportAjudaModal from '../moldes/MoldeImportAjudaModal';
+
+const ImportarMoldePanel = lazy(() => import('../moldes/ImportarMoldeModal'));
 
 const novaPeca = () => ({ nome: '', etapas: [], quantidade: 1 });
 
@@ -26,7 +30,7 @@ function CamposHm({ label, horas, minutos, onHoras, onMinutos, inputCls }) {
     );
 }
 
-export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHistorico }) {
+export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHistorico, initialModo }) {
     const clientes = useAppStore((s) => s.clientes);
     const config = useAppStore((s) => s.configuracoesGlobais);
     const activeSector = useAppStore((s) => s.activeSector);
@@ -69,6 +73,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
     const [historicoOrigemId, setHistoricoOrigemId] = useState(null);
     const [historicoSugestao, setHistoricoSugestao] = useState(null);
     const [loadingHistoricoCodigo, setLoadingHistoricoCodigo] = useState(false);
+    const [moldeOrigem, setMoldeOrigem] = useState('manual');
+    const [ajudaImportOpen, setAjudaImportOpen] = useState(false);
+    const [calibracaoImport, setCalibracaoImport] = useState(() => lerCalibracaoImportLocal());
 
     const nomesClientes = nomesClienteAutocomplete(clientes, nomeEmpresa);
 
@@ -113,6 +120,14 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         if (!isOpen || !initialFromHistorico) return;
         preencherComHistorico(initialFromHistorico);
     }, [isOpen, initialFromHistorico, preencherComHistorico]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (initialModo === 'molde') {
+            setModo('molde');
+            setMoldeOrigem('manual');
+        }
+    }, [isOpen, initialModo]);
 
     useEffect(() => {
         if (!isOpen || modo !== 'avulsa') {
@@ -171,6 +186,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         setHistoricoOrigemId(null);
         setHistoricoSugestao(null);
         setLoadingHistoricoCodigo(false);
+        setMoldeOrigem('manual');
+        setAjudaImportOpen(false);
+        setCalibracaoImport(lerCalibracaoImportLocal());
         setFolhaPreview((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return '';
@@ -343,6 +361,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
 
     const inputCls = 'w-full px-3 py-2.5 border border-[#262A33] bg-[#111318] rounded-[8px] text-[#E7E9ED] text-sm placeholder-[#565B68] focus:outline-none focus:border-[#D97D3D]';
     const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
+    const moldeImportAtivo = modo === 'molde' && isGestor && moldeOrigem === 'importar';
 
     const renderRoteiroPeca = (peca, idx, { showNome }) => (
         <div key={idx} className="border border-[#262A33] rounded-[8px] p-3 bg-[#111318] space-y-2">
@@ -460,7 +479,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
             isOpen={isOpen}
             onClose={handleClose}
             title={isGestor ? 'Nova O.S. — despacho para o setor' : 'Novo kanban'}
-            maxWidth="max-w-lg"
+            maxWidth={modo === 'molde' && moldeOrigem === 'importar' ? 'max-w-3xl' : 'max-w-lg'}
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 {isGestor && (
@@ -507,7 +526,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                         <label className={labelCls}>Código do molde</label>
                         <input value={codigoMolde} onChange={(e) => setCodigoMolde(e.target.value)} placeholder="Ex: KINNER" className={inputCls} />
                     </div>
-                ) : (
+                ) : modo !== 'molde' ? (
                     <div>
                         <label className={labelCls}>Código da peça</label>
                         <input value={codigoPeca} onChange={(e) => setCodigoPeca(e.target.value)} placeholder="Ex: PN-123" className={`${inputCls} uppercase`} />
@@ -539,7 +558,59 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                             </div>
                         ) : null}
                     </div>
-                )}
+                ) : null}
+
+                {modo === 'molde' && isGestor ? (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                            <p className={labelCls}>Peças do molde</p>
+                            <button
+                                type="button"
+                                onClick={() => setAjudaImportOpen(true)}
+                                className="inline-flex items-center gap-1 text-[11px] text-[#7B808F] hover:text-[#D97D3D]"
+                                title="Ajuda e calibração da importação"
+                            >
+                                <HelpCircle className="w-3.5 h-3.5" />
+                                Ajuda importação
+                            </button>
+                        </div>
+                        <div className="flex bg-[#111318] p-1 rounded-[7px] border border-[#262A33] gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setMoldeOrigem('manual')}
+                                className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold cursor-pointer ${moldeOrigem === 'manual' ? 'bg-[#333844] text-[#E7E9ED]' : 'text-[#7B808F]'}`}
+                            >
+                                Manual
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMoldeOrigem('importar')}
+                                className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold cursor-pointer flex items-center justify-center gap-1 ${moldeOrigem === 'importar' ? 'bg-[#333844] text-[#E7E9ED]' : 'text-[#7B808F]'}`}
+                            >
+                                Importar
+                                <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[8px] font-bold uppercase bg-[#C99A4A]/20 text-[#C99A4A] border border-[#C99A4A]/30">
+                                    <FlaskConical className="w-2.5 h-2.5" /> Beta
+                                </span>
+                            </button>
+                        </div>
+                        {moldeOrigem === 'importar' ? (
+                            <Suspense fallback={<p className="text-sm text-[#7B808F] flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Carregando importador…</p>}>
+                                <ImportarMoldePanel
+                                    embedded
+                                    open
+                                    calibracao={calibracaoImport}
+                                    cabecalhoExterno={{ cliente, codigoMolde, prazo: prazoEntrega }}
+                                    onOpenAjuda={() => setAjudaImportOpen(true)}
+                                    onClose={() => setMoldeOrigem('manual')}
+                                    onCreated={(criados) => {
+                                        handleClose();
+                                        onCreated?.(criados);
+                                    }}
+                                />
+                            </Suspense>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -572,9 +643,10 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </p>
                 )}
 
-                <button
-                    type="button"
-                    onClick={() => setIsPrioridade((v) => !v)}
+                {modo !== 'molde' && (
+                    <button
+                        type="button"
+                        onClick={() => setIsPrioridade((v) => !v)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] border cursor-pointer ${
                         isPrioridade
                             ? 'border-[#C85558]/50 bg-[rgba(200,85,88,0.1)]'
@@ -589,8 +661,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                         {isPrioridade ? 'Destaque no quadro' : 'Normal'}
                     </span>
                 </button>
+                )}
 
-                {isGestor ? (
+                {isGestor && !moldeImportAtivo ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className={labelCls}>
@@ -614,12 +687,14 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                         )}
                     </div>
                 ) : (
+                    !moldeImportAtivo ? (
                     <p className="text-sm text-[#E7E9ED] bg-[#111318] border border-[#262A33] rounded-[8px] px-3 py-2">
                         {labelSetor(setorPadrao)} — cai em A fazer para programar
                     </p>
+                    ) : null
                 )}
 
-                {((!isGestor && setorPadrao !== 'EXTERNO') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('CNC') || (p?.etapas || []).includes('EDM_FIO')))) && (
+                {!moldeImportAtivo && ((!isGestor && setorPadrao !== 'EXTERNO') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('CNC') || (p?.etapas || []).includes('EDM_FIO')))) && (
                     <div className="border border-[#262A33] rounded-[8px] p-3 bg-[#111318] space-y-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565B68]">Tempos previstos (CAM)</p>
                         <p className="text-[10px] text-[#565B68] leading-relaxed">
@@ -640,7 +715,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </div>
                 )}
 
-                {isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')) && (
+                {!moldeImportAtivo && isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')) && (
                     <div>
                         <button
                             type="button"
@@ -656,6 +731,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </div>
                 )}
 
+                {!moldeImportAtivo ? (
+                <>
                 <div>
                     <label className={labelCls}>Caminho / link do desenho</label>
                     <input value={linkDesenho} onChange={(e) => setLinkDesenho(e.target.value)} placeholder="Pasta de rede, URL ou caminho do arquivo" className={inputCls} />
@@ -701,8 +778,20 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                         {isSubmitting ? 'Criando...' : 'Enviar para A fazer'}
                     </Button>
                 </div>
+                </>
+                ) : (
+                    <div className="flex gap-3 pt-2 border-t border-[#262A33]">
+                        <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>Cancelar</Button>
+                    </div>
+                )}
             </form>
         </Modal>
+        <MoldeImportAjudaModal
+            open={ajudaImportOpen}
+            onClose={() => setAjudaImportOpen(false)}
+            calibracao={calibracaoImport}
+            onSalvarCalibracao={(cal) => setCalibracaoImport(salvarCalibracaoImportLocal(cal))}
+        />
             <Modal
                 isOpen={showEdmCalc}
                 onClose={() => setShowEdmCalc(false)}

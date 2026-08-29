@@ -99,7 +99,15 @@ function montarLinhasKanban(pecas, molde, origemLabel) {
     return linhas;
 }
 
-export default function ImportarMoldeModal({ open, onClose, onCreated }) {
+export default function ImportarMoldePanel({
+    open = true,
+    embedded = false,
+    onClose,
+    onCreated,
+    calibracao,
+    cabecalhoExterno,
+    onOpenAjuda,
+}) {
     const addGrupoOrdensServico = useAppStore((s) => s.addGrupoOrdensServico);
     const addOrdemServico = useAppStore((s) => s.addOrdemServico);
     const clientes = useAppStore((s) => s.clientes);
@@ -136,6 +144,10 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
     );
 
     if (!open) return null;
+
+    const clienteFinal = () => (cabecalhoExterno?.cliente ?? cliente).trim();
+    const moldeFinal = () => (cabecalhoExterno?.codigoMolde ?? codigoMolde).trim();
+    const prazoFinal = () => cabecalhoExterno?.prazo ?? prazo;
 
     const reset = () => {
         setPecas([]);
@@ -196,7 +208,7 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
         setErro('');
         setInfo('');
         try {
-            const { codigoMolde: molde, pecas: rows, resumo } = await parseZw3dPasta(files);
+            const { codigoMolde: molde, pecas: rows, resumo } = await parseZw3dPasta(files, { calibracao });
             aplicarPecas(rows, { codigoMolde: molde });
             const auto = resumo?.processadas ?? rows.filter((r) => r.leituraAutomatica).length;
             const rev = resumo?.revisao ?? rows.filter((r) => !r.leituraAutomatica).length;
@@ -312,7 +324,8 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
     };
 
     const criar = async () => {
-        if (!cliente.trim()) {
+        const cli = clienteFinal();
+        if (!cli) {
             setErro('Informe o cliente.');
             return;
         }
@@ -329,15 +342,15 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
         setSaving(true);
         setErro('');
         try {
-            const molde = codigoMolde.trim() || 'Molde';
+            const molde = moldeFinal() || 'Molde';
             const origemLabel = modo === 'csv' || modo === 'csv_pdf' ? 'csv' : 'zw3d';
             const linhas = montarLinhasKanban(selecionadas, molde, origemLabel);
 
             const cabecalho = {
-                cliente: cliente.trim(),
+                cliente: cli,
                 codigoPeca: molde,
                 codigoMolde: molde,
-                prazoEntrega: prazo || '',
+                prazoEntrega: prazoFinal() || '',
                 quantidade: 1,
                 status: 'A fazer',
                 programado: false,
@@ -502,10 +515,11 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
         );
     };
 
-    return (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center p-0 sm:p-4">
-            <button type="button" className="absolute inset-0 bg-black/70" aria-label="Fechar" onClick={fechar} />
-            <div className="relative z-10 flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-[#262A33] bg-[#181B22] sm:rounded-xl">
+    const usaCabecalhoExterno = embedded && cabecalhoExterno;
+
+    const corpo = (
+        <>
+            {!embedded ? (
                 <div className="flex items-start justify-between gap-3 border-b border-[#262A33] px-5 py-4">
                     <div>
                         <p className="font-['Space_Grotesk'] text-[15px] text-[#E7E9ED]">Importar molde</p>
@@ -517,42 +531,56 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
                         <X className="h-4 w-4" />
                     </button>
                 </div>
+            ) : null}
 
-                <div className="overflow-y-auto px-5 py-4 space-y-4">
-                    {!pecas.length ? (
-                        <>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                {MODOS.map((m) => {
-                                    const Icon = m.icon;
-                                    const ativo = modo === m.id;
-                                    return (
-                                        <button
-                                            key={m.id}
-                                            type="button"
-                                            onClick={() => { setModo(m.id); setErro(''); setInfo(''); setCsvPendentes(null); }}
-                                            className={`rounded-[8px] border p-3 text-left transition-colors ${
-                                                ativo ? 'border-[#D97D3D] bg-[#D97D3D]/10' : 'border-[#262A33] bg-[#111318] hover:border-[#333844]'
-                                            }`}
-                                        >
-                                            <Icon className={`w-4 h-4 mb-1.5 ${ativo ? 'text-[#D97D3D]' : 'text-[#7B808F]'}`} />
-                                            <p className="text-[12px] font-semibold text-[#E7E9ED]">{m.label}</p>
-                                            <p className="text-[10px] text-[#565B68] mt-0.5 line-clamp-2">{m.desc}</p>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            {(modo === 'csv' || modo === 'csv_pdf') ? <CsvFormatGuia /> : null}
-                            {renderDropZone()}
-                        </>
-                    ) : (
-                        <>
-                            <div className="rounded-[8px] border border-[#D97D3D]/30 bg-[#D97D3D]/10 px-3 py-2 text-[12px] text-[#E7E9ED]">
-                                Fila do molde — revise os campos, desmarque o que não for importar e confirme.
-                                {resumoRevisao > 0 ? (
-                                    <span className="block mt-1 text-[#C99A4A]">{resumoRevisao} peça(s) pedem revisão manual.</span>
-                                ) : null}
-                            </div>
+            <div className={`overflow-y-auto space-y-4 ${embedded ? '' : 'px-5 py-4 max-h-[60vh]'}`}>
+                {embedded && onOpenAjuda ? (
+                    <div className="flex items-start justify-between gap-2 rounded-[8px] border border-[#C99A4A]/30 bg-[#C99A4A]/8 px-3 py-2">
+                        <p className="text-[11px] text-[#9DA2AE] leading-relaxed">
+                            <span className="text-[#C99A4A] font-semibold uppercase text-[10px]">Beta · </span>
+                            CSV é a fonte mais confiável. PDF ZW3D pode exigir revisão manual e calibração.
+                        </p>
+                        <button type="button" onClick={onOpenAjuda} className="shrink-0 text-[11px] font-semibold text-[#D97D3D] hover:underline">
+                            Ajuda
+                        </button>
+                    </div>
+                ) : null}
 
+                {!pecas.length ? (
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {MODOS.map((m) => {
+                                const Icon = m.icon;
+                                const ativo = modo === m.id;
+                                return (
+                                    <button
+                                        key={m.id}
+                                        type="button"
+                                        onClick={() => { setModo(m.id); setErro(''); setInfo(''); setCsvPendentes(null); }}
+                                        className={`rounded-[8px] border p-3 text-left transition-colors ${
+                                            ativo ? 'border-[#D97D3D] bg-[#D97D3D]/10' : 'border-[#262A33] bg-[#111318] hover:border-[#333844]'
+                                        }`}
+                                    >
+                                        <Icon className={`w-4 h-4 mb-1.5 ${ativo ? 'text-[#D97D3D]' : 'text-[#7B808F]'}`} />
+                                        <p className="text-[12px] font-semibold text-[#E7E9ED]">{m.label}</p>
+                                        <p className="text-[10px] text-[#565B68] mt-0.5 line-clamp-2">{m.desc}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {(modo === 'csv' || modo === 'csv_pdf') ? <CsvFormatGuia /> : null}
+                        {renderDropZone()}
+                    </>
+                ) : (
+                    <>
+                        <div className="rounded-[8px] border border-[#D97D3D]/30 bg-[#D97D3D]/10 px-3 py-2 text-[12px] text-[#E7E9ED]">
+                            Fila do molde — revise os campos, desmarque o que não for importar e confirme.
+                            {resumoRevisao > 0 ? (
+                                <span className="block mt-1 text-[#C99A4A]">{resumoRevisao} peça(s) pedem revisão manual.</span>
+                            ) : null}
+                        </div>
+
+                        {!usaCabecalhoExterno ? (
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <label className="text-[11px] text-[#7B808F]">
                                     Código do molde
@@ -578,53 +606,73 @@ export default function ImportarMoldeModal({ open, onClose, onCreated }) {
                                     </div>
                                 </label>
                             </div>
+                        ) : (
+                            <p className="text-[11px] text-[#7B808F]">
+                                Cliente, molde e prazo vêm do formulário acima.
+                            </p>
+                        )}
 
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7B808F]">
-                                    {selecionadas.length} de {pecas.length} selecionada(s)
-                                </p>
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={adicionarPecaManual}
-                                        className="inline-flex items-center gap-1 text-[12px] text-[#D97D3D]">
-                                        <Plus className="w-3.5 h-3.5" /> Peça manual
-                                    </button>
-                                    <button type="button" onClick={() => { setPecas([]); setCodigoMolde(''); setInfo(''); }}
-                                        className="text-[12px] text-[#7B808F]">
-                                        Recomeçar
-                                    </button>
-                                </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7B808F]">
+                                {selecionadas.length} de {pecas.length} selecionada(s)
+                            </p>
+                            <div className="flex gap-2">
+                                <button type="button" onClick={adicionarPecaManual}
+                                    className="inline-flex items-center gap-1 text-[12px] text-[#D97D3D]">
+                                    <Plus className="w-3.5 h-3.5" /> Peça manual
+                                </button>
+                                <button type="button" onClick={() => { setPecas([]); setCodigoMolde(''); setInfo(''); }}
+                                    className="text-[12px] text-[#7B808F]">
+                                    Recomeçar
+                                </button>
                             </div>
+                        </div>
 
-                            <ul className="space-y-2 max-h-[42vh] overflow-y-auto pr-1">
-                                {pecas.map((p, idx) => (
-                                    <PecaImportRow
-                                        key={`${p.fileName}-${idx}-${p.codigoPeca}`}
-                                        peca={p}
-                                        idx={idx}
-                                        onPatch={patchPeca}
-                                        onRemove={removerPeca}
-                                        showRemove={pecas.length > 1}
-                                    />
-                                ))}
-                            </ul>
-                        </>
-                    )}
+                        <ul className="space-y-2 max-h-[36vh] overflow-y-auto pr-1">
+                            {pecas.map((p, idx) => (
+                                <PecaImportRow
+                                    key={`${p.fileName}-${idx}-${p.codigoPeca}`}
+                                    peca={p}
+                                    idx={idx}
+                                    onPatch={patchPeca}
+                                    onRemove={removerPeca}
+                                    showRemove={pecas.length > 1}
+                                />
+                            ))}
+                        </ul>
+                    </>
+                )}
 
-                    {info ? <p className="text-[12px] text-[#4A9D74]">{info}</p> : null}
-                    {erro ? <p className="text-[12px] text-[#C85558]">{erro}</p> : null}
-                </div>
+                {info ? <p className="text-[12px] text-[#4A9D74]">{info}</p> : null}
+                {erro ? <p className="text-[12px] text-[#C85558]">{erro}</p> : null}
+            </div>
 
-                <div className="flex gap-2 border-t border-[#262A33] px-5 py-3">
-                    <button type="button" onClick={criar} disabled={saving || !selecionadas.length}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-[#D97D3D] py-2 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32] disabled:opacity-50">
-                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                        Enviar para fila · {selecionadas.length} peça{selecionadas.length === 1 ? '' : 's'}
-                    </button>
-                    <button type="button" onClick={fechar} className="rounded-md border border-[#333844] px-4 py-2 text-[13px] text-[#E7E9ED]">
-                        Fechar
-                    </button>
-                </div>
+            <div className={`flex gap-2 border-t border-[#262A33] ${embedded ? 'pt-3 mt-1' : 'px-5 py-3'}`}>
+                <button type="button" onClick={criar} disabled={saving || !selecionadas.length}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-[#D97D3D] py-2 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32] disabled:opacity-50">
+                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                    Enviar para fila · {selecionadas.length} peça{selecionadas.length === 1 ? '' : 's'}
+                </button>
+                <button type="button" onClick={fechar} className="rounded-md border border-[#333844] px-4 py-2 text-[13px] text-[#E7E9ED]">
+                    {embedded ? 'Voltar' : 'Fechar'}
+                </button>
+            </div>
+        </>
+    );
+
+    if (embedded) return corpo;
+
+    return (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center p-0 sm:p-4">
+            <button type="button" className="absolute inset-0 bg-black/70" aria-label="Fechar" onClick={fechar} />
+            <div className="relative z-10 flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-[#262A33] bg-[#181B22] sm:rounded-xl">
+                {corpo}
             </div>
         </div>
     );
+}
+
+/** @deprecated use ImportarMoldePanel — mantido para compatibilidade */
+export function ImportarMoldeModal(props) {
+    return <ImportarMoldePanel {...props} />;
 }
