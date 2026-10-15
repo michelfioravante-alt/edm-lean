@@ -218,7 +218,7 @@ export default function Moldes({ onNavigate }) {
                     <div>
                         <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Moldes</h2>
                         <p className="text-[#565B68] mt-0.5 text-xs max-w-xl">
-                            Ordem de chegada (recentes no topo) · Nova O.S. → Molde para cadastrar ou importar peças.
+                            Ordem de chegada (recentes no topo) · Nova O.S. → Molde para cadastrar peças manualmente.
                         </p>
                     </div>
                 </div>

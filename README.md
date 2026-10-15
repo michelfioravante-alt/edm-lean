@@ -28,12 +28,10 @@ O deploy na Vercel é automático a cada push na branch `main`.
 - Acesso à Visão de Gestor, Indicadores Financeiros da Planta e Parâmetros Globais protegido por **PIN Master de 4 dígitos** configurável em tempo real.
 - Bloqueio automático de programadores ao seu setor de atuação (`🔒 KPIs Exclusivos`).
 
-### 🧩 3. Aba Moldes — Importação ZW3D / CSV e Fila do Gestor
-- **1 folha PDF = 1 peça = 1 kanban**; moldes agrupam peças por `os_grupo_id`.
-- **Três modos de importação**: Folhas PDF · Planilha CSV · CSV + PDFs.
-- **CSV como fonte confiável** (lista oficial da engenharia); PDF como desenho/folha de processo.
-- Peças importadas entram na **fila do molde** (`em_fila`) — só aparecem no Kanban do setor após o gestor **liberar** (individual ou em lote, com confirmação).
-- Modelo de planilha: [`public/modelo-importacao-molde.csv`](public/modelo-importacao-molde.csv).
+### 🧩 3. Aba Moldes — Cadastro manual e fila do gestor
+- Moldes agrupam peças por `os_grupo_id` (kanbans pai/filho).
+- Cadastro **manual** das peças e do roteiro em Nova O.S. → Molde.
+- Peças entram na **fila do molde** (`em_fila`) — só aparecem no Kanban do setor após o gestor **liberar** (individual ou em lote).
 
 ### ⏱️ 4. Horas Máquina — Referência para Orçamentos
 - Foco em **horas máquina reais** (setup, corte, aferição, pausas), não em substituir o preço comercial.
@@ -53,9 +51,9 @@ O deploy na Vercel é automático a cada push na branch `main`.
   - `custoHoraEdm`: Custo hora específico para Eletroerosão a Fio (Padrão: R$ 120/h).
 - Apuração do valor gerado em ciclo, valor total de setup + trabalho, perdas por refugo e custo de tempo morto / pausas.
 
-### 📄 7. Importador de Folhas de Processo CAM
-- **Siemens NX / ShopDocs**: leitura de HTML com extração de tempos, ferramentas e programas G.
-- **ZW3D**: parser de PDF (Plano A — revisão manual sempre possível) + import via CSV estruturado.
+### 📄 7. Folha e tempos no cartão
+- Anexo de print/imagem da peça no cartão e na folha A4.
+- Tempos previstos (setup/corte) digitados na abertura ou na programação; calculadora WEDM opcional para eletrofio.
 
 ### 📦 8. Controle de Estoque & Vida Útil de Ferramental
 - Registro e controle de vida útil em horas de ferramentas de corte (fresas, brocas, fios).
@@ -106,7 +104,7 @@ Para conectar a uma instância própria do Supabase, execute os scripts de [`sup
 ## 📋 Fluxo resumido — Molde → Produção
 
 ```text
-Import (CSV/PDF) → Fila do molde (em_fila) → Gestor libera → Kanban do setor
+Nova O.S. (molde/peças manuais) → Fila do molde (em_fila) → Gestor libera → Kanban do setor
        → Setup → Corte → Aferição → Concluído → Relatório de horas
 ```
 

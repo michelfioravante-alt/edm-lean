@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { HelpButton } from '../components/common/HelpModal';
 import CalculadoraEdmSection from '../components/landing/CalculadoraEdmSection';
+import PainelIndicadores from '../components/landing/PainelIndicadores';
 
 const NAV = [
     { id: 'calculadora', label: 'Calculadora' },
     { id: 'telas', label: 'Telas' },
+    { id: 'indicadores', label: 'Indicadores' },
     { id: 'produto', label: 'Produto' },
     { id: 'uso', label: 'Uso' },
 ];
@@ -84,7 +86,7 @@ function VideoFluxo({ className = '' }) {
                 loop
                 playsInline
                 preload="auto"
-                aria-label="Gravação do quadro: o operador confirma o checklist, o cartão vai para usinagem e depois é pausado por troca de insert"
+                aria-label="Gravação do quadro: o operador confirma o checklist, o cartão vai para usinagem e depois é pausado por troca de inserto"
                 className="block h-auto w-full"
             />
         </Janela>
@@ -104,7 +106,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             },
             { rootMargin: '-35% 0px -50% 0px', threshold: 0 },
         );
-        ['home', 'calculadora', 'telas', 'produto', 'uso'].forEach((id) => {
+        ['home', 'calculadora', 'telas', 'indicadores', 'produto', 'uso'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
         });
@@ -130,7 +132,7 @@ export default function LandingPage({ onLogin, onRegister }) {
     };
 
     return (
-        <div className="min-h-screen bg-[#111318] text-[#E7E9ED]">
+        <div className="min-h-screen overflow-x-hidden bg-[#111318] text-[#E7E9ED]">
             <header className="sticky top-0 z-20 border-b border-[#262A33]/80 bg-[#111318]/85 backdrop-blur-md">
                 <div className="mx-auto flex h-[72px] max-w-[1080px] items-center justify-between px-6">
                     <a href="#home" onClick={(e) => go(e, 'home')} className="flex items-center gap-3">
@@ -235,10 +237,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                     </div>
                     <p className="mt-4 text-[12px] text-[#565B68]">Sem cartão de crédito. Seus dados ficam só com a sua empresa.</p>
 
-                    <div className="relative mt-16">
-                        <div aria-hidden className="pointer-events-none absolute -inset-x-10 -top-10 bottom-1/2 rounded-full bg-[#D97D3D]/10 blur-3xl" />
+                    <div className="relative mt-16 overflow-hidden">
+                        <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-10 bottom-1/2 rounded-full bg-[#D97D3D]/10 blur-3xl" />
                         <VideoFluxo className="relative" />
-                        <p className="mt-3 text-[12px] text-[#565B68]">Quadro do centro CNC: o operador confirma o checklist, o cartão vai para a usinagem e a pausa entra com o motivo.</p>
+                        <p className="mt-3 text-[12px] text-[#565B68]">Quadro do centro CNC: o operador confirma o checklist, o cartão vai para a usinagem e a pausa entra com o motivo (ex.: troca de inserto).</p>
                     </div>
                 </section>
 
@@ -289,6 +291,22 @@ export default function LandingPage({ onLogin, onRegister }) {
                     </div>
                 </section>
 
+                <section id="indicadores" className="border-t border-[#262A33] scroll-mt-20">
+                    <div className="mx-auto max-w-[1080px] px-6 py-20">
+                        <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">Indicadores</p>
+                        <h2 className="mt-3 max-w-[22ch] font-['Space_Grotesk'] text-[28px] font-medium tracking-tight text-white sm:text-[32px]">
+                            Números do chão, sem planilha à parte.
+                        </h2>
+                        <p className="mt-4 max-w-[540px] text-[14px] leading-relaxed text-[#9DA2AE]">
+                            O painel de controle mostra eficiência, FPY, lead time, WIP e atrasos — com legenda de como cada número é calculado.
+                        </p>
+
+                        <div className="mt-12">
+                            <PainelIndicadores />
+                        </div>
+                    </div>
+                </section>
+
                 <section id="produto" className="border-t border-[#262A33]">
                     <div className="mx-auto max-w-[1080px] px-6 py-20">
                         <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">Produto</p>
@@ -299,10 +317,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                             {[
                                 ['Quadro', 'Kanban de CNC e eletrofio: fila, preparação, usinagem ou corte, inspeção e concluído.'],
                                 ['Roteiro', 'CNC, eletrofio, laser, retífica, torno, montagem e serviço externo (têmpera, terceira).'],
-                                ['Folha A4', 'Peça, quantidade, desenho, programa CAM, imagem e QR para o cartão. Impressão em formato A4.'],
-                                ['CAM e estoque', 'Importação de folha NX, Mastercam ou SolidCAM. Baixa de insert, fresa e fio com alerta de reposição.'],
+                                ['Folha A4', 'Peça, quantidade, desenho, programa, imagem e QR para o cartão. Impressão em formato A4.'],
+                                ['Estoque', 'Baixa de inserto, fresa e fio com alerta de reposição.'],
                                 ['Qualidade', 'Inspeção em aprovada ou refugo. Retrabalho gera um novo cartão ligado à O.S. original.'],
-                                ['Gestão', 'Carteira de prazos, previsto versus real de máquina, pausas com motivo, clientes e registros.'],
+                                ['Gestão', 'Indicadores de eficiência, FPY, WIP e atrasos; carteira de prazos; previsto versus real; clientes e registros.'],
                             ].map(([title, text]) => (
                                 <div key={title} className="grid gap-2 py-6 sm:grid-cols-[180px_1fr] sm:gap-10">
                                     <p className="text-[14px] font-medium text-[#E7E9ED]">{title}</p>
@@ -327,7 +345,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 </li>
                                 <li>
                                     <p className="text-[14px] text-[#E7E9ED]">Programador</p>
-                                    <p className="mt-1 text-[14px] leading-relaxed text-[#7B808F]">Importa a folha CAM, aponta o programa e confirma ferramentas no estoque.</p>
+                                    <p className="mt-1 text-[14px] leading-relaxed text-[#7B808F]">Aponta o programa, registra tempos previstos e confirma ferramentas no estoque.</p>
                                 </li>
                                 <li>
                                     <p className="text-[14px] text-[#E7E9ED]">Operador</p>

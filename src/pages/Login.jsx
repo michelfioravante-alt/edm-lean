@@ -91,12 +91,20 @@ export default function Login({ initialMode = 'login', onBack }) {
         <div className="relative flex min-h-screen flex-col bg-[#111318]">
             <header className="relative z-20 border-b border-[#262A33]/80">
                 <div className="mx-auto flex h-[72px] max-w-[1080px] items-center justify-between px-6">
-                    <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (onBack) onBack();
+                            else window.location.hash = '#home';
+                        }}
+                        className="flex items-center gap-3 text-left"
+                        aria-label="Voltar à tela inicial"
+                    >
                         <span className="flex h-8 w-8 items-center justify-center rounded-md border border-[#333844] bg-[#181B22] text-[11px] font-semibold tracking-wide text-[#D97D3D]">
                             EL
                         </span>
                         <span className="font-['Space_Grotesk'] text-[15px] tracking-tight text-[#E7E9ED]">EDM Lean</span>
-                    </div>
+                    </button>
                     <div className="flex items-center gap-4">
                         {onBack && (
                             <button

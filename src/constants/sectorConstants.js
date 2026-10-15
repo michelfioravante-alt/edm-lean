@@ -21,7 +21,7 @@ export const SECTORS = {
         motivosPausa: [
             'Troca de Ferramenta',
             'Quebra de Ferramenta',
-            'Troca de Insert',
+            'Troca de Inserto',
             'Ajuste de Offset / Zero',
             'Entrada de outra O.S.',
             'Troca de Insumo',
@@ -74,7 +74,7 @@ export const SECTORS = {
             concluido: { key: 'concluido', label: 'Concluído', theme: 'kanban-green' },
         },
         motivosPausa: [
-            'Troca de Insert / Pastilha',
+            'Troca de Inserto / Pastilha',
             'Troca de Ferramenta',
             'Ajuste de Corretor / Zero',
             'Troca de Castanhas',
@@ -151,7 +151,7 @@ export const SECTORS = {
         motivosPausa: [
             'Troca de Ferramenta',
             'Quebra de Ferramenta',
-            'Troca de Insert',
+            'Troca de Inserto',
             'Troca de Resina / Filtro',
             'Ajuste de Offset / Zero',
             'Entrada de outra O.S.',

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
-import ImportNxSheet from './ImportNxSheet';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 import { useAppStore } from '../../store/useAppStore';
-import { minutosParaHorasMin } from '../../utils/nxShopDocParser';
 import { Calculator, Plus, Trash2 } from 'lucide-react';
 import {
     lerChecklistFerramentas,
@@ -30,8 +28,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
         numeroPrograma: '',
         linkPrograma: '',
         totalSetups: 1,
-        nomesSetups: ['OP10'],
-        nxImport: null,
+            nomesSetups: ['OP10'],
         checklistFerramentas: [],
     });
 
@@ -48,7 +45,6 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
             linkPrograma: lerLinkPrograma(osData),
             totalSetups: osData.total_setups || 1,
             nomesSetups: osData.nomes_setups || ['OP10'],
-            nxImport: osData.nx_import || null,
             checklistFerramentas: lerChecklistFerramentas(osData),
         });
     }, [isOpen, osData?.id, fetchEstoque]);
@@ -58,24 +54,8 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
     const inputCls = 'w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-[8px] text-[#E7E9ED] text-sm focus:outline-none focus:border-[#D97D3D] [color-scheme:dark]';
     const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
     const isEdm = setor === 'EDM_FIO' || setor.includes('EDM') || setor.includes('FIO');
-    const isCnc = !isEdm && setor !== 'EXTERNO';
     const linkDesenho = osData.link_desenho || '';
     const programadoresDoSetor = programadores.filter((p) => !p.setor || p.setor === 'TODOS' || p.setor === setor);
-
-    const handleNxImport = (data) => {
-        const corte = minutosParaHorasMin(data.tempoUsinagemMinutos || 0);
-        const setup = minutosParaHorasMin(data.tempoSetupMinutos || 0);
-        setForm((p) => ({
-            ...p,
-            nxImport: data,
-            tempoEstimadoCorteHoras: String(corte.horas || ''),
-            tempoEstimadoCorteMinutos: String(corte.minutos || ''),
-            tempoEstimadoSetupHoras: String(setup.horas || ''),
-            tempoEstimadoSetupMinutos: String(setup.minutos || ''),
-            numeroPrograma: data.numeroPrograma || data.codigoPeca || p.numeroPrograma,
-            programador: data.programador || p.programador,
-        }));
-    };
 
     const setLinha = (index, patch) => {
         setForm((p) => {
@@ -98,7 +78,6 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
                 tempoEstimadoSetupMinutos: form.tempoEstimadoSetupMinutos,
                 numeroPrograma: form.numeroPrograma,
                 linkPrograma: form.linkPrograma || null,
-                nxImport: form.nxImport,
                 checklistFerramentas: checklist,
                 programado: true,
             });
@@ -116,15 +95,8 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
                 <p className="text-xs text-[#7B808F]">
                     {isEdm
                         ? 'O gestor já deixou o desenho da peça. Aqui o programador de fio solta o programa (ISO/NC), o caminho na rede e os tempos. Sem isso o cartão não vai para preparação.'
-                        : 'O gestor só abriu o cartão. Aqui entram a folha CAM (botão laranja abaixo), o checklist do estoque e o caminho do programa na rede.'}
+                        : 'O gestor só abriu o cartão. Digite os tempos previstos, o checklist do estoque e o caminho do programa na rede.'}
                 </p>
-
-                {isCnc && (
-                    <div className="border border-[#D97D3D]/50 rounded-[8px] p-3 bg-[#1A120C]">
-                        <p className="text-[10px] font-semibold text-[#D97D3D] uppercase tracking-wider mb-2">Folha de processo CAM</p>
-                        <ImportNxSheet onImport={handleNxImport} />
-                    </div>
-                )}
 
                 {linkDesenho ? (
                     <div className="bg-[#111318] border border-[#262A33] rounded-[8px] p-3">

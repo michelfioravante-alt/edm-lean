@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calculadora de eletroerosão a fio (WEDM) — tempo de corte · EDM Lean</title>
-  <meta name="description" content="Calculadora gratuita de tempo de corte para eletroerosão a fio (EDM / WEDM). Informe perímetro, espessura e velocidade em mm²/min e veja o resultado no kanban. Sem cadastro." />
-  <meta name="keywords" content="calculadora edm, calculadora eletroerosão a fio, calculadora WEDM, tempo de corte fio, mm²/min, eletrofio" />
+  <meta name="description" content="Calculadora gratuita de tempo de corte para eletroerosão a fio (EDM / WEDM). Informe perímetro e rendimento em mm/min (típico 4–7) e veja o resultado no kanban. Sem cadastro." />
+  <meta name="keywords" content="calculadora edm, calculadora eletroerosão a fio, calculadora WEDM, tempo de corte fio, mm/min, eletrofio" />
   <link rel="canonical" href="https://edmlean.com.br/calculadora" />
   <meta name="robots" content="index, follow" />
 
@@ -13,7 +13,7 @@
   <meta property="og:locale" content="pt_BR" />
   <meta property="og:url" content="https://edmlean.com.br/calculadora" />
   <meta property="og:title" content="Calculadora de eletroerosão a fio (WEDM) · EDM Lean" />
-  <meta property="og:description" content="Calcule o tempo de corte a fio grátis. Perímetro, espessura, velocidade mm²/min e eficiência — resultado no kanban." />
+  <meta property="og:description" content="Calcule o tempo de corte a fio grátis. Perímetro, rendimento mm/min e eficiência — resultado no kanban." />
   <meta property="og:site_name" content="EDM Lean" />
   <meta property="og:image" content="https://edmlean.com.br/landing/fluxo-capa.jpg" />
 
@@ -33,6 +33,7 @@
       --text: #E7E9ED; --muted: #9DA2AE; --dim: #7B808F; --faint: #565B68; --brand: #D97D3D;
     }
     * { box-sizing: border-box; }
+    html, body { overflow-x: hidden; }
     body {
       margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
       font-family: 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
@@ -84,11 +85,76 @@
     .lead { margin: 1rem 0 0; max-width: 540px; font-size: 15px; line-height: 1.6; color: var(--muted); }
 
     .grid {
-      margin-top: 2.5rem; display: grid; gap: 2rem;
+      margin-top: 2.5rem; display: grid; gap: 2rem; max-width: 520px;
     }
-    @media (min-width: 1024px) {
-      .grid { grid-template-columns: minmax(0, 380px) 1fr; }
+    .btn-ver { margin-top: 1rem; width: 100%; padding: .7rem 1.1rem; }
+    @media (min-width: 480px) {
+      .btn-ver { width: auto; }
     }
+
+    .modal[hidden] { display: none !important; }
+    .modal {
+      position: fixed; inset: 0; z-index: 80;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    @media (min-width: 640px) {
+      .modal { align-items: center; padding: 1rem; }
+    }
+    .modal-backdrop {
+      position: absolute; inset: 0; border: none; cursor: pointer;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(2px);
+      animation: calcBackdropIn .22s ease both;
+    }
+    .modal-panel {
+      position: relative; z-index: 1; width: 100%; max-width: 720px; max-height: 92vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid var(--border2); border-radius: 16px 16px 0 0; background: var(--bg);
+      box-shadow: 0 32px 80px -16px rgba(0,0,0,.85);
+      animation: calcPanelIn .32s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @media (min-width: 640px) {
+      .modal-panel { border-radius: 16px; }
+    }
+    .modal-head {
+      display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start;
+      border-bottom: 1px solid var(--border); padding: .9rem 1.1rem;
+    }
+    .modal-eyebrow { margin: 0; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+    .modal-head h2 {
+      margin: .15rem 0 0; font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px; font-weight: 500; color: #fff;
+    }
+    .modal-sub { margin: .35rem 0 0; font-size: 12px; color: var(--muted); }
+    .modal-close {
+      border: 1px solid var(--border2); background: transparent; color: var(--dim);
+      border-radius: 6px; width: 32px; height: 32px; cursor: pointer; flex-shrink: 0;
+    }
+    .modal-body { overflow: auto; padding: .75rem 1rem; }
+    .modal-foot {
+      border-top: 1px solid var(--border); background: var(--surface); padding: 1rem 1.1rem;
+    }
+    .modal-foot h3 {
+      margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 500; color: #fff;
+    }
+    .modal-foot p { margin: .4rem 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+    .cta-actions { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+
+    @keyframes calcBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes calcPanelIn {
+      from { opacity: 0; transform: translateY(18px) scale(.98); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes calcCardIn {
+      from { opacity: 0; transform: translateY(-40px) scale(.9); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes calcCardPulse {
+      0%, 100% { box-shadow: 0 12px 40px -16px rgba(217,125,61,.55); }
+      50% { box-shadow: 0 16px 48px -8px rgba(217,125,61,.85); }
+    }
+    .card.drop-in { animation: calcCardIn .7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .card.pulse { animation: calcCardPulse 1.1s ease .15s 2; }
+    .col.destacada { border-color: rgba(217,125,61,.55); }
 
     .panel {
       border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 1.25rem;
@@ -141,6 +207,10 @@
       margin-top: 1.5rem; border: 1px solid var(--border2); border-radius: 12px;
       background: var(--bg); padding: 1rem;
     }
+    .result.ready {
+      border-color: rgba(217,125,61,.4);
+      background: linear-gradient(135deg, rgba(217,125,61,.12), transparent);
+    }
     .result-label { font-size: 12px; color: var(--dim); margin: 0; }
     .result-time {
       margin: .25rem 0 0; font-family: 'Space Grotesk', sans-serif;
@@ -185,17 +255,11 @@
     .card {
       overflow: hidden; border-radius: 10px; border: 1px solid rgba(217,125,61,.55);
       background: var(--surface); box-shadow: 0 12px 40px -16px rgba(217,125,61,.55);
-      opacity: 0; transform: translateY(8px); transition: .5s ease;
     }
-    .card.show { opacity: 1; transform: none; }
     .card-h {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex; align-items: center; gap: .35rem;
       border-bottom: 1px solid var(--border); background: var(--raised); padding: .5rem .75rem;
       font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--brand);
-    }
-    .tag {
-      border: 1px solid var(--border2); background: var(--bg); border-radius: 4px;
-      padding: .1rem .45rem; font-size: 9.5px; color: var(--dim); letter-spacing: .4px;
     }
     .card-b { padding: .75rem; }
     .card-cli { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; }
@@ -219,19 +283,6 @@
     .card-actions .go {
       flex: 1.4; background: var(--brand); color: #111318; font-weight: 600; border: none;
     }
-
-    .cta {
-      margin-top: 1rem; border-radius: 12px; border: 1px solid var(--border);
-      background: var(--surface); padding: 1.25rem; transition: .4s;
-    }
-    .cta.on {
-      border-color: rgba(217,125,61,.45);
-      background: linear-gradient(135deg, rgba(217,125,61,.15), transparent);
-    }
-    .cta h2 { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 500; color: #fff; }
-    .cta p { margin: .5rem 0 0; max-width: 52ch; font-size: 13px; line-height: 1.55; color: var(--muted); }
-    .cta-actions { margin-top: 1.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
-    .cta-actions .btn-brand { display: inline-flex; align-items: center; gap: .4rem; padding: .65rem 1.25rem; }
 
     .footnote { margin-top: 2.5rem; max-width: 720px; font-size: 12px; line-height: 1.55; color: var(--faint); }
     .seo-block {
@@ -279,8 +330,8 @@
     <p class="eyebrow">Ferramenta gratuita · WEDM</p>
     <h1>Calculadora de eletroerosão a fio</h1>
     <p class="lead">
-      Informe perímetro, espessura e velocidade da máquina. O tempo de corte vira um cartão no kanban —
-      o mesmo quadro que a ferramentaria usa no chão. Sem cadastro para calcular.
+      Informe perímetro e rendimento da máquina em mm/min (na prática costuma ficar entre 4 e 7).
+      O tempo de corte vira um cartão no kanban — o mesmo quadro do chão. Sem cadastro para calcular.
     </p>
 
     <div class="grid">
@@ -314,29 +365,19 @@
               <span class="hint">mm · contorno</span>
             </label>
             <label class="field">
-              <span class="lbl">Espessura</span>
-              <input class="inp-num" id="espessura" type="number" inputmode="decimal" min="0" step="0.1" value="40" />
-              <span class="hint">mm</span>
+              <span class="lbl">Rendimento</span>
+              <input class="inp-num" id="velocidade" type="number" inputmode="decimal" min="0" max="20" step="0.1" value="5.5" />
+              <span class="hint">mm/min · típico 4–7</span>
             </label>
-            <label class="field">
-              <span class="lbl">Velocidade</span>
-              <input class="inp-num" id="velocidade" type="number" inputmode="decimal" min="0" step="0.1" value="45" />
-              <span class="hint">mm²/min</span>
-            </label>
-          </div>
-
-          <div class="row-nums">
             <label class="field">
               <span class="lbl">Peças</span>
               <input class="inp-num" id="quantidade" type="number" inputmode="numeric" min="1" step="1" value="1" />
               <span class="hint">quantidade</span>
             </label>
             <label class="field">
-              <span class="lbl">Set-up (opc.)</span>
-              <div class="hm">
-                <div class="hm-wrap"><input class="inp-num" id="setupH" type="number" inputmode="numeric" min="0" placeholder="0" /><span class="suf">h</span></div>
-                <div class="hm-wrap"><input class="inp-num" id="setupM" type="number" inputmode="numeric" min="0" max="59" placeholder="0" /><span class="suf">min</span></div>
-              </div>
+              <span class="lbl">Set-up</span>
+              <input class="inp-num" id="setupMin" type="number" inputmode="numeric" min="0" placeholder="0" />
+              <span class="hint">min · opcional</span>
             </label>
           </div>
 
@@ -345,7 +386,7 @@
               <div>
                 <span class="lbl">Eficiência esperada</span>
                 <span class="hint" style="margin:0">
-                  A velocidade do catálogo é em trecho reto. Cantos, entradas, soldas e distâncias dos bicos deixam o corte mais lento — a eficiência reduz o ritmo “de papel” para algo mais realista.
+                  O rendimento em trecho reto quase nunca se mantém no contorno inteiro. Cantos, entradas, soldas e distância dos bicos reduzem o ritmo — a eficiência traz o tempo para algo mais realista.
                 </span>
               </div>
               <span class="eff-pct" id="effLabel">85%</span>
@@ -362,48 +403,60 @@
         <div class="result">
           <p class="result-label">⏱ Tempo total estimado</p>
           <p class="result-time" id="tempoTotal">—</p>
-          <p class="result-meta" id="tempoMeta">Preencha perímetro, espessura e velocidade</p>
-        </div>
-      </section>
-
-      <section>
-        <div class="board" aria-label="Prévia do kanban">
-          <div class="board-head">
-            <div>
-              <p class="board-title">Quadro · Centro Eletrofio</p>
-              <p class="board-sub">Prévia do kanban com o tempo que você acabou de calcular</p>
-            </div>
-          </div>
-          <div class="cols" id="cols"></div>
-        </div>
-
-        <div class="cta" id="cta">
-          <h2 id="ctaTitle">O resultado aparece no kanban ao lado.</h2>
-          <p>
-            No EDM Lean o tempo previsto vira O.S.: fila, setup, corte, inspeção e histórico — sem planilha.
-            Teste 30 dias. Sem cartão de crédito.
-          </p>
-          <div class="cta-actions">
-            <button type="button" class="btn btn-brand" id="btnSalvar" disabled>Salvar este kanban →</button>
-            <a class="link-muted" href="/#login">Já tenho conta</a>
-          </div>
+          <p class="result-meta" id="tempoMeta">Preencha perímetro e rendimento</p>
+          <button type="button" class="btn btn-brand btn-ver" id="btnVer" disabled>Ver no kanban</button>
         </div>
       </section>
     </div>
 
+    <div class="modal" id="modal" hidden>
+      <button type="button" class="modal-backdrop" id="modalBackdrop" aria-label="Fechar"></button>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+          <div>
+            <p class="modal-eyebrow">Prévia do chão</p>
+            <h2 id="modalTitle">Assim a ordem entra no kanban</h2>
+            <p class="modal-sub" id="modalSub"></p>
+          </div>
+          <button type="button" class="modal-close" id="modalClose" aria-label="Fechar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="board" aria-label="Prévia do kanban">
+            <div class="board-head">
+              <div>
+                <p class="board-title">Quadro · Centro Eletrofio</p>
+                <p class="board-sub">O cartão cai na coluna A FAZER</p>
+              </div>
+            </div>
+            <div class="cols" id="cols"></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <h3 id="ctaTitle">Quer esse cartão no quadro de verdade?</h3>
+          <p>
+            No EDM Lean o tempo previsto vira O.S. no chão. Teste 30 dias, sem cartão.
+          </p>
+          <div class="cta-actions">
+            <button type="button" class="btn btn-brand" id="btnSalvar">Salvar este kanban →</button>
+            <a class="link-muted" href="/#login">Já tenho conta</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <p class="footnote">
-      Estimativa: tempo de corte = (perímetro × espessura ÷ velocidade) ÷ eficiência × quantidade de peças, somando o set-up se informado.
-      O tempo real muda com tipo de fio, desgaste, estratégia de passe e condição da máquina.
+      Estimativa: tempo de corte = (perímetro ÷ rendimento em mm/min) ÷ eficiência × quantidade de peças, somando o set-up se informado.
+      Na prática o rendimento de eletrofio costuma ficar entre 4 e 7 mm/min e raramente passa de 9.
+      O tempo real muda com tipo de fio, espessura, desgaste e condição da máquina.
       No EDM Lean, a mesma lógica alimenta a ordem de serviço no quadro.
     </p>
 
     <article class="seo-block">
       <h2>Como usar a calculadora de eletroerosão a fio</h2>
       <p>
-        Esta <strong>calculadora EDM / WEDM</strong> estima o tempo de corte a fio a partir da área de usinagem.
-        Multiplique o <strong>perímetro</strong> pela <strong>espessura</strong> para obter mm², divida pela
-        <strong>velocidade de corte em mm²/min</strong> da sua máquina e ajuste a <strong>eficiência esperada</strong>
-        para cantos, entradas e distâncias dos bicos.
+        Esta <strong>calculadora EDM / WEDM</strong> estima o tempo de corte a fio pelo
+        <strong>perímetro</strong> dividido pelo <strong>rendimento em mm/min</strong> da máquina
+        (típico 4–7 mm/min), ajustando a <strong>eficiência esperada</strong> para cantos, entradas e distâncias dos bicos.
       </p>
       <h3>Para que serve</h3>
       <ul>
@@ -437,71 +490,46 @@
 
     function calcular() {
       const perimetro = num($('perimetro').value);
-      const espessura = num($('espessura').value);
       const velocidade = num($('velocidade').value);
       const qtd = Math.max(1, parseInt($('quantidade').value, 10) || 1);
       const eff = Math.max(0.4, (num($('eficiencia').value) || 100) / 100);
-      const setup = Math.max(0, (parseInt($('setupH').value, 10) || 0) * 60 + (parseInt($('setupM').value, 10) || 0));
+      const setup = Math.max(0, parseInt($('setupMin').value, 10) || 0);
       const peca = ($('peca').value || 'PECA-001').trim();
       const cliente = ($('cliente').value || 'Sua ferramentaria').trim();
 
-      let corteMin = 0, area = 0;
-      if (perimetro > 0 && espessura > 0 && velocidade > 0) {
-        area = perimetro * espessura;
-        corteMin = ((area / velocidade) / eff) * qtd;
+      let corteMin = 0;
+      if (perimetro > 0 && velocidade > 0) {
+        corteMin = ((perimetro / velocidade) / eff) * qtd;
       }
       const total = corteMin + setup;
-      return { peca, cliente, qtd, setup, corteMin, total, area, pronto: corteMin > 0 };
+      return { peca, cliente, qtd, setup, corteMin, total, pronto: corteMin > 0 };
     }
 
-    function render() {
-      const r = calcular();
-      const eff = $('eficiencia').value;
-      $('effLabel').textContent = eff + '%';
-
-      if (r.pronto) {
-        $('tempoTotal').textContent = rotulo(r.total);
-        let meta = 'Corte ' + rotulo(r.corteMin);
-        if (r.setup > 0) meta += ' · Setup ' + rotulo(r.setup);
-        meta += ' · ' + r.qtd + ' peça' + (r.qtd > 1 ? 's' : '');
-        meta += ' · Área ' + Math.round(r.area).toLocaleString('pt-BR') + ' mm²';
-        $('tempoMeta').textContent = meta;
-        $('cta').classList.add('on');
-        $('ctaTitle').textContent = 'Esse cartão já nasceu. Quer salvá-lo no quadro da fábrica?';
-        $('btnSalvar').disabled = false;
-      } else {
-        $('tempoTotal').textContent = '—';
-        $('tempoMeta').textContent = 'Preencha perímetro, espessura e velocidade';
-        $('cta').classList.remove('on');
-        $('ctaTitle').textContent = 'O resultado aparece no kanban ao lado.';
-        $('btnSalvar').disabled = true;
-      }
-
+    function renderBoard(r, animar) {
       const root = $('cols');
       root.innerHTML = '';
       COLS.forEach((col) => {
         const el = document.createElement('div');
-        el.className = 'col';
-        const mostra = r.pronto && col.key === 'aFazer';
+        const destino = col.key === 'aFazer';
+        el.className = 'col' + (destino && animar ? ' destacada' : '');
         el.innerHTML =
           '<div class="col-head"><span class="col-name"><span class="dot" style="background:' + col.cor + '"></span>' +
-          col.titulo + '</span><span class="col-count">' + (mostra ? 1 : 0) + '</span></div>' +
+          col.titulo + '</span><span class="col-count">' + (destino ? 1 : 0) + '</span></div>' +
           '<div class="col-body"></div>';
         const body = el.querySelector('.col-body');
-        if (mostra) {
+        if (destino) {
           let rows = '';
           if (r.setup > 0) {
             rows += '<div class="meta-row"><span class="meta-k">Setup</span><span class="meta-v">' + rotulo(r.setup) + '</span></div>';
           }
           rows +=
-            '<div class="meta-row"><span class="meta-k">Corte previsto</span><span class="meta-v hi">' + rotulo(r.corteMin) + '</span></div>' +
+            '<div class="meta-row"><span class="meta-k">Corte</span><span class="meta-v hi">' + rotulo(r.corteMin) + '</span></div>' +
             '<div class="meta-row"><span class="meta-k">Peças</span><span class="meta-v">' + r.qtd + '</span></div>';
           body.innerHTML =
-            '<div class="card show" id="card">' +
-            '<div class="card-h"><span>⚡ Eletrofio</span><span class="tag">A fazer</span></div>' +
+            '<div class="card' + (animar ? ' drop-in pulse' : '') + '">' +
+            '<div class="card-h"><span>⚡ Eletrofio</span></div>' +
             '<div class="card-b"><p class="card-cli"></p><p class="card-cod"></p>' +
-            '<div class="meta">' + rows + '</div>' +
-            '<div class="card-actions"><span>Detalhes</span><span class="go">Mover →</span></div></div></div>';
+            '<div class="meta">' + rows + '</div></div></div>';
           body.querySelector('.card-cli').textContent = r.cliente;
           body.querySelector('.card-cod').textContent = r.peca;
         } else {
@@ -511,8 +539,54 @@
       });
     }
 
-    ['peca','cliente','perimetro','espessura','velocidade','quantidade','setupH','setupM','eficiencia']
+    function render() {
+      const r = calcular();
+      $('effLabel').textContent = $('eficiencia').value + '%';
+      if (r.pronto) {
+        $('tempoTotal').textContent = rotulo(r.total);
+        let meta = 'Corte ' + rotulo(r.corteMin);
+        if (r.setup > 0) meta += ' · Setup ' + rotulo(r.setup);
+        meta += ' · ' + r.qtd + ' peça' + (r.qtd > 1 ? 's' : '');
+        $('tempoMeta').textContent = meta;
+        $('btnVer').disabled = false;
+        $('tempoTotal').closest('.result').classList.add('ready');
+      } else {
+        $('tempoTotal').textContent = '—';
+        $('tempoMeta').textContent = 'Preencha perímetro e rendimento';
+        $('btnVer').disabled = true;
+        $('tempoTotal').closest('.result').classList.remove('ready');
+        fecharModal();
+      }
+    }
+
+    function abrirModal() {
+      const r = calcular();
+      if (!r.pronto) return;
+      let sub = 'Tempo total <strong style="color:#D97D3D">' + rotulo(r.total) + '</strong> · corte ' + rotulo(r.corteMin);
+      if (r.setup > 0) sub += ' · setup ' + rotulo(r.setup);
+      $('modalSub').innerHTML = sub;
+      renderBoard(r, false);
+      $('modal').hidden = false;
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(function () {
+        setTimeout(function () { renderBoard(r, true); }, 160);
+      });
+    }
+
+    function fecharModal() {
+      $('modal').hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    ['peca','cliente','perimetro','velocidade','quantidade','setupMin','eficiencia']
       .forEach((id) => $(id).addEventListener('input', render));
+
+    $('btnVer').addEventListener('click', abrirModal);
+    $('modalClose').addEventListener('click', fecharModal);
+    $('modalBackdrop').addEventListener('click', fecharModal);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !$('modal').hidden) fecharModal();
+    });
 
     $('btnSalvar').addEventListener('click', () => {
       const r = calcular();
@@ -520,11 +594,10 @@
       try {
         sessionStorage.setItem('edm-lean-calc-rascunho', JSON.stringify({
           peca: r.peca, cliente: r.cliente,
-          perimetro: $('perimetro').value, espessura: $('espessura').value,
-          velocidade: $('velocidade').value, eficiencia: $('eficiencia').value,
+          perimetro: $('perimetro').value,
+          velocidadeMmMin: $('velocidade').value, eficiencia: $('eficiencia').value,
           quantidade: r.qtd, setupMinutos: r.setup,
           totalMinutos: Math.round(r.corteMin), totalComSetupMinutos: Math.round(r.total),
-          areaMm2: r.area,
         }));
       } catch (e) {}
       window.location.href = '/#register';

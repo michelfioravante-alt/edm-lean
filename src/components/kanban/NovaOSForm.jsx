@@ -1,20 +1,16 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { listaEtapasRoteiro, labelSetor, geraCartaoEtapa, montarRoteiro, slugEtapaPersonalizada } from '../../constants/osWorkflow';
 import { nomesClienteAutocomplete } from '../../constants/roles';
-import { Plus, Trash2, Flag, ArrowRight, X, Calculator, History, Loader2, HelpCircle, FlaskConical } from 'lucide-react';
+import { Plus, Trash2, Flag, ArrowRight, X, Calculator, History, Loader2 } from 'lucide-react';
 import { compressImageFile } from '../../utils/folhaProcesso';
 import CalculadoraTempoModal from '../common/CalculadoraTempoModal';
 import { formatarMoedaDigitacao, parseMoedaBr } from '../../utils/formatters';
 import { osService } from '../../services/osService';
 import { dadosFormularioRepetirPeca } from '../../utils/horasProducao';
-import { lerCalibracaoImportLocal, salvarCalibracaoImportLocal } from '../../constants/calibracaoImport';
-import MoldeImportAjudaModal from '../moldes/MoldeImportAjudaModal';
-
-const ImportarMoldePanel = lazy(() => import('../moldes/ImportarMoldeModal'));
 
 const novaPeca = () => ({ nome: '', etapas: [], quantidade: 1 });
 
@@ -73,10 +69,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
     const [historicoOrigemId, setHistoricoOrigemId] = useState(null);
     const [historicoSugestao, setHistoricoSugestao] = useState(null);
     const [loadingHistoricoCodigo, setLoadingHistoricoCodigo] = useState(false);
-    const [moldeOrigem, setMoldeOrigem] = useState('manual');
-    const [ajudaImportOpen, setAjudaImportOpen] = useState(false);
-    const [calibracaoImport, setCalibracaoImport] = useState(() => lerCalibracaoImportLocal());
-
     const nomesClientes = nomesClienteAutocomplete(clientes, nomeEmpresa);
 
     const aplicarTemposSetor = useCallback((setor, setupHm, corteHm) => {
@@ -125,7 +117,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         if (!isOpen) return;
         if (initialModo === 'molde') {
             setModo('molde');
-            setMoldeOrigem('manual');
         }
     }, [isOpen, initialModo]);
 
@@ -186,9 +177,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         setHistoricoOrigemId(null);
         setHistoricoSugestao(null);
         setLoadingHistoricoCodigo(false);
-        setMoldeOrigem('manual');
-        setAjudaImportOpen(false);
-        setCalibracaoImport(lerCalibracaoImportLocal());
         setFolhaPreview((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return '';
@@ -361,8 +349,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
 
     const inputCls = 'w-full px-3 py-2.5 border border-[#262A33] bg-[#111318] rounded-[8px] text-[#E7E9ED] text-sm placeholder-[#565B68] focus:outline-none focus:border-[#D97D3D]';
     const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
-    const moldeImportAtivo = modo === 'molde' && isGestor && moldeOrigem === 'importar';
-
     const renderRoteiroPeca = (peca, idx, { showNome }) => (
         <div key={idx} className="border border-[#262A33] rounded-[8px] p-3 bg-[#111318] space-y-2">
             {showNome && (
@@ -479,7 +465,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
             isOpen={isOpen}
             onClose={handleClose}
             title={isGestor ? 'Nova O.S. — despacho para o setor' : 'Novo kanban'}
-            maxWidth={modo === 'molde' && moldeOrigem === 'importar' ? 'max-w-3xl' : 'max-w-lg'}
+            maxWidth="max-w-lg"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 {isGestor && (
@@ -560,58 +546,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </div>
                 ) : null}
 
-                {modo === 'molde' && isGestor ? (
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <p className={labelCls}>Peças do molde</p>
-                            <button
-                                type="button"
-                                onClick={() => setAjudaImportOpen(true)}
-                                className="inline-flex items-center gap-1 text-[11px] text-[#7B808F] hover:text-[#D97D3D]"
-                                title="Ajuda e calibração da importação"
-                            >
-                                <HelpCircle className="w-3.5 h-3.5" />
-                                Ajuda importação
-                            </button>
-                        </div>
-                        <div className="flex bg-[#111318] p-1 rounded-[7px] border border-[#262A33] gap-1">
-                            <button
-                                type="button"
-                                onClick={() => setMoldeOrigem('manual')}
-                                className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold cursor-pointer ${moldeOrigem === 'manual' ? 'bg-[#333844] text-[#E7E9ED]' : 'text-[#7B808F]'}`}
-                            >
-                                Manual
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setMoldeOrigem('importar')}
-                                className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold cursor-pointer flex items-center justify-center gap-1 ${moldeOrigem === 'importar' ? 'bg-[#333844] text-[#E7E9ED]' : 'text-[#7B808F]'}`}
-                            >
-                                Importar
-                                <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[8px] font-bold uppercase bg-[#C99A4A]/20 text-[#C99A4A] border border-[#C99A4A]/30">
-                                    <FlaskConical className="w-2.5 h-2.5" /> Beta
-                                </span>
-                            </button>
-                        </div>
-                        {moldeOrigem === 'importar' ? (
-                            <Suspense fallback={<p className="text-sm text-[#7B808F] flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Carregando importador…</p>}>
-                                <ImportarMoldePanel
-                                    embedded
-                                    open
-                                    calibracao={calibracaoImport}
-                                    cabecalhoExterno={{ cliente, codigoMolde, prazo: prazoEntrega }}
-                                    onOpenAjuda={() => setAjudaImportOpen(true)}
-                                    onClose={() => setMoldeOrigem('manual')}
-                                    onCreated={(criados) => {
-                                        handleClose();
-                                        onCreated?.(criados);
-                                    }}
-                                />
-                            </Suspense>
-                        ) : null}
-                    </div>
-                ) : null}
-
                 <div className="grid grid-cols-2 gap-3">
                     <div>
                         <label className={labelCls}>Prazo {modo === 'molde' ? '(do molde)' : ''}</label>
@@ -663,7 +597,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                 </button>
                 )}
 
-                {isGestor && !moldeImportAtivo ? (
+                {isGestor ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className={labelCls}>
@@ -680,21 +614,19 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                             )}
                         </div>
                         <p className="text-[10px] text-[#565B68] leading-relaxed">
-                            Ordem da esquerda para a direita. CNC, eletrofio e serviço externo viram cartão. Laser, retífica, torno, montagem e etapas que você criar só aparecem no caminho da peça.
+                            Digite as peças e o roteiro. CNC, eletrofio e serviço externo viram cartão. Laser, retífica, torno, montagem e etapas que você criar só aparecem no caminho da peça.
                         </p>
                         {(modo === 'molde' ? pecas : [pecas[0]]).map((peca, idx) =>
                             renderRoteiroPeca(peca, idx, { showNome: modo === 'molde' })
                         )}
                     </div>
                 ) : (
-                    !moldeImportAtivo ? (
                     <p className="text-sm text-[#E7E9ED] bg-[#111318] border border-[#262A33] rounded-[8px] px-3 py-2">
                         {labelSetor(setorPadrao)} — cai em A fazer para programar
                     </p>
-                    ) : null
                 )}
 
-                {!moldeImportAtivo && ((!isGestor && setorPadrao !== 'EXTERNO') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('CNC') || (p?.etapas || []).includes('EDM_FIO')))) && (
+                {((!isGestor && setorPadrao !== 'EXTERNO') || (isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('CNC') || (p?.etapas || []).includes('EDM_FIO')))) && (
                     <div className="border border-[#262A33] rounded-[8px] p-3 bg-[#111318] space-y-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565B68]">Tempos previstos (CAM)</p>
                         <p className="text-[10px] text-[#565B68] leading-relaxed">
@@ -715,7 +647,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </div>
                 )}
 
-                {!moldeImportAtivo && isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')) && (
+                {isGestor && (modo === 'molde' ? pecas : [pecas[0]]).some((p) => (p?.etapas || []).includes('EDM_FIO')) && (
                     <div>
                         <button
                             type="button"
@@ -731,7 +663,6 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </div>
                 )}
 
-                {!moldeImportAtivo ? (
                 <>
                 <div>
                     <label className={labelCls}>Caminho / link do desenho</label>
@@ -742,7 +673,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={3} placeholder="Sobremetal, cuidado no setup, pedido do cliente…" className={`${inputCls} min-h-[72px] resize-y`} />
                 </div>
                 <div>
-                    <label className={labelCls}>Print da peça (NX / Mastercam)</label>
+                    <label className={labelCls}>Print / anexo da peça</label>
                     <input
                         type="file"
                         accept="image/*"
@@ -765,11 +696,11 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     {folhaPreview && (
                         <img src={folhaPreview} alt="Print" className="mt-2 max-h-28 rounded-[6px] border border-[#262A33] object-contain" />
                     )}
-                    <p className="text-[10px] text-[#565B68] mt-1">Uma foto por kanban. Escolher outra substitui a anterior (Storage, não no banco).</p>
+                    <p className="text-[10px] text-[#565B68] mt-1">Print da folha CAM ou foto da peça. Uma imagem por kanban — escolher outra substitui a anterior.</p>
                 </div>
 
                 <p className="text-[11px] text-[#7B808F] leading-relaxed">
-                    O print aparece no detalhe do cartão. A folha de processo imprime de lá, quando precisar.
+                    O anexo aparece no cartão e na folha A4. Tempos previstos você digita acima (ou usa a calculadora de eletrofio).
                 </p>
 
                 <div className="flex gap-3 pt-2 border-t border-[#262A33]">
@@ -779,19 +710,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                     </Button>
                 </div>
                 </>
-                ) : (
-                    <div className="flex gap-3 pt-2 border-t border-[#262A33]">
-                        <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>Cancelar</Button>
-                    </div>
-                )}
             </form>
         </Modal>
-        <MoldeImportAjudaModal
-            open={ajudaImportOpen}
-            onClose={() => setAjudaImportOpen(false)}
-            calibracao={calibracaoImport}
-            onSalvarCalibracao={(cal) => setCalibracaoImport(salvarCalibracaoImportLocal(cal))}
-        />
             <Modal
                 isOpen={showEdmCalc}
                 onClose={() => setShowEdmCalc(false)}

@@ -286,7 +286,7 @@ export default function Ferramental() {
                         </select>
                         <textarea
                             className="w-full bg-[#111318] border border-[#333844] rounded-xl px-4 py-2.5 text-sm text-white min-h-[72px]"
-                            placeholder="Observação (ex: quebrou insert no acabamento OP20)"
+                            placeholder="Observação (ex: quebrou inserto no acabamento OP20)"
                             value={quebraObs}
                             onChange={(e) => setQuebraObs(e.target.value)}
                         />

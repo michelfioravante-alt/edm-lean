@@ -238,7 +238,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                             <div className="flex flex-wrap gap-1.5 mb-3">
                                 {[
                                     'Envio Tratamento Térmico (Ext.)',
-                                    'Troca de Insert',
+                                    'Troca de Inserto',
                                     'Ajuste de Offset / Zero',
                                     'Troca de Ferramenta',
                                     'Quebra de Ferramenta',

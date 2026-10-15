@@ -203,7 +203,7 @@ export default function Estoque() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Nome do Item</label>
-                                    <input type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className={inputClasses} placeholder={novoSetor === 'EDM_FIO' ? 'Ex: Fio Latão Ø0.25mm, Filtro Resina' : novoSetor === 'TORNO' ? 'Ex: Pastilha CCMT 09T3, Bedame' : novoSetor === 'CNC' ? 'Ex: Fresa Ø6mm, Insert APMT' : 'Ex: Óleo Solúvel, Graxa Lubrificante'} required />
+                                    <input type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className={inputClasses} placeholder={novoSetor === 'EDM_FIO' ? 'Ex: Fio Latão Ø0.25mm, Filtro Resina' : novoSetor === 'TORNO' ? 'Ex: Pastilha CCMT 09T3, Bedame' : novoSetor === 'CNC' ? 'Ex: Fresa Ø6mm, Inserto APMT' : 'Ex: Óleo Solúvel, Graxa Lubrificante'} required />
                                 </div>
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Setor do Insumo</label>
@@ -219,7 +219,7 @@ export default function Estoque() {
                                         className={inputClasses}
                                     >
                                         <option value="TODOS">Geral / Toda Fábrica (Fluídos, Graxas)</option>
-                                        <option value="CNC">Usinagem CNC (Fresas, Inserts, Fixação)</option>
+                                        <option value="CNC">Usinagem CNC (Fresas, Insertos, Fixação)</option>
                                         <option value="EDM_FIO">Eletroerosão a Fio (Fios, Resinas, Filtros)</option>
                                         <option value="TORNO">Torno CNC (Castanhas, Pastilhas, Bedames)</option>
                                     </select>

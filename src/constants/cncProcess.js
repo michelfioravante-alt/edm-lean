@@ -72,7 +72,7 @@ export const MOTIVOS_PAUSA_CNC = [
     'Troca de Ferramenta',
     'Troca de Insumo',
     'Quebra de Ferramenta',
-    'Troca de Insert',
+    'Troca de Inserto',
     'Ajuste de Offset / Zero',
     'Intervalo',
     'Falta de Energia',
@@ -85,7 +85,7 @@ export const MOTIVOS_PAUSA_CNC = [
 export const TIPOS_FERRAMENTAL = [
     'Fresa',
     'Broca',
-    'Insert',
+    'Inserto',
     'Porta-ferramenta',
     'Mandril',
     'Macho',
