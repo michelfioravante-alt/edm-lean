@@ -29,17 +29,16 @@ function Captura({ src, alt, largura, altura, className = '' }) {
 }
 
 function VideoFluxo({ className = '' }) {
-    const [semMovimento] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
     const ref = useRef(null);
 
     // React não grava o atributo `muted` no HTML; sem ele o navegador bloqueia o autoplay.
     useEffect(() => {
         const video = ref.current;
-        if (!video || semMovimento) return;
+        if (!video) return;
         video.muted = true;
         video.setAttribute('muted', '');
         video.play().catch(() => {});
-    }, [semMovimento]);
+    }, []);
 
     return (
         <Janela className={className}>
@@ -49,8 +48,7 @@ function VideoFluxo({ className = '' }) {
                 poster="/landing/fluxo-capa.jpg"
                 width={1440}
                 height={900}
-                autoPlay={!semMovimento}
-                controls={semMovimento}
+                autoPlay
                 muted
                 loop
                 playsInline
