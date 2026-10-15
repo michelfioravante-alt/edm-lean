@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { HelpButton } from '../components/common/HelpModal';
+import CalculadoraEdmSection from '../components/landing/CalculadoraEdmSection';
 
 const NAV = [
+    { id: 'calculadora', label: 'Calculadora' },
     { id: 'telas', label: 'Telas' },
     { id: 'produto', label: 'Produto' },
     { id: 'uso', label: 'Uso' },
 ];
-
-const LINK_CALC = { href: '/calculadora', label: 'Calculadora' };
 
 function Janela({ className = '', children }) {
     return (
@@ -104,11 +104,21 @@ export default function LandingPage({ onLogin, onRegister }) {
             },
             { rootMargin: '-35% 0px -50% 0px', threshold: 0 },
         );
-        ['home', 'telas', 'produto', 'uso'].forEach((id) => {
+        ['home', 'calculadora', 'telas', 'produto', 'uso'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
         });
         return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        const id = (window.location.hash || '').replace(/^#/, '');
+        if (!id || id === 'home') return;
+        const t = setTimeout(() => {
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setActive(id);
+        }, 80);
+        return () => clearTimeout(t);
     }, []);
 
     const go = (e, id) => {
@@ -143,9 +153,6 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 {item.label}
                             </a>
                         ))}
-                        <a href={LINK_CALC.href} className="text-[13px] tracking-wide text-[#D97D3D] hover:text-[#e89a5a]">
-                            {LINK_CALC.label}
-                        </a>
                     </nav>
 
                     <div className="flex items-center gap-3">
@@ -181,9 +188,6 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 {item.label}
                             </a>
                         ))}
-                        <a href={LINK_CALC.href} className="block py-2 text-sm text-[#D97D3D]">
-                            {LINK_CALC.label} de eletrofio
-                        </a>
                         <button
                             type="button"
                             onClick={() => { setMenuOpen(false); onRegister(); }}
@@ -214,12 +218,13 @@ export default function LandingPage({ onLogin, onRegister }) {
                         >
                             Testar 30 dias grátis
                         </button>
-                        <a
-                            href="/calculadora"
+                        <button
+                            type="button"
+                            onClick={(e) => go(e, 'calculadora')}
                             className="rounded-md border border-[#333844] px-5 py-2.5 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/50"
                         >
                             Calculadora de eletrofio
-                        </a>
+                        </button>
                         <button
                             type="button"
                             onClick={onLogin}
@@ -236,6 +241,8 @@ export default function LandingPage({ onLogin, onRegister }) {
                         <p className="mt-3 text-[12px] text-[#565B68]">Quadro do centro CNC: o operador confirma o checklist, o cartão vai para a usinagem e a pausa entra com o motivo.</p>
                     </div>
                 </section>
+
+                <CalculadoraEdmSection onRegister={onRegister} onLogin={onLogin} />
 
                 <section id="telas" className="border-t border-[#262A33]">
                     <div className="mx-auto max-w-[1080px] space-y-24 px-6 py-20">

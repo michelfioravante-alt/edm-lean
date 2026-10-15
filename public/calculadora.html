@@ -104,6 +104,7 @@
 
     .fields { display: flex; flex-direction: column; gap: 1rem; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .row-nums { display: flex; flex-wrap: wrap; gap: .75rem 1rem; }
     label.field { display: block; }
     .lbl { display: block; margin-bottom: .35rem; font-size: 12px; font-weight: 500; color: var(--muted); }
     .hint { display: block; margin-top: .35rem; font-size: 11px; line-height: 1.4; color: var(--faint); }
@@ -111,15 +112,20 @@
       width: 100%; border: 1px solid var(--border2); border-radius: 8px; background: var(--bg);
       color: var(--text); padding: .65rem .75rem; font-size: 15px; font-weight: 600; font-family: inherit;
     }
-    .inp:focus { outline: none; border-color: var(--brand); }
-    .inp::placeholder { color: var(--faint); font-weight: 500; }
-    .hm { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
-    .hm-wrap { position: relative; }
+    .inp-num {
+      width: 5.5rem; max-width: 100%; border: 1px solid var(--border2); border-radius: 8px; background: var(--bg);
+      color: var(--text); padding: .55rem .5rem; font-size: 15px; font-weight: 600; font-family: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+    .inp:focus, .inp-num:focus { outline: none; border-color: var(--brand); }
+    .inp::placeholder, .inp-num::placeholder { color: var(--faint); font-weight: 500; }
+    .hm { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .hm-wrap { position: relative; width: 5.5rem; }
     .hm-wrap .suf {
-      position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+      position: absolute; right: .5rem; top: 50%; transform: translateY(-50%);
       font-size: 12px; color: var(--faint); pointer-events: none;
     }
-    .hm-wrap .inp { padding-right: 2rem; }
+    .hm-wrap .inp-num { width: 100%; padding-right: 1.75rem; }
 
     .eff-box { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: .9rem; }
     .eff-top { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; }
@@ -152,10 +158,11 @@
     .board-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; margin: 0; }
     .board-sub { font-size: 11px; color: var(--faint); margin: .15rem 0 0; }
     .cols {
-      display: flex; gap: .5rem; overflow-x: auto; padding: .75rem .75rem 1rem;
+      display: flex; gap: .5rem; overflow-x: auto; overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch; padding: .75rem .75rem 1rem;
     }
     .col {
-      flex: 0 0 200px; min-height: 220px; display: flex; flex-direction: column;
+      flex: 0 0 168px; min-height: 180px; display: flex; flex-direction: column;
       border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
     }
     @media (min-width: 1100px) {
@@ -300,38 +307,38 @@
             </label>
           </div>
 
-          <label class="field">
-            <span class="lbl">Perímetro de corte (mm)</span>
-            <input class="inp" id="perimetro" type="number" min="0" step="0.1" value="420" />
-            <span class="hint">Comprimento total do contorno que o fio vai percorrer, em milímetros.</span>
-          </label>
+          <div class="row-nums">
+            <label class="field">
+              <span class="lbl">Perímetro</span>
+              <input class="inp-num" id="perimetro" type="number" inputmode="decimal" min="0" step="0.1" value="420" />
+              <span class="hint">mm · contorno</span>
+            </label>
+            <label class="field">
+              <span class="lbl">Espessura</span>
+              <input class="inp-num" id="espessura" type="number" inputmode="decimal" min="0" step="0.1" value="40" />
+              <span class="hint">mm</span>
+            </label>
+            <label class="field">
+              <span class="lbl">Velocidade</span>
+              <input class="inp-num" id="velocidade" type="number" inputmode="decimal" min="0" step="0.1" value="45" />
+              <span class="hint">mm²/min</span>
+            </label>
+          </div>
 
-          <label class="field">
-            <span class="lbl">Espessura do material (mm)</span>
-            <input class="inp" id="espessura" type="number" min="0" step="0.1" value="40" />
-            <span class="hint">Altura da peça na direção do fio. Com o perímetro, forma a área de corte (mm²).</span>
-          </label>
-
-          <label class="field">
-            <span class="lbl">Velocidade de corte (mm²/min)</span>
-            <input class="inp" id="velocidade" type="number" min="0" step="0.1" value="45" />
-            <span class="hint">Área que a máquina remove por minuto neste material e fio (catálogo ou experiência).</span>
-          </label>
-
-          <label class="field">
-            <span class="lbl">Quantidade de peças</span>
-            <input class="inp" id="quantidade" type="number" min="1" step="1" value="1" />
-            <span class="hint">Quantas peças iguais entram neste cálculo. O tempo de corte é multiplicado por esse número.</span>
-          </label>
-
-          <label class="field">
-            <span class="lbl">Tempo de set-up (opcional)</span>
-            <div class="hm">
-              <div class="hm-wrap"><input class="inp" id="setupH" type="number" min="0" placeholder="0" /><span class="suf">h</span></div>
-              <div class="hm-wrap"><input class="inp" id="setupM" type="number" min="0" max="59" placeholder="0" /><span class="suf">min</span></div>
-            </div>
-            <span class="hint">Preparação da máquina antes de cortar: amarrar, alinhar, furar entrada, carregar programa.</span>
-          </label>
+          <div class="row-nums">
+            <label class="field">
+              <span class="lbl">Peças</span>
+              <input class="inp-num" id="quantidade" type="number" inputmode="numeric" min="1" step="1" value="1" />
+              <span class="hint">quantidade</span>
+            </label>
+            <label class="field">
+              <span class="lbl">Set-up (opc.)</span>
+              <div class="hm">
+                <div class="hm-wrap"><input class="inp-num" id="setupH" type="number" inputmode="numeric" min="0" placeholder="0" /><span class="suf">h</span></div>
+                <div class="hm-wrap"><input class="inp-num" id="setupM" type="number" inputmode="numeric" min="0" max="59" placeholder="0" /><span class="suf">min</span></div>
+              </div>
+            </label>
+          </div>
 
           <div class="eff-box">
             <div class="eff-top">

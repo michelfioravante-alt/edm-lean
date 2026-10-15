@@ -102,6 +102,12 @@ function App() {
         );
     }
 
+    // Fallback se /calculadora cair na SPA (sem rewrite): manda para a âncora na landing
+    if (path === '/calculadora' || path === '/calculadora/') {
+        window.location.replace('/#calculadora');
+        return <Spinner />;
+    }
+
     if (!isInitialized) return <Spinner />;
 
     if (!user || isResettingPassword) {
