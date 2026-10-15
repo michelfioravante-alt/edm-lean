@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Allow: /calculadora
+
+Sitemap: https://edmlean.com.br/sitemap.xml

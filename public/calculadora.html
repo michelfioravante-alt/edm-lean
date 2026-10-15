@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de eletroerosão a fio (WEDM) — tempo de corte · EDM Lean</title>
+  <meta name="description" content="Calculadora gratuita de tempo de corte para eletroerosão a fio (EDM / WEDM). Informe perímetro, espessura e velocidade em mm²/min e veja o resultado no kanban. Sem cadastro." />
+  <meta name="keywords" content="calculadora edm, calculadora eletroerosão a fio, calculadora WEDM, tempo de corte fio, mm²/min, eletrofio" />
+  <link rel="canonical" href="https://edmlean.com.br/calculadora" />
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:url" content="https://edmlean.com.br/calculadora" />
+  <meta property="og:title" content="Calculadora de eletroerosão a fio (WEDM) · EDM Lean" />
+  <meta property="og:description" content="Calcule o tempo de corte a fio grátis. Perímetro, espessura, velocidade mm²/min e eficiência — resultado no kanban." />
+  <meta property="og:site_name" content="EDM Lean" />
+  <meta property="og:image" content="https://edmlean.com.br/landing/fluxo-capa.jpg" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Calculadora de eletroerosão a fio · EDM Lean" />
+  <meta name="twitter:description" content="Tempo de corte WEDM gratuito. Resultado em formato kanban." />
+  <meta name="twitter:image" content="https://edmlean.com.br/landing/fluxo-capa.jpg" />
+
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#111318" />
+  <style>
+    :root {
+      --bg: #111318; --surface: #181B22; --raised: #1F232B; --border: #262A33; --border2: #333844;
+      --text: #E7E9ED; --muted: #9DA2AE; --dim: #7B808F; --faint: #565B68; --brand: #D97D3D;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+      font-family: 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .header {
+      position: sticky; top: 0; z-index: 20; border-bottom: 1px solid rgba(38,42,51,.8);
+      background: rgba(17,19,24,.9); backdrop-filter: blur(12px);
+    }
+    .header-inner, .main {
+      max-width: 1200px; margin: 0 auto; padding-left: 1.25rem; padding-right: 1.25rem;
+    }
+    .header-inner {
+      height: 64px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: .75rem; }
+    .logo {
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border2); border-radius: 6px; background: var(--surface);
+      color: var(--brand); font-size: 11px; font-weight: 600;
+    }
+    .brand-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; }
+    .nav { display: flex; align-items: center; gap: .75rem; }
+    .btn {
+      border: none; cursor: pointer; border-radius: 6px; font-size: 13px; padding: .4rem .9rem;
+      font-family: inherit;
+    }
+    .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+    .btn-ghost:hover { border-color: rgba(217,125,61,.5); }
+    .btn-brand { background: var(--brand); color: #111318; font-weight: 500; }
+    .btn-brand:hover { background: #c46d32; }
+    .btn-brand:disabled { opacity: .4; cursor: not-allowed; }
+    .link-muted { font-size: 13px; color: var(--dim); }
+    .link-muted:hover { color: var(--text); }
+    .hide-sm { display: none; }
+    @media (min-width: 640px) { .hide-sm { display: inline; } }
+
+    .main { padding-top: 2.5rem; padding-bottom: 7rem; }
+    .eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); margin: 0; }
+    h1 {
+      margin: .75rem 0 0; max-width: 18ch;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: clamp(32px, 5vw, 40px);
+      line-height: 1.15; letter-spacing: -0.02em; color: #fff;
+    }
+    .lead { margin: 1rem 0 0; max-width: 540px; font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+    .grid {
+      margin-top: 2.5rem; display: grid; gap: 2rem;
+    }
+    @media (min-width: 1024px) {
+      .grid { grid-template-columns: minmax(0, 380px) 1fr; }
+    }
+
+    .panel {
+      border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 1.25rem;
+      box-shadow: 0 24px 80px -40px rgba(0,0,0,.9);
+    }
+    .panel-head { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; }
+    .icon-box {
+      width: 36px; height: 36px; border-radius: 8px; background: var(--brand); color: #111318;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;
+    }
+    .panel-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; margin: 0; }
+    .panel-sub { font-size: 12px; color: var(--dim); margin: .15rem 0 0; }
+
+    .fields { display: flex; flex-direction: column; gap: 1rem; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    label.field { display: block; }
+    .lbl { display: block; margin-bottom: .35rem; font-size: 12px; font-weight: 500; color: var(--muted); }
+    .hint { display: block; margin-top: .35rem; font-size: 11px; line-height: 1.4; color: var(--faint); }
+    .inp {
+      width: 100%; border: 1px solid var(--border2); border-radius: 8px; background: var(--bg);
+      color: var(--text); padding: .65rem .75rem; font-size: 15px; font-weight: 600; font-family: inherit;
+    }
+    .inp:focus { outline: none; border-color: var(--brand); }
+    .inp::placeholder { color: var(--faint); font-weight: 500; }
+    .hm { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .hm-wrap { position: relative; }
+    .hm-wrap .suf {
+      position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+      font-size: 12px; color: var(--faint); pointer-events: none;
+    }
+    .hm-wrap .inp { padding-right: 2rem; }
+
+    .eff-box { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: .9rem; }
+    .eff-top { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; }
+    .eff-pct {
+      flex-shrink: 0; border-radius: 4px; background: rgba(217,125,61,.15);
+      color: var(--brand); font-size: 12px; font-weight: 600; padding: .15rem .5rem;
+    }
+    input[type=range] { width: 100%; margin-top: .6rem; accent-color: var(--brand); }
+    .eff-ends { display: flex; justify-content: space-between; margin-top: .4rem; font-size: 10px; color: var(--faint); }
+    .eff-ex { margin: .5rem 0 0; font-size: 11px; line-height: 1.4; color: var(--dim); }
+
+    .result {
+      margin-top: 1.5rem; border: 1px solid var(--border2); border-radius: 12px;
+      background: var(--bg); padding: 1rem;
+    }
+    .result-label { font-size: 12px; color: var(--dim); margin: 0; }
+    .result-time {
+      margin: .25rem 0 0; font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px; font-weight: 500; letter-spacing: -0.02em; color: #fff;
+    }
+    .result-meta { margin: .35rem 0 0; font-size: 12px; color: var(--faint); }
+
+    .board {
+      border: 1px solid var(--border); border-radius: 12px; background: #0E1015; overflow: hidden;
+    }
+    .board-head {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); padding: .75rem 1rem;
+    }
+    .board-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; margin: 0; }
+    .board-sub { font-size: 11px; color: var(--faint); margin: .15rem 0 0; }
+    .cols {
+      display: flex; gap: .5rem; overflow-x: auto; padding: .75rem .75rem 1rem;
+    }
+    .col {
+      flex: 0 0 200px; min-height: 220px; display: flex; flex-direction: column;
+      border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+    }
+    @media (min-width: 1100px) {
+      .col { flex: 1 1 0; min-width: 0; }
+    }
+    .col-head {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); padding: .5rem .65rem;
+    }
+    .col-name { display: flex; align-items: center; gap: .5rem; font-size: 10px; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .col-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--faint); }
+    .col-body { flex: 1; padding: .5rem; }
+    .empty {
+      min-height: 160px; height: 100%; display: flex; align-items: center; justify-content: center;
+      border: 1px dashed var(--border); border-radius: 6px; font-size: 10px;
+      text-transform: uppercase; letter-spacing: .08em; color: #3A3F4A;
+    }
+
+    .card {
+      overflow: hidden; border-radius: 10px; border: 1px solid rgba(217,125,61,.55);
+      background: var(--surface); box-shadow: 0 12px 40px -16px rgba(217,125,61,.55);
+      opacity: 0; transform: translateY(8px); transition: .5s ease;
+    }
+    .card.show { opacity: 1; transform: none; }
+    .card-h {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); background: var(--raised); padding: .5rem .75rem;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--brand);
+    }
+    .tag {
+      border: 1px solid var(--border2); background: var(--bg); border-radius: 4px;
+      padding: .1rem .45rem; font-size: 9.5px; color: var(--dim); letter-spacing: .4px;
+    }
+    .card-b { padding: .75rem; }
+    .card-cli { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; }
+    .card-cod { margin: .15rem 0 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+    .meta {
+      margin-top: .75rem; border: 1px solid var(--border); border-radius: 7px; font-size: 11px; overflow: hidden;
+    }
+    .meta-row {
+      display: flex; justify-content: space-between; padding: .4rem .65rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-k { color: var(--faint); }
+    .meta-v { font-family: 'IBM Plex Mono', monospace; color: var(--muted); }
+    .meta-v.hi { color: var(--brand); font-weight: 600; font-family: inherit; }
+    .card-actions { margin-top: .75rem; display: flex; gap: .4rem; }
+    .card-actions span {
+      flex: 1; text-align: center; padding: .4rem; border-radius: 6px; font-size: 10px; color: var(--dim);
+      border: 1px solid var(--border2);
+    }
+    .card-actions .go {
+      flex: 1.4; background: var(--brand); color: #111318; font-weight: 600; border: none;
+    }
+
+    .cta {
+      margin-top: 1rem; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--surface); padding: 1.25rem; transition: .4s;
+    }
+    .cta.on {
+      border-color: rgba(217,125,61,.45);
+      background: linear-gradient(135deg, rgba(217,125,61,.15), transparent);
+    }
+    .cta h2 { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 500; color: #fff; }
+    .cta p { margin: .5rem 0 0; max-width: 52ch; font-size: 13px; line-height: 1.55; color: var(--muted); }
+    .cta-actions { margin-top: 1.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+    .cta-actions .btn-brand { display: inline-flex; align-items: center; gap: .4rem; padding: .65rem 1.25rem; }
+
+    .footnote { margin-top: 2.5rem; max-width: 720px; font-size: 12px; line-height: 1.55; color: var(--faint); }
+    .seo-block {
+      margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border);
+      max-width: 720px; color: var(--dim); font-size: 14px; line-height: 1.65;
+    }
+    .seo-block h2 {
+      font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 500; color: var(--text); margin: 0 0 .75rem;
+    }
+    .seo-block h3 { font-size: 15px; color: var(--text); margin: 1.5rem 0 .5rem; }
+    .seo-block ul { padding-left: 1.2rem; margin: .5rem 0; }
+    .seo-block a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Calculadora de eletroerosão a fio EDM Lean",
+    "url": "https://edmlean.com.br/calculadora",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" },
+    "description": "Calculadora gratuita de tempo de corte para eletroerosão a fio (WEDM / EDM), com prévia em kanban.",
+    "inLanguage": "pt-BR",
+    "publisher": { "@type": "Organization", "name": "EDM Lean", "url": "https://edmlean.com.br/" }
+  }
+  </script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="/">
+        <span class="logo">EL</span>
+        <span class="brand-name">EDM Lean</span>
+      </a>
+      <nav class="nav">
+        <a class="link-muted hide-sm" href="/">Início</a>
+        <a class="btn btn-ghost" href="/#login">Entrar</a>
+        <a class="btn btn-brand" href="/#register">Criar conta</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <p class="eyebrow">Ferramenta gratuita · WEDM</p>
+    <h1>Calculadora de eletroerosão a fio</h1>
+    <p class="lead">
+      Informe perímetro, espessura e velocidade da máquina. O tempo de corte vira um cartão no kanban —
+      o mesmo quadro que a ferramentaria usa no chão. Sem cadastro para calcular.
+    </p>
+
+    <div class="grid">
+      <section class="panel" aria-label="Formulário de cálculo">
+        <div class="panel-head">
+          <div class="icon-box">∑</div>
+          <div>
+            <p class="panel-title">Dados do corte</p>
+            <p class="panel-sub">Preencha o que você conhece da peça e da máquina</p>
+          </div>
+        </div>
+
+        <div class="fields">
+          <div class="row2">
+            <label class="field">
+              <span class="lbl">Código da peça</span>
+              <input class="inp" id="peca" value="INSERTO-042" />
+              <span class="hint">Como você chama a peça no desenho</span>
+            </label>
+            <label class="field">
+              <span class="lbl">Cliente (opcional)</span>
+              <input class="inp" id="cliente" placeholder="Sua ferramentaria" />
+              <span class="hint">Aparece no cartão do kanban</span>
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="lbl">Perímetro de corte (mm)</span>
+            <input class="inp" id="perimetro" type="number" min="0" step="0.1" value="420" />
+            <span class="hint">Comprimento total do contorno que o fio vai percorrer, em milímetros.</span>
+          </label>
+
+          <label class="field">
+            <span class="lbl">Espessura do material (mm)</span>
+            <input class="inp" id="espessura" type="number" min="0" step="0.1" value="40" />
+            <span class="hint">Altura da peça na direção do fio. Com o perímetro, forma a área de corte (mm²).</span>
+          </label>
+
+          <label class="field">
+            <span class="lbl">Velocidade de corte (mm²/min)</span>
+            <input class="inp" id="velocidade" type="number" min="0" step="0.1" value="45" />
+            <span class="hint">Área que a máquina remove por minuto neste material e fio (catálogo ou experiência).</span>
+          </label>
+
+          <label class="field">
+            <span class="lbl">Quantidade de peças</span>
+            <input class="inp" id="quantidade" type="number" min="1" step="1" value="1" />
+            <span class="hint">Quantas peças iguais entram neste cálculo. O tempo de corte é multiplicado por esse número.</span>
+          </label>
+
+          <label class="field">
+            <span class="lbl">Tempo de set-up (opcional)</span>
+            <div class="hm">
+              <div class="hm-wrap"><input class="inp" id="setupH" type="number" min="0" placeholder="0" /><span class="suf">h</span></div>
+              <div class="hm-wrap"><input class="inp" id="setupM" type="number" min="0" max="59" placeholder="0" /><span class="suf">min</span></div>
+            </div>
+            <span class="hint">Preparação da máquina antes de cortar: amarrar, alinhar, furar entrada, carregar programa.</span>
+          </label>
+
+          <div class="eff-box">
+            <div class="eff-top">
+              <div>
+                <span class="lbl">Eficiência esperada</span>
+                <span class="hint" style="margin:0">
+                  A velocidade do catálogo é em trecho reto. Cantos, entradas, soldas e distâncias dos bicos deixam o corte mais lento — a eficiência reduz o ritmo “de papel” para algo mais realista.
+                </span>
+              </div>
+              <span class="eff-pct" id="effLabel">85%</span>
+            </div>
+            <input type="range" id="eficiencia" min="40" max="100" step="5" value="85" aria-label="Eficiência esperada" />
+            <div class="eff-ends">
+              <span>40% · muitos cantos / acabamento</span>
+              <span>100% · trecho reto ideal</span>
+            </div>
+            <p class="eff-ex">Ex.: 85% = o corte leva cerca de 18% a mais do que a velocidade pura indicaria.</p>
+          </div>
+        </div>
+
+        <div class="result">
+          <p class="result-label">⏱ Tempo total estimado</p>
+          <p class="result-time" id="tempoTotal">—</p>
+          <p class="result-meta" id="tempoMeta">Preencha perímetro, espessura e velocidade</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="board" aria-label="Prévia do kanban">
+          <div class="board-head">
+            <div>
+              <p class="board-title">Quadro · Centro Eletrofio</p>
+              <p class="board-sub">Prévia do kanban com o tempo que você acabou de calcular</p>
+            </div>
+          </div>
+          <div class="cols" id="cols"></div>
+        </div>
+
+        <div class="cta" id="cta">
+          <h2 id="ctaTitle">O resultado aparece no kanban ao lado.</h2>
+          <p>
+            No EDM Lean o tempo previsto vira O.S.: fila, setup, corte, inspeção e histórico — sem planilha.
+            Teste 30 dias. Sem cartão de crédito.
+          </p>
+          <div class="cta-actions">
+            <button type="button" class="btn btn-brand" id="btnSalvar" disabled>Salvar este kanban →</button>
+            <a class="link-muted" href="/#login">Já tenho conta</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <p class="footnote">
+      Estimativa: tempo de corte = (perímetro × espessura ÷ velocidade) ÷ eficiência × quantidade de peças, somando o set-up se informado.
+      O tempo real muda com tipo de fio, desgaste, estratégia de passe e condição da máquina.
+      No EDM Lean, a mesma lógica alimenta a ordem de serviço no quadro.
+    </p>
+
+    <article class="seo-block">
+      <h2>Como usar a calculadora de eletroerosão a fio</h2>
+      <p>
+        Esta <strong>calculadora EDM / WEDM</strong> estima o tempo de corte a fio a partir da área de usinagem.
+        Multiplique o <strong>perímetro</strong> pela <strong>espessura</strong> para obter mm², divida pela
+        <strong>velocidade de corte em mm²/min</strong> da sua máquina e ajuste a <strong>eficiência esperada</strong>
+        para cantos, entradas e distâncias dos bicos.
+      </p>
+      <h3>Para que serve</h3>
+      <ul>
+        <li>Orçar tempo de peça em eletroerosão a fio antes de abrir a O.S.</li>
+        <li>Comparar lotes (quantidade de peças) e impacto do set-up.</li>
+        <li>Visualizar o cartão no mesmo fluxo kanban do chão de fábrica.</li>
+      </ul>
+      <h3>Software de ferramentaria</h3>
+      <p>
+        O <a href="/">EDM Lean</a> é um sistema de kanban para CNC e eletrofio: roteiro da peça, folha de processo,
+        pausas e estoque de ferramenta. A calculadora é gratuita; salvar o kanban na fábrica exige criar conta.
+      </p>
+    </article>
+  </main>
+
+  <script>
+    const COLS = [
+      { key: 'aFazer', titulo: 'A FAZER', cor: '#7B808F' },
+      { key: 'setup', titulo: 'SETUP', cor: '#D97D3D' },
+      { key: 'emCorte', titulo: 'EM USINAGEM', cor: '#3D9B8F' },
+      { key: 'afericao', titulo: 'INSPEÇÃO', cor: '#8B7BB8' },
+      { key: 'concluido', titulo: 'CONCLUÍDO', cor: '#4A9D74' },
+    ];
+
+    function $(id) { return document.getElementById(id); }
+    function num(v) { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
+    function rotulo(minutos) {
+      const m = Math.max(0, Math.round(minutos));
+      return Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm';
+    }
+
+    function calcular() {
+      const perimetro = num($('perimetro').value);
+      const espessura = num($('espessura').value);
+      const velocidade = num($('velocidade').value);
+      const qtd = Math.max(1, parseInt($('quantidade').value, 10) || 1);
+      const eff = Math.max(0.4, (num($('eficiencia').value) || 100) / 100);
+      const setup = Math.max(0, (parseInt($('setupH').value, 10) || 0) * 60 + (parseInt($('setupM').value, 10) || 0));
+      const peca = ($('peca').value || 'PECA-001').trim();
+      const cliente = ($('cliente').value || 'Sua ferramentaria').trim();
+
+      let corteMin = 0, area = 0;
+      if (perimetro > 0 && espessura > 0 && velocidade > 0) {
+        area = perimetro * espessura;
+        corteMin = ((area / velocidade) / eff) * qtd;
+      }
+      const total = corteMin + setup;
+      return { peca, cliente, qtd, setup, corteMin, total, area, pronto: corteMin > 0 };
+    }
+
+    function render() {
+      const r = calcular();
+      const eff = $('eficiencia').value;
+      $('effLabel').textContent = eff + '%';
+
+      if (r.pronto) {
+        $('tempoTotal').textContent = rotulo(r.total);
+        let meta = 'Corte ' + rotulo(r.corteMin);
+        if (r.setup > 0) meta += ' · Setup ' + rotulo(r.setup);
+        meta += ' · ' + r.qtd + ' peça' + (r.qtd > 1 ? 's' : '');
+        meta += ' · Área ' + Math.round(r.area).toLocaleString('pt-BR') + ' mm²';
+        $('tempoMeta').textContent = meta;
+        $('cta').classList.add('on');
+        $('ctaTitle').textContent = 'Esse cartão já nasceu. Quer salvá-lo no quadro da fábrica?';
+        $('btnSalvar').disabled = false;
+      } else {
+        $('tempoTotal').textContent = '—';
+        $('tempoMeta').textContent = 'Preencha perímetro, espessura e velocidade';
+        $('cta').classList.remove('on');
+        $('ctaTitle').textContent = 'O resultado aparece no kanban ao lado.';
+        $('btnSalvar').disabled = true;
+      }
+
+      const root = $('cols');
+      root.innerHTML = '';
+      COLS.forEach((col) => {
+        const el = document.createElement('div');
+        el.className = 'col';
+        const mostra = r.pronto && col.key === 'aFazer';
+        el.innerHTML =
+          '<div class="col-head"><span class="col-name"><span class="dot" style="background:' + col.cor + '"></span>' +
+          col.titulo + '</span><span class="col-count">' + (mostra ? 1 : 0) + '</span></div>' +
+          '<div class="col-body"></div>';
+        const body = el.querySelector('.col-body');
+        if (mostra) {
+          let rows = '';
+          if (r.setup > 0) {
+            rows += '<div class="meta-row"><span class="meta-k">Setup</span><span class="meta-v">' + rotulo(r.setup) + '</span></div>';
+          }
+          rows +=
+            '<div class="meta-row"><span class="meta-k">Corte previsto</span><span class="meta-v hi">' + rotulo(r.corteMin) + '</span></div>' +
+            '<div class="meta-row"><span class="meta-k">Peças</span><span class="meta-v">' + r.qtd + '</span></div>';
+          body.innerHTML =
+            '<div class="card show" id="card">' +
+            '<div class="card-h"><span>⚡ Eletrofio</span><span class="tag">A fazer</span></div>' +
+            '<div class="card-b"><p class="card-cli"></p><p class="card-cod"></p>' +
+            '<div class="meta">' + rows + '</div>' +
+            '<div class="card-actions"><span>Detalhes</span><span class="go">Mover →</span></div></div></div>';
+          body.querySelector('.card-cli').textContent = r.cliente;
+          body.querySelector('.card-cod').textContent = r.peca;
+        } else {
+          body.innerHTML = '<div class="empty">Vazio</div>';
+        }
+        root.appendChild(el);
+      });
+    }
+
+    ['peca','cliente','perimetro','espessura','velocidade','quantidade','setupH','setupM','eficiencia']
+      .forEach((id) => $(id).addEventListener('input', render));
+
+    $('btnSalvar').addEventListener('click', () => {
+      const r = calcular();
+      if (!r.pronto) return;
+      try {
+        sessionStorage.setItem('edm-lean-calc-rascunho', JSON.stringify({
+          peca: r.peca, cliente: r.cliente,
+          perimetro: $('perimetro').value, espessura: $('espessura').value,
+          velocidade: $('velocidade').value, eficiencia: $('eficiencia').value,
+          quantidade: r.qtd, setupMinutos: r.setup,
+          totalMinutos: Math.round(r.corteMin), totalComSetupMinutos: Math.round(r.total),
+          areaMm2: r.area,
+        }));
+      } catch (e) {}
+      window.location.href = '/#register';
+    });
+
+    render();
+  </script>
+</body>
+</html>

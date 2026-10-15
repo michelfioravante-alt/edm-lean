@@ -92,7 +92,7 @@ function App() {
         }
     }, [user, currentHash]);
 
-    // Onboarding por convite (/join/CODIGO) vem antes de qualquer bloqueio
+    // Rotas públicas (antes do login)
     const path = window.location.pathname;
     if (path.startsWith('/join/')) {
         return (
@@ -110,8 +110,8 @@ function App() {
             return (
                 <Suspense fallback={<Spinner />}>
                     <LandingPage
-                        onLogin={() => window.location.hash = '#login'}
-                        onRegister={() => window.location.hash = '#register'}
+                        onLogin={() => { window.location.hash = '#login'; }}
+                        onRegister={() => { window.location.hash = '#register'; }}
                     />
                 </Suspense>
             );

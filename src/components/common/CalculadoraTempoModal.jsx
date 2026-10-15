@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button';
 import { Calculator, Plus, Trash2 } from 'lucide-react';
+import { calcularTempoPorPasses } from '../../utils/calculadoraEdm';
 
 export default function CalculadoraTempoModal({ onCalculate, onClose, initialQuantidade = 1 }) {
     const [perimetro, setPerimetro] = useState('');
@@ -9,43 +10,13 @@ export default function CalculadoraTempoModal({ onCalculate, onClose, initialQua
     const [quantidade, setQuantidade] = useState(initialQuantidade);
     const [resultado, setResultado] = useState({ horas: 0, minutos: 0, totalMinutos: 0 });
 
-    // Calcula o tempo sempre que os inputs mudam
     useEffect(() => {
-        const mmParaDividir = parseFloat(perimetro);
-
-        if (!perimetro || mmParaDividir <= 0 || passes.length === 0) {
-            setResultado({ horas: 0, minutos: 0, totalMinutos: 0 });
-            return;
-        }
-
-        let tempoCemPorCento_Minutos_Total = 0;
-        let temCalculoValido = false;
-
-        passes.forEach(passo => {
-            const taxaCorte = parseFloat(passo.rendimento);
-            if (taxaCorte > 0) {
-                tempoCemPorCento_Minutos_Total += (mmParaDividir / taxaCorte);
-                temCalculoValido = true;
-            }
-        });
-
-        if (!temCalculoValido) {
-            setResultado({ horas: 0, minutos: 0, totalMinutos: 0 });
-            return;
-        }
-
-        // Ajuste da porcentagem de eficiência e QUANTIDADE
-        const eff = parseFloat(percentual) / 100;
-        const tempoReal_Minutos = (tempoCemPorCento_Minutos_Total / eff) * Math.max(1, parseInt(quantidade || 1));
-
-        const horasTotais = Math.floor(tempoReal_Minutos / 60);
-        const minutosRestantes = Math.round(tempoReal_Minutos % 60);
-
-        setResultado({
-            horas: horasTotais,
-            minutos: minutosRestantes,
-            totalMinutos: Math.round(tempoReal_Minutos)
-        });
+        setResultado(calcularTempoPorPasses({
+            perimetroMm: perimetro,
+            passesMmMin: passes.map((p) => p.rendimento),
+            eficienciaPct: percentual,
+            quantidade,
+        }));
     }, [perimetro, passes, percentual, quantidade]);
 
     const handleAddPass = () => {

@@ -45,6 +45,17 @@
     -webkit-text-fill-color: #E7E9ED !important;
     transition: background-color 5000s ease-in-out 0s;
   }
+
+  /* Remove o spinner branco nativo (Chrome/Edge/Safari/Firefox) */
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 /* Animations */

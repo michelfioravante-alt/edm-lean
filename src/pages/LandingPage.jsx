@@ -7,6 +7,8 @@ const NAV = [
     { id: 'uso', label: 'Uso' },
 ];
 
+const LINK_CALC = { href: '/calculadora', label: 'Calculadora' };
+
 function Janela({ className = '', children }) {
     return (
         <figure className={`overflow-hidden rounded-lg border border-[#262A33] bg-[#181B22] shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)] ${className}`}>
@@ -141,6 +143,9 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 {item.label}
                             </a>
                         ))}
+                        <a href={LINK_CALC.href} className="text-[13px] tracking-wide text-[#D97D3D] hover:text-[#e89a5a]">
+                            {LINK_CALC.label}
+                        </a>
                     </nav>
 
                     <div className="flex items-center gap-3">
@@ -176,6 +181,9 @@ export default function LandingPage({ onLogin, onRegister }) {
                                 {item.label}
                             </a>
                         ))}
+                        <a href={LINK_CALC.href} className="block py-2 text-sm text-[#D97D3D]">
+                            {LINK_CALC.label} de eletrofio
+                        </a>
                         <button
                             type="button"
                             onClick={() => { setMenuOpen(false); onRegister(); }}
@@ -206,6 +214,12 @@ export default function LandingPage({ onLogin, onRegister }) {
                         >
                             Testar 30 dias grátis
                         </button>
+                        <a
+                            href="/calculadora"
+                            className="rounded-md border border-[#333844] px-5 py-2.5 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/50"
+                        >
+                            Calculadora de eletrofio
+                        </a>
                         <button
                             type="button"
                             onClick={onLogin}
