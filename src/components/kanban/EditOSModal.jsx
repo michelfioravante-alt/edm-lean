@@ -38,23 +38,23 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
     // Colocado ANTES de qualquer early-return para respeitar as regras dos Hooks
     useEffect(() => {
         if (isOpen && osData) {
-            const total = parseInt(osData.total_setups ?? osData.totalSetups ?? 1) || 1;
-            const nomes = osData.nomes_setups || osData.nomesSetups || [];
+            const total = parseInt(osData.total_setups ?? 1) || 1;
+            const nomes = osData.nomes_setups || [];
             setForm({
                 cliente: osData.cliente || '',
-                codigoPeca: osData.codigo_peca || osData.codigoPeca || '',
-                prazoEntrega: (osData.prazo_entrega || osData.prazoEntrega || '').slice(0, 10),
-                tempoEstimadoCorteHoras: String(osData.tempo_estimado_corte_horas ?? osData.tempoEstimadoCorteHoras ?? ''),
-                tempoEstimadoCorteMinutos: String(osData.tempo_estimado_corte_minutos ?? osData.tempoEstimadoCorteMinutos ?? ''),
-                tempoEstimadoSetupHoras: String(osData.tempo_estimado_setup_horas ?? osData.tempoEstimadoSetupHoras ?? ''),
-                tempoEstimadoSetupMinutos: String(osData.tempo_estimado_setup_minutos ?? osData.tempoEstimadoSetupMinutos ?? ''),
+                codigoPeca: osData.codigo_peca || '',
+                prazoEntrega: (osData.prazo_entrega || '').slice(0, 10),
+                tempoEstimadoCorteHoras: String(osData.tempo_estimado_corte_horas ?? ''),
+                tempoEstimadoCorteMinutos: String(osData.tempo_estimado_corte_minutos ?? ''),
+                tempoEstimadoSetupHoras: String(osData.tempo_estimado_setup_horas ?? ''),
+                tempoEstimadoSetupMinutos: String(osData.tempo_estimado_setup_minutos ?? ''),
                 programador: osData.programador_nome || osData.programador || '',
-                linkDesenho: osData.link_desenho || osData.linkDesenho || '',
-                isPrioridade: osData.is_prioridade ?? osData.isPrioridade ?? false,
+                linkDesenho: osData.link_desenho || '',
+                isPrioridade: osData.is_prioridade ?? false,
                 quantidade: osData.quantidade || 1,
-                codigoMolde: osData.codigo_molde || osData.codigoMolde || '',
-                componenteMolde: osData.componente_molde || osData.componenteMolde || '',
-                numeroPrograma: osData.numero_programa || osData.numeroPrograma || '',
+                codigoMolde: osData.codigo_molde || '',
+                componenteMolde: osData.componente_molde || '',
+                numeroPrograma: osData.numero_programa || '',
                 totalSetups: total,
                 nomesSetups: ajustarNomes(nomes, total),
             });
@@ -96,10 +96,10 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
             ) {
                 const fator = novaQuantidade / originalQuantidade;
 
-                const corteHOrig = osData.tempo_estimado_corte_horas ?? osData.tempoEstimadoCorteHoras ?? 0;
-                const corteMOrig = osData.tempo_estimado_corte_minutos ?? osData.tempoEstimadoCorteMinutos ?? 0;
-                const setupHOrig = osData.tempo_estimado_setup_horas ?? osData.tempoEstimadoSetupHoras ?? 0;
-                const setupMOrig = osData.tempo_estimado_setup_minutos ?? osData.tempoEstimadoSetupMinutos ?? 0;
+                const corteHOrig = osData.tempo_estimado_corte_horas ?? 0;
+                const corteMOrig = osData.tempo_estimado_corte_minutos ?? 0;
+                const setupHOrig = osData.tempo_estimado_setup_horas ?? 0;
+                const setupMOrig = osData.tempo_estimado_setup_minutos ?? 0;
 
                 const corteTotalMinOrig = (parseInt(corteHOrig, 10) || 0) * 60 + (parseInt(corteMOrig, 10) || 0);
                 const setupTotalMinOrig = (parseInt(setupHOrig, 10) || 0) * 60 + (parseInt(setupMOrig, 10) || 0);
@@ -113,11 +113,11 @@ export default function EditOSModal({ isOpen, onClose, osData }) {
                 payload.tempoEstimadoSetupMinutos = String(setupTotalMinNovo % 60);
             }
 
-            const detalhes = osData.detalhes_setups || osData.detalhesSetups || [];
+            const detalhes = osData.detalhes_setups || [];
             payload.detalhesSetups = form.nomesSetups.map((nome, i) => ({ ...(detalhes[i] || {}), nome }));
 
             // Reduzir o nº de setups não pode deixar a O.S. apontando para um setup inexistente.
-            const setupAtual = parseInt(osData.setup_atual ?? osData.setupAtual ?? 1) || 1;
+            const setupAtual = parseInt(osData.setup_atual ?? 1) || 1;
             if (setupAtual > form.totalSetups) payload.setupAtual = form.totalSetups;
 
             await editOrdemServico(osData.id, payload);

@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 const getEmpresaId = () => {
     const state = useAuthStore.getState();
@@ -11,7 +9,6 @@ const getEmpresaId = () => {
 export const perfisService = {
     // Busca todos os usuários da mesma empresa
     async fetchEquipe() {
-        if (isLocalMode()) return localApi.perfis.fetchEquipe();
         const empresaId = getEmpresaId();
         if (!empresaId) return [];
 
@@ -26,7 +23,6 @@ export const perfisService = {
 
     // Atualiza cargo do usuário
     async updateRole(userId, newRole) {
-        if (isLocalMode()) return localApi.perfis.updateRole(userId, newRole);
         const { error } = await supabase
             .from('perfis')
             .update({ funcao: newRole })
@@ -37,7 +33,6 @@ export const perfisService = {
 
     // Remove o vínculo do usuário com a empresa (Detach)
     async detachUser(userId) {
-        if (isLocalMode()) return localApi.perfis.detachUser(userId);
         const { error } = await supabase
             .from('perfis')
             .update({ empresa_id: null, funcao: 'programmer' })

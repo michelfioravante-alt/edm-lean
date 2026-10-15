@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 const getEmpresaId = () => {
     const state = useAuthStore.getState();
@@ -11,7 +9,6 @@ const getEmpresaId = () => {
 
 export const historicoConsumiveisService = {
     async fetchAll() {
-        if (isLocalMode()) return localApi.historicoConsumiveis.fetchAll();
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('historico_consumiveis')
@@ -24,7 +21,6 @@ export const historicoConsumiveisService = {
     },
 
     async create({ maquinaId, itemNome, operadorNome }) {
-        if (isLocalMode()) return localApi.historicoConsumiveis.create({ maquinaId, itemNome, operadorNome });
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('historico_consumiveis')
@@ -44,7 +40,6 @@ export const historicoConsumiveisService = {
     },
 
     async encerrarAtivo({ maquinaId, itemNome }) {
-        if (isLocalMode()) return localApi.historicoConsumiveis.encerrarAtivo({ maquinaId, itemNome });
         const empresaId = getEmpresaId();
         // Encerra todos os registros ativos (data_fim = null) para esta máquina+item
         const { error } = await supabase

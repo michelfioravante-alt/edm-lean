@@ -16,22 +16,22 @@ const LONG_PAUSE_H = 2;
 const VENDOR_SLACK_D = 1;
 
 function sectorOf(os) {
-    return os?.setor || os?.tipo_processo || 'CNC';
+    return os?.setor || 'CNC';
 }
 
 function isPaused(os) {
-    return !!(os?.is_pausado || os?.isPausado);
+    return !!(os?.is_pausado);
 }
 
 function pauseHours(os, now = Date.now()) {
-    const raw = os?.data_pausa || os?.dataPausa;
+    const raw = os?.data_pausa;
     const t = raw ? new Date(raw).getTime() : NaN;
     if (!isPaused(os) || Number.isNaN(t)) return 0;
     return Math.max(0, (now - t) / (1000 * 60 * 60));
 }
 
 function isScrap(os) {
-    const r = os?.resultado_afericao || os?.resultadoAfericao || '';
+    const r = os?.resultado_afericao || '';
     return r === 'Refugo';
 }
 
@@ -43,15 +43,15 @@ function sameDay(iso, ref = new Date()) {
 }
 
 function endDate(os) {
-    return os?.timestamp_entrada_concluido || os?.timestampEntrada_concluido || os?.updated_at || os?.updatedAt;
+    return os?.timestamp_entrada_concluido || os?.updated_at;
 }
 
 function rowTitle(row) {
-    return row.titulo || row.head?.codigo_peca || row.head?.codigoPeca || 'O.S.';
+    return row.titulo || row.head?.codigo_peca || 'O.S.';
 }
 
 function partCode(os) {
-    return os?.codigo_peca || os?.codigoPeca || 'kanban';
+    return os?.codigo_peca || 'kanban';
 }
 
 function countSector(list, sector) {
@@ -181,7 +181,7 @@ export function montarHomeGerente(kanban, estoque, config = {}) {
             id: `pausa-${os.id}`,
             sev: 'red',
             titulo: `Parada ha ${h.toFixed(1)} h — ${partCode(os)}`,
-            detalhe: os.motivo_pausa || os.motivoPausa || labelSetor(sectorOf(os)),
+            detalhe: os.motivo_pausa || labelSetor(sectorOf(os)),
             acao: 'Ver kanban',
             os,
             view: 'kanban',
@@ -189,12 +189,12 @@ export function montarHomeGerente(kanban, estoque, config = {}) {
     });
 
     [...(kanban.concluido || []), ...(kanban.afericao || [])].filter(isScrap).forEach((os) => {
-        if (!sameDay(endDate(os)) && !sameDay(os.updated_at || os.updatedAt)) return;
+        if (!sameDay(endDate(os)) && !sameDay(os.updated_at)) return;
         avisos.push({
             id: `refugo-${os.id}`,
             sev: 'red',
             titulo: `Refugo hoje — ${partCode(os)}`,
-            detalhe: os.motivo_refugo || os.motivoRefugo || os.cliente || '',
+            detalhe: os.motivo_refugo || os.cliente || '',
             acao: 'Ver ficha',
             os,
             view: 'kanban',

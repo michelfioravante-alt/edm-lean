@@ -1,10 +1,7 @@
 import { supabase } from './supabase';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 export const historicoQuebrasEstoqueService = {
     async fetchAll() {
-        if (isLocalMode()) return localApi.historicoQuebrasEstoque.fetchAll();
         const { data, error } = await supabase
             .from('historico_quebras_estoque')
             .select('*')
@@ -14,7 +11,6 @@ export const historicoQuebrasEstoqueService = {
     },
 
     async create(payload) {
-        if (isLocalMode()) return localApi.historicoQuebrasEstoque.create(payload);
         const { data, error } = await supabase
             .from('historico_quebras_estoque')
             .insert({

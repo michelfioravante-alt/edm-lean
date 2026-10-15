@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 const getEmpresaId = () => {
     const state = useAuthStore.getState();
@@ -11,7 +9,6 @@ const getEmpresaId = () => {
 
 export const ferramentalService = {
     async fetchAll() {
-        if (isLocalMode()) return localApi.ferramental.fetchAll();
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ferramental')
@@ -23,7 +20,6 @@ export const ferramentalService = {
     },
 
     async create({ nome, tipo, codigo, vidaUtilHoras, alertaHoras, observacao, estoqueItemId }) {
-        if (isLocalMode()) return localApi.ferramental.create({ nome, tipo, codigo, vidaUtilHoras, alertaHoras, observacao, estoqueItemId });
         const empresaId = getEmpresaId();
         const payload = {
             empresa_id: empresaId,
@@ -49,7 +45,6 @@ export const ferramentalService = {
     },
 
     async update(id, updates) {
-        if (isLocalMode()) return localApi.ferramental.update(id, updates);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ferramental')
@@ -63,7 +58,6 @@ export const ferramentalService = {
     },
 
     async registrarQuebra({ ferramentalId, maquinaNome, operadorNome, observacao }) {
-        if (isLocalMode()) return localApi.ferramental.registrarQuebra({ ferramentalId, maquinaNome, operadorNome, observacao });
         const empresaId = getEmpresaId();
         const { data: ferramenta, error: fetchErr } = await supabase
             .from('ferramental')
@@ -91,7 +85,6 @@ export const ferramentalService = {
     },
 
     async remove(id) {
-        if (isLocalMode()) return localApi.ferramental.remove(id);
         const empresaId = getEmpresaId();
         const { error } = await supabase
             .from('ferramental')
@@ -102,7 +95,6 @@ export const ferramentalService = {
     },
 
     async fetchHistorico() {
-        if (isLocalMode()) return localApi.ferramental.fetchHistorico();
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('historico_ferramental')

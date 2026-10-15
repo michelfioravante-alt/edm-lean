@@ -32,15 +32,15 @@ function gargaloTexto(row) {
     if (p?.kind === 'marco') return `${p.label} (marco)`;
     const g = p?.os || row.gargalo;
     if (!g) return '—';
-    const peca = g.codigo_peca || g.codigoPeca || 'kanban';
+    const peca = g.codigo_peca || 'kanban';
     const extra = kanbanPrecisaProgramar(g) ? ' · a programar' : '';
-    const ext = (g.setor || g.tipo_processo) === 'EXTERNO' && g.fornecedor_nome
+    const ext = (g.setor) === 'EXTERNO' && g.fornecedor_nome
         ? ` · ${g.fornecedor_nome}`
         : '';
-    const dias = (g.setor || g.tipo_processo) === 'EXTERNO' && g.enviado_em
+    const dias = (g.setor) === 'EXTERNO' && g.enviado_em
         ? ` · ${Math.round(diasEntre(g.enviado_em, g.voltou_em) || 0)}d`
         : '';
-    return `${labelSetor(g.setor || g.tipo_processo)} — ${peca}${extra}${ext}${dias}`;
+    return `${labelSetor(g.setor)} — ${peca}${extra}${ext}${dias}`;
 }
 
 export default function Carteira({ onNavigate }) {
@@ -83,7 +83,7 @@ export default function Carteira({ onNavigate }) {
     const filaExterna = useMemo(() => {
         return carteira.flatMap((row) =>
             row.externos
-                .filter((k) => (k.statusLocal || k.status) !== 'Concluído')
+                .filter((k) => k.status !== 'Concluído')
                 .map((k) => ({ row, kanban: k }))
         );
     }, [carteira]);
@@ -200,7 +200,7 @@ export default function Carteira({ onNavigate }) {
                                         <tr key={k.id} className="text-[#E7E9ED]">
                                             <td className="px-3 py-2.5">
                                                 <div className="font-medium">{row.titulo}</div>
-                                                <div className="text-[11px] text-[#7B808F]">{k.codigo_peca || k.codigoPeca}</div>
+                                                <div className="text-[11px] text-[#7B808F]">{k.codigo_peca}</div>
                                             </td>
                                             <td className="px-3 py-2.5 text-[#9DA2AE]">{row.cliente || '—'}</td>
                                             <td className="px-3 py-2.5 text-[#C99A4A]">{labelStatusExterno(k)}</td>
@@ -260,7 +260,7 @@ export default function Carteira({ onNavigate }) {
                                             <td className="px-3 py-2.5 text-[#E7E9ED]">{gargaloTexto(row)}</td>
                                             <td className="px-3 py-2.5 text-[#7B808F]">
                                                 {row.emTerceiro
-                                                    ? row.externos.filter((x) => (x.statusLocal || x.status) === 'Em Usinagem' || (x.statusLocal || x.status) === 'Em Corte').map((x) => x.fornecedor_nome || 'terceiro').join(', ')
+                                                    ? row.externos.filter((x) => x.status === 'Em Usinagem').map((x) => x.fornecedor_nome || 'terceiro').join(', ')
                                                     : (row.externos.length ? 'externo ok' : '—')}
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -318,12 +318,12 @@ export default function Carteira({ onNavigate }) {
                         <ul className="space-y-2">
                             {ficha.kanbans.map((k, i) => {
                                 const custo = custoHoraKanban(k, config || {});
-                                const setor = k.setor || k.tipo_processo;
+                                const setor = k.setor;
                                 return (
                                     <li key={k.id} className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between border border-[#262A33] rounded-[8px] px-3 py-2 bg-[#111318]">
                                         <div>
                                             <div className="text-sm text-[#E7E9ED]">
-                                                {i + 1}. {k.codigo_peca || k.codigoPeca} · {labelSetor(setor)}
+                                                {i + 1}. {k.codigo_peca} · {labelSetor(setor)}
                                             </div>
                                             <div className="text-[11px] text-[#7B808F]">
                                                 {setor === 'EXTERNO' ? labelStatusExterno(k) : (k.status || '—')}

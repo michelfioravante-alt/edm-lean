@@ -12,16 +12,16 @@ export default function PauseReasonsChart({ concluidas = [], kanban = {} }) {
             motivoHoras[motivo] = (motivoHoras[motivo] || 0) + h;
         });
     };
-    concluidas.forEach((os) => add(os.historico_pausas || os.historicoPausas));
+    concluidas.forEach((os) => add(os.historico_pausas));
     const ativas = [...(kanban.setup || []), ...(kanban.emCorte || []), ...(kanban.afericao || [])];
     const now = Date.now();
     ativas.forEach((os) => {
-        if (!(os.is_pausado || os.isPausado)) return;
-        const dataPausa = os.data_pausa || os.dataPausa;
+        if (!(os.is_pausado)) return;
+        const dataPausa = os.data_pausa;
         if (!dataPausa) return;
         const t = new Date(dataPausa).getTime();
         if (Number.isNaN(t)) return;
-        const motivo = os.motivo_pausa || os.motivoPausa || 'Não informado';
+        const motivo = os.motivo_pausa || 'Não informado';
         motivoHoras[motivo] = (motivoHoras[motivo] || 0) + Math.max(0, (now - t) / 3600000);
     });
     const sorted = Object.entries(motivoHoras).filter(([, h]) => h > 0).sort((a, b) => b[1] - a[1]).slice(0, 7);

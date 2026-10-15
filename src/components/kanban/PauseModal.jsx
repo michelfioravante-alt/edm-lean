@@ -29,7 +29,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
 
 
 
-    const estrategiaOs = osData?.estrategia_ferramental || osData?.estrategiaFerramental
+    const estrategiaOs = osData?.estrategia_ferramental
         || configuracoesGlobais?.modoMagazineDefault || 'individual';
     const isModoLote = estrategiaOs === 'lote';
 
@@ -56,9 +56,9 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
     const [horaFimEnergia, setHoraFimEnergia] = useState('');
     const [aplicarGlobal, setAplicarGlobal] = useState(true);
 
-    const isAlreadyPaused = osData?.is_pausado || osData?.isPausado;
+    const isAlreadyPaused = osData?.is_pausado;
 
-    const maquinaOsNome = osData?.maquina_nome || osData?.maquina || '';
+    const maquinaOsNome = osData?.maquina_nome || '';
     const ferramentasNaMaquina = (ferramentasMaquina || []).filter(
         (f) => (f.maquinaNome || f.maquina_nome) === maquinaOsNome || (f.osId || f.os_id) === osData?.id
     );
@@ -70,7 +70,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
             const m = maquinas.find((x) => x.nome === maquinaOsNome);
             if (m) setFerramentaMaquina(m.id);
         }
-        const op = osData.operador_atual || osData.operadorAtual;
+        const op = osData.operador_atual;
         if (op && !ferramentaOperador) setFerramentaOperador(op);
     }, [isOpen, osData, motivo, maquinas, ferramentaMaquina, ferramentaOperador, maquinaOsNome]);
 
@@ -119,7 +119,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                 itemNome: item?.nome || '',
                 maquinaNome,
                 operadorNome: ferramentaOperador,
-                codigoPeca: osData.codigo_peca || osData.codigoPeca || '',
+                codigoPeca: osData.codigo_peca || '',
                 observacao,
                 slot: trocaSlot.trim() || null,
                 ferramentaSaiuId: ferramentaSaiuId || null,
@@ -157,7 +157,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                 itemNome: item?.nome || '',
                 maquinaNome,
                 operadorNome: ferramentaOperador,
-                codigoPeca: osData.codigo_peca || osData.codigoPeca || '',
+                codigoPeca: osData.codigo_peca || '',
                 observacao,
                 horaInicioQuebra: quebraRetroativo ? horaInicioQuebra : null,
                 horaFimQuebra: quebraRetroativo ? horaFimQuebra : null,
@@ -215,7 +215,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
 
     if (!osData) return null;
 
-    const codigoPeca = osData.codigo_peca || osData.codigoPeca;
+    const codigoPeca = osData.codigo_peca;
 
     return (
         <Modal

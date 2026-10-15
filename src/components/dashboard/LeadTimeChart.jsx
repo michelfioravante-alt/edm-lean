@@ -6,11 +6,11 @@ import ChartCard, { ChartEmpty } from './ChartCard';
 
 export default function LeadTimeChart({ concluidas }) {
     const completedOS = [...(concluidas || [])]
-        .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 8)
         .reverse();
 
-    const labels = completedOS.map((os) => os.codigo_peca || os.codigoPeca || `OS-${String(os.id).slice(-4)}`);
+    const labels = completedOS.map((os) => os.codigo_peca || `OS-${String(os.id).slice(-4)}`);
     const data = {
         labels,
         datasets: [

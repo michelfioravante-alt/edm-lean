@@ -13,7 +13,7 @@ export function pickOs(os, ...keys) {
 }
 
 export function codigoPecaOs(os) {
-    return pickOs(os, 'codigo_peca', 'codigoPeca') || '—';
+    return pickOs(os, 'codigo_peca') || '—';
 }
 
 /** Converte horas decimais em h/min para campos do formulário. */
@@ -31,29 +31,29 @@ export function extrairRoteiroSetores(os) {
             .map((r) => (typeof r === 'string' ? r : r?.setor || r?.id))
             .filter(Boolean);
     }
-    const setor = os?.setor || os?.tipo_processo;
+    const setor = os?.setor;
     return setor ? [setor] : ['CNC'];
 }
 
 /** Dados para pré-preencher Nova O.S. a partir de execução anterior. */
 export function dadosFormularioRepetirPeca(os, config = {}) {
     const resumo = resumoHorasOs(os, config);
-    const setor = os?.setor || os?.tipo_processo || 'CNC';
+    const setor = os?.setor || 'CNC';
     const setup = horasParaHm(resumo.setupReal || resumo.setupEst);
     const corte = horasParaHm(resumo.corteReal || resumo.corteEst);
     const codigo = codigoPecaOs(os);
-    const valor = pickOs(os, 'valor_orcado', 'valorOrcado');
+    const valor = pickOs(os, 'valor_orcado');
     return {
         origemId: os?.id || null,
         cliente: pickOs(os, 'cliente') || '',
         codigoPeca: codigo !== '—' ? codigo : '',
-        codigoMolde: pickOs(os, 'codigo_molde', 'codigoMolde') || '',
-        linkDesenho: pickOs(os, 'link_desenho', 'linkDesenho') || '',
+        codigoMolde: pickOs(os, 'codigo_molde') || '',
+        linkDesenho: pickOs(os, 'link_desenho') || '',
         quantidade: os?.quantidade || 1,
         valorOrcado: valor,
         setor,
         etapas: extrairRoteiroSetores(os),
-        componente: pickOs(os, 'componente_molde', 'componenteMolde') || '',
+        componente: pickOs(os, 'componente_molde') || '',
         setupHm: setup,
         corteHm: corte,
         resumo,
@@ -65,7 +65,7 @@ export function resumoHorasOs(os, config = {}) {
     const h = horasKanban(os);
     const custo = custoHoraKanban(os, config);
     const pausas = horasPausaOs(os);
-    const setor = os?.setor || os?.tipo_processo || 'CNC';
+    const setor = os?.setor || 'CNC';
     const totalReal = h.setupReal + h.corteReal + h.afericaoReal;
     const totalEst = h.setupEst + h.corteEst;
     const eficiencia = h.eficienciaCam;
@@ -73,15 +73,15 @@ export function resumoHorasOs(os, config = {}) {
     return {
         codigo: codigoPecaOs(os),
         cliente: pickOs(os, 'cliente') || '—',
-        molde: pickOs(os, 'codigo_molde', 'codigoMolde') || '—',
+        molde: pickOs(os, 'codigo_molde') || '—',
         setor,
         setorLabel: labelSetor(setor),
-        maquina: pickOs(os, 'maquina_nome', 'maquina') || '—',
-        operador: pickOs(os, 'operador_atual', 'operadorAtual') || '—',
-        programador: pickOs(os, 'programador_nome', 'programador') || '—',
-        programa: pickOs(os, 'numero_programa', 'numeroPrograma') || '—',
-        resultado: pickOs(os, 'resultado_afericao', 'resultadoAfericao') || '—',
-        concluidoEm: pickOs(os, 'timestamp_entrada_concluido', 'timestampEntrada_concluido', 'created_at', 'createdAt'),
+        maquina: pickOs(os, 'maquina_nome') || '—',
+        operador: pickOs(os, 'operador_atual') || '—',
+        programador: pickOs(os, 'programador') || '—',
+        programa: pickOs(os, 'numero_programa') || '—',
+        resultado: pickOs(os, 'resultado_afericao') || '—',
+        concluidoEm: pickOs(os, 'timestamp_entrada_concluido', 'created_at'),
         setupReal: h.setupReal,
         corteReal: h.corteReal,
         afericaoReal: h.afericaoReal,
@@ -103,7 +103,7 @@ export function resumoHorasOs(os, config = {}) {
             totalEst: formatarHoras(totalEst),
             pausas: formatarHoras(pausas),
             referenciaInterna: formatarMoedaBRL(custo.custo),
-            concluidoEm: formatarDataBR(pickOs(os, 'timestamp_entrada_concluido', 'timestampEntrada_concluido', 'created_at', 'createdAt')),
+            concluidoEm: formatarDataBR(pickOs(os, 'timestamp_entrada_concluido', 'created_at')),
         },
     };
 }
@@ -163,7 +163,7 @@ export function exportCsvTexto(linhas, filename) {
     URL.revokeObjectURL(url);
 }
 
-export function exportRelatorioPecaCsv(os, config) {
+export function exportRelatorioPecaCsv(os, config, comValores = false) {
     const r = resumoHorasOs(os, config);
     const linhas = [
         'campo;valor',
@@ -182,7 +182,7 @@ export function exportRelatorioPecaCsv(os, config) {
         `maquina;${r.maquina}`,
         `operador;${r.operador}`,
         `programa;${r.programa}`,
-        `referencia_interna_rs;${(r.referenciaInterna || 0).toFixed(2)}`,
+        ...(comValores ? [`referencia_interna_rs;${(r.referenciaInterna || 0).toFixed(2)}`] : []),
         `concluido_em;${r.formatado.concluidoEm}`,
     ];
     exportCsvTexto(linhas, `horas-${r.codigo.replace(/[^\w-]/g, '_')}.csv`);

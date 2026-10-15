@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
-    AlertTriangle, ArrowRight, Bell, CheckCircle2, Clock, Cpu, Factory,
-    CircleHelp, Package, PauseCircle, Plus, Zap,
+    AlertTriangle, ArrowRight, Bell, CheckCircle2, Clock,
+    CircleHelp, Package, PauseCircle, Plus,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import NovaOSForm from '../components/kanban/NovaOSForm';
@@ -31,7 +31,7 @@ function gargaloCurto(row) {
     const g = row.passoAberto?.os || row.gargalo;
     if (!g) return '—';
     const extra = kanbanPrecisaProgramar(g) ? ' · a programar' : '';
-    return `${labelSetor(g.setor || g.tipo_processo)} — ${g.codigo_peca || g.codigoPeca || 'kanban'}${extra}`;
+    return `${labelSetor(g.setor)} — ${g.codigo_peca || 'kanban'}${extra}`;
 }
 
 function QueueCard({ titulo, vazio, itens, onOpen, onVerTodas }) {
@@ -71,12 +71,35 @@ function QueueCard({ titulo, vazio, itens, onOpen, onVerTodas }) {
     );
 }
 
-function StripChip({ label, n }) {
+function ChaoAgoraPainel({ faixa, onSetor }) {
+    const linhas = [
+        { id: 'CNC', label: 'CNC', nums: [faixa.cnc.fila, faixa.cnc.setup, faixa.cnc.maquina, faixa.cnc.afericao] },
+        { id: 'EDM_FIO', label: 'Eletrofio', nums: [faixa.edm.fila, faixa.edm.setup, faixa.edm.maquina, faixa.edm.afericao] },
+        { id: 'EXTERNO', label: 'Externo', nums: [faixa.ext.fila, faixa.ext.la, faixa.ext.volta] },
+    ];
+
     return (
-        <span className="inline-flex items-center gap-1.5 text-[11px] text-[#9DA2AE]">
-            <span className="text-[#565B68]">{label}</span>
-            <span className="font-mono font-semibold text-[#E7E9ED]">{n}</span>
-        </span>
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[11px] text-[#565B68]">
+            <span className="text-[10px] uppercase tracking-wider text-[#7B808F]">Chão</span>
+            {linhas.map((l) => (
+                <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => onSetor(l.id)}
+                    className="inline-flex items-baseline gap-1.5 hover:text-[#9DA2AE] transition-colors cursor-pointer"
+                >
+                    <span>{l.label}</span>
+                    <span className="font-mono tabular-nums">
+                        {l.nums.map((n, i) => (
+                            <React.Fragment key={i}>
+                                {i > 0 ? <span className="text-[#333844] mx-0.5">·</span> : null}
+                                <span className={n > 0 ? 'text-[#9DA2AE]' : ''}>{n}</span>
+                            </React.Fragment>
+                        ))}
+                    </span>
+                </button>
+            ))}
+        </div>
     );
 }
 
@@ -85,6 +108,7 @@ export default function HomeGerente({ onNavigate }) {
     const estoque = useAppStore((s) => s.estoque);
     const config = useAppStore((s) => s.configuracoesGlobais);
     const irParaKanban = useAppStore((s) => s.irParaKanban);
+    const setActiveSector = useAppStore((s) => s.setActiveSector);
     const pedirFiltroCarteira = useAppStore((s) => s.pedirFiltroCarteira);
     const [novaOs, setNovaOs] = useState(false);
     const [novaOsMolde, setNovaOsMolde] = useState(false);
@@ -110,6 +134,11 @@ export default function HomeGerente({ onNavigate }) {
             return;
         }
         irCarteira(kpi.filtroCarteira);
+    };
+
+    const openSetorKanban = (setor) => {
+        setActiveSector(setor);
+        onNavigate?.('kanban');
     };
 
     const onAlertClick = (aviso) => {
@@ -186,40 +215,7 @@ export default function HomeGerente({ onNavigate }) {
                 ))}
             </div>
 
-            <div className="border border-[#262A33] rounded-[10px] bg-[#181B22] px-3.5 py-3 flex flex-col gap-2.5">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#565B68]">Chao agora</div>
-                <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Cpu className="w-3.5 h-3.5 text-[#7B808F] shrink-0" />
-                        <span className="text-[11px] font-semibold text-[#E7E9ED] w-16 shrink-0">CNC</span>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                            <StripChip label="Fila" n={painel.faixa.cnc.fila} />
-                            <StripChip label="Setup" n={painel.faixa.cnc.setup} />
-                            <StripChip label="Maq." n={painel.faixa.cnc.maquina} />
-                            <StripChip label="Afer." n={painel.faixa.cnc.afericao} />
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Zap className="w-3.5 h-3.5 text-[#7B808F] shrink-0" />
-                        <span className="text-[11px] font-semibold text-[#E7E9ED] w-16 shrink-0">Eletrofio</span>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                            <StripChip label="Fila" n={painel.faixa.edm.fila} />
-                            <StripChip label="Setup" n={painel.faixa.edm.setup} />
-                            <StripChip label="Maq." n={painel.faixa.edm.maquina} />
-                            <StripChip label="Afer." n={painel.faixa.edm.afericao} />
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Factory className="w-3.5 h-3.5 text-[#7B808F] shrink-0" />
-                        <span className="text-[11px] font-semibold text-[#E7E9ED] w-16 shrink-0">Externo</span>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                            <StripChip label="A enviar" n={painel.faixa.ext.fila} />
-                            <StripChip label="La" n={painel.faixa.ext.la} />
-                            <StripChip label="Volta" n={painel.faixa.ext.volta} />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ChaoAgoraPainel faixa={painel.faixa} onSetor={openSetorKanban} />
 
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
                 <div className="xl:col-span-2 border border-[#262A33] rounded-[10px] bg-[#181B22]">

@@ -150,7 +150,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                         setHistoricoSugestao(null);
                         return;
                     }
-                    const concluida = (r) => r.status === 'Concluído' || r.status === 'Concluido';
+                    const concluida = (r) => r.status === 'Concluído';
                     const pick = matches.find(concluida) || matches[0];
                     setHistoricoSugestao({
                         os: pick,

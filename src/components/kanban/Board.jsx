@@ -151,12 +151,12 @@ export default function Board() {
             }
 
             if (!pauseData.isPausado && (colKey === 'setup' || colKey === 'emCorte')) {
-                const targetMachine = osData.maquina_nome || osData.maquina;
+                const targetMachine = osData.maquina_nome;
                 if (targetMachine) {
                     const isOccupied = state.kanban[colKey].some(item =>
                         item.id !== osData.id &&
-                        (item.maquina_nome === targetMachine || item.maquina === targetMachine) &&
-                        !(item.is_pausado || item.isPausado)
+                        (item.maquina_nome === targetMachine) &&
+                        !(item.is_pausado)
                     );
                     if (isOccupied) {
                         setOccupiedMachineAlert({ maquinaName: targetMachine, targetCol: colKey });
@@ -191,7 +191,7 @@ export default function Board() {
         let list = cards.filter((os) => !kanbanEmFila(os));
         if (activeSector !== 'TODOS') {
             list = list.filter((os) => {
-                const osSetor = os.setor || os.tipo_processo || 'CNC';
+                const osSetor = os.setor || 'CNC';
                 return osSetor === activeSector;
             });
         }
@@ -199,13 +199,13 @@ export default function Board() {
         const limiteMs = 48 * 60 * 60 * 1000;
         const now = Date.now();
         const filtered = list.filter(card => {
-            const timeEntrada = card.timestamp_entrada_concluido || card.timestampEntrada_concluido || card.created_at;
+            const timeEntrada = card.timestamp_entrada_concluido || card.created_at;
             if (!timeEntrada) return true;
             return (now - new Date(timeEntrada).getTime()) < limiteMs;
         });
         filtered.sort((a, b) => {
-            const tA = new Date(a.timestamp_entrada_concluido || a.timestampEntrada_concluido || a.created_at).getTime() || 0;
-            const tB = new Date(b.timestamp_entrada_concluido || b.timestampEntrada_concluido || b.created_at).getTime() || 0;
+            const tA = new Date(a.timestamp_entrada_concluido || a.created_at).getTime() || 0;
+            const tB = new Date(b.timestamp_entrada_concluido || b.created_at).getTime() || 0;
             return tB - tA;
         });
         return filtered.slice(0, 20);
@@ -227,8 +227,8 @@ export default function Board() {
             const targetMachine = data.maquina_nome || state.kanban[pendingTransition.sourceCol].find(os => os.id === pendingTransition.osId)?.maquina_nome;
             if (targetMachine) {
                 const isOccupied = state.kanban[destCol].some(os =>
-                    (os.maquina_nome === targetMachine || os.maquina === targetMachine) &&
-                    !(os.is_pausado || os.isPausado)
+                    (os.maquina_nome === targetMachine) &&
+                    !(os.is_pausado)
                 );
                 if (isOccupied) {
                     setOccupiedMachineAlert({ maquinaName: targetMachine, targetCol: destCol });
@@ -240,21 +240,10 @@ export default function Board() {
         const ctx = { ...pendingTransition };
         setPendingTransition(null);
         const nowIso = new Date().toISOString();
-        const checklistFerramentas = data.checklistFerramentas;
-        const loteMagazine = data.magazineLote || data.magazineLote;
-        const movePayload = { ...data };
-        delete movePayload.magazineLote;
-        delete movePayload.magazineLote;
-        delete movePayload.checklistFerramentas;
+        const { checklistFerramentas, magazineLote: loteMagazine, ...movePayload } = data;
         const persistChecklist = async () => {
             if (!checklistFerramentas) return;
-            const os = useAppStore.getState().kanban[destCol]?.find((o) => o.id === ctx.osId)
-                || ctx.osData;
-            const nx = os?.nx_import || os?.nxImport || {};
-            await useAppStore.getState().editOrdemServico(ctx.osId, {
-                checklistFerramentas,
-                nxImport: { ...nx, checklistFerramentas },
-            });
+            await useAppStore.getState().editOrdemServico(ctx.osId, { checklistFerramentas });
         };
         state.moveOrdemServico(ctx.osId, ctx.sourceCol, destCol, {
             ...movePayload,
@@ -267,7 +256,7 @@ export default function Board() {
                 await useAppStore.getState().montarMagazineLote({
                     maquinaNome: movePayload.maquina_nome,
                     osId: ctx.osId,
-                    codigoPeca: os?.codigo_peca || os?.codigoPeca || ctx.osData?.codigo_peca,
+                    codigoPeca: os?.codigo_peca || ctx.osData?.codigo_peca,
                     operadorNome: movePayload.operador_atual,
                     itens: loteMagazine.itens,
                     baixarEstoque: loteMagazine.baixarEstoque,
@@ -382,7 +371,7 @@ export default function Board() {
         const nowIso = new Date().toISOString();
 
         if (afericaoData?.avancarProximoSetup) {
-            const currentSetup = ctx.osData?.setup_atual || ctx.osData?.setupAtual || 1;
+            const currentSetup = ctx.osData?.setup_atual || 1;
             const nextSetup = currentSetup + 1;
             moveOrdemServico(ctx.osId, ctx.sourceCol, 'setup', {
                 status: COLUMN_TITLES['setup'],
@@ -465,15 +454,15 @@ export default function Board() {
     const filteredConcluido = getFilteredCards('concluido', kanban.concluido || []);
     const totalAtivas = filteredAFazer.length + filteredSetup.length + filteredEmCorte.length + filteredAfericao.length;
     const totalEmAtraso = [...filteredAFazer, ...filteredSetup, ...filteredEmCorte, ...filteredAfericao].filter(os => {
-        const prazo = os.prazo_entrega || os.prazoEntrega;
+        const prazo = os.prazo_entrega;
         if (!prazo) return false;
         const prazoDate = new Date(prazo.includes('T') ? prazo : `${prazo}T12:00:00`);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return prazoDate.getTime() < today.getTime() && !(os.is_pausado || os.isPausado);
+        return prazoDate.getTime() < today.getTime() && !(os.is_pausado);
     }).length;
     const totalConcluidasHoje = filteredConcluido.filter(os => {
-        const ts = os.timestamp_entrada_concluido || os.timestampEntrada_concluido;
+        const ts = os.timestamp_entrada_concluido;
         return ts && new Date(ts).toDateString() === new Date().toDateString();
     }).length;
 

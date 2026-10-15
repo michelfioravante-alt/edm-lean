@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 const getEmpresaId = () => {
     const state = useAuthStore.getState();
@@ -11,7 +9,6 @@ const getEmpresaId = () => {
 
 export const ferramentasMaquinaService = {
     async fetchAtivas() {
-        if (isLocalMode()) return localApi.ferramentasMaquina.fetchAtivas();
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ferramentas_maquina')
@@ -24,7 +21,6 @@ export const ferramentasMaquinaService = {
     },
 
     async instalar(payload) {
-        if (isLocalMode()) return localApi.ferramentasMaquina.instalar(payload);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ferramentas_maquina')
@@ -50,7 +46,6 @@ export const ferramentasMaquinaService = {
     },
 
     async retirarPorId(id, motivo = 'fim_ciclo') {
-        if (isLocalMode()) return localApi.ferramentasMaquina.retirarPorId(id, motivo);
         const { data, error } = await supabase
             .from('ferramentas_maquina')
             .update({ ativo: false, removido_em: new Date().toISOString(), motivo_remocao: motivo })
@@ -62,7 +57,6 @@ export const ferramentasMaquinaService = {
     },
 
     async retirarPorItem(params) {
-        if (isLocalMode()) return localApi.ferramentasMaquina.retirarPorItem(params);
         // Supabase: simplificado — desativa registros ativos correspondentes
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
@@ -87,7 +81,6 @@ export const ferramentasMaquinaService = {
     },
 
     async limparPorOs(osId) {
-        if (isLocalMode()) return localApi.ferramentasMaquina.limparPorOs(osId);
         const empresaId = getEmpresaId();
         const { error } = await supabase
             .from('ferramentas_maquina')

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
-import LocalModeBanner from '../common/LocalModeBanner';
-import DemoGuideWidget from '../common/DemoGuideWidget';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -84,7 +82,6 @@ export default function Layout({ children, activeView, onViewChange }) {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#111318] text-[#E7E9ED]">
-            <LocalModeBanner />
             <Header onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             <div className="flex flex-1 pb-[60px] md:pb-0">
@@ -106,8 +103,6 @@ export default function Layout({ children, activeView, onViewChange }) {
                 onViewChange={onViewChange}
                 role={role}
             />
-
-            <DemoGuideWidget activeView={activeView} onViewChange={onViewChange} />
         </div>
     );
 }

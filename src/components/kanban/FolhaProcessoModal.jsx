@@ -5,25 +5,25 @@ import { Printer } from 'lucide-react';
 import Button from '../common/Button';
 import { labelSetor, listarKanbansDoGrupo, textoRoteiroPassos, roteiroDaOs } from '../../constants/osWorkflow';
 import { urlKanbanOs } from '../../utils/folhaProcesso';
-import { resolveFolhaImagemSrc } from '../../services/osPrints';
+import { useFolhaImagemSrc } from '../../services/osPrints';
 import { useAppStore } from '../../store/useAppStore';
 
 function textoRoteiro(os, irmaos) {
     const passos = roteiroDaOs(os, irmaos);
     if (passos.length) return textoRoteiroPassos(passos);
     const lista = (irmaos && irmaos.length > 1) ? irmaos : (os ? [os] : []);
-    return lista.map((k) => labelSetor(k.setor || k.tipo_processo)).join('  →  ');
+    return lista.map((k) => labelSetor(k.setor)).join('  →  ');
 }
 
 function FolhaA4({ os, qr, irmaos }) {
-    const peca = os.codigo_peca || os.codigoPeca || 'S/N';
-    const molde = os.codigo_molde || os.codigoMolde;
-    const prazo = os.prazo_entrega || os.prazoEntrega;
+    const peca = os.codigo_peca || 'S/N';
+    const molde = os.codigo_molde;
+    const prazo = os.prazo_entrega;
     const prazoTxt = prazo ? String(prazo).slice(0, 10).split('-').reverse().join('/') : '—';
-    const desenho = os.link_desenho || os.linkDesenho || '—';
-    const programaPath = os.link_programa || os.linkPrograma || os.nx_import?.linkPrograma || os.nxImport?.linkPrograma || '';
+    const desenho = os.link_desenho || '—';
+    const programaPath = os.link_programa || '';
     const obs = os.observacoes || os.observacao || '';
-    const img = resolveFolhaImagemSrc(os.folha_imagem || os.folhaImagem);
+    const img = useFolhaImagemSrc(os.folha_imagem);
     const qtd = os.quantidade || 1;
     const roteiro = textoRoteiro(os, irmaos);
     const qrUrl = os.id ? urlKanbanOs(os.id) : '';
@@ -55,7 +55,7 @@ function FolhaA4({ os, qr, irmaos }) {
                 </div>
                 <div>
                     <span className="uppercase tracking-wider text-neutral-600">Setor atual</span>
-                    <div className="font-semibold text-sm">{labelSetor(os.setor || os.tipo_processo)}</div>
+                    <div className="font-semibold text-sm">{labelSetor(os.setor)}</div>
                 </div>
                 <div>
                     <span className="uppercase tracking-wider text-neutral-600">Prazo</span>
@@ -64,12 +64,12 @@ function FolhaA4({ os, qr, irmaos }) {
             </div>
             <div className="px-4 sm:px-6 py-3 border-b border-neutral-400">
                 <span className="text-[10px] uppercase tracking-wider text-neutral-600">Caminho do kanban</span>
-                <div className="font-semibold text-sm mt-0.5">{roteiro || labelSetor(os.setor || os.tipo_processo)}</div>
+                <div className="font-semibold text-sm mt-0.5">{roteiro || labelSetor(os.setor)}</div>
                 {irmaos?.length > 1 && (
                     <ol className="mt-2 text-xs space-y-0.5">
                         {irmaos.map((k, i) => (
                             <li key={k.id || i}>
-                                {i + 1}. {labelSetor(k.setor || k.tipo_processo)}
+                                {i + 1}. {labelSetor(k.setor)}
                                 {k.id === os.id ? ' ← este cartão' : ''}
                                 {k.status ? ` · ${k.status}` : ''}
                             </li>

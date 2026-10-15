@@ -10,8 +10,8 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
     const [avancarProximoSetup, setAvancarProximoSetup] = useState(false);
     const [criarRetrabalho, setCriarRetrabalho] = useState(true);
 
-    const setupAtual = osData?.setup_atual || osData?.setupAtual || 1;
-    const totalSetups = osData?.total_setups || osData?.totalSetups || 1;
+    const setupAtual = osData?.setup_atual || 1;
+    const totalSetups = osData?.total_setups || 1;
     const temProximoSetup = setupAtual < totalSetups;
     const proximoSetupNome = osData?.nomes_setups?.[setupAtual] || `OP${(setupAtual + 1) * 10}`;
 
@@ -39,7 +39,7 @@ export default function AfericaoModal({ isOpen, onClose, onConfirm, osData }) {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Inspeção de Qualidade: ${osData.codigoPeca || osData.codigo_peca || 'O.S.'}`}
+            title={`Inspeção de Qualidade: ${osData.codigo_peca || 'O.S.'}`}
             maxWidth="max-w-md"
         >
             <form onSubmit={handleSubmit} className="space-y-5">

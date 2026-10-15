@@ -5,7 +5,7 @@ import {
 import RelatorioMoldeModal from '../components/moldes/RelatorioMoldeModal';
 import { useAppStore } from '../store/useAppStore';
 import { agruparCarteira, labelSetor, statusEhConcluido, kanbanEmFila } from '../constants/osWorkflow';
-import { resolveFolhaImagemSrc } from '../services/osPrints';
+import { useFolhaImagemSrc } from '../services/osPrints';
 import NovaOSForm from '../components/kanban/NovaOSForm';
 import AcompanhamentoModal from '../components/kanban/AcompanhamentoModal';
 
@@ -23,6 +23,11 @@ const SETORES_ENVIO = [
     { id: 'EXTERNO', label: 'Serviço fora' },
 ];
 
+function Miniatura({ value, vazio = null }) {
+    const src = useFolhaImagemSrc(value);
+    return src ? <img src={src} alt="" className="max-w-full max-h-full object-contain" /> : vazio;
+}
+
 function progressoGrupo(kanbans) {
     const total = kanbans.length || 1;
     const done = kanbans.filter(statusEhConcluido).length;
@@ -31,15 +36,15 @@ function progressoGrupo(kanbans) {
 }
 
 function codigoPeca(os) {
-    return os.codigo_peca || os.codigoPeca || '—';
+    return os.codigo_peca || '—';
 }
 
 function codigoMoldeGrupo(g) {
-    return g.head?.codigo_molde || g.head?.codigoMolde || g.titulo || '—';
+    return g.head?.codigo_molde || g.titulo || '—';
 }
 
 function chegadaGrupo(g) {
-    const t = g.head?.created_at || g.head?.createdAt;
+    const t = g.head?.created_at;
     const ms = t ? new Date(t).getTime() : 0;
     return Number.isFinite(ms) ? ms : 0;
 }
@@ -140,7 +145,7 @@ export default function Moldes({ onNavigate }) {
     const pecasFiltradas = useMemo(() => {
         if (!detalhe) return [];
         return detalhe.kanbans.filter((os) => {
-            const setor = os.setor || os.tipo_processo || '';
+            const setor = os.setor || '';
             if (filtro === 'todos') return true;
             if (filtro === 'fila') return kanbanEmFila(os);
             if (filtro === 'liberadas') return !kanbanEmFila(os);
@@ -173,7 +178,7 @@ export default function Moldes({ onNavigate }) {
         if (!pecas.length) return;
         setConfirmEnvio({
             pecas,
-            setor: setorSugerido || pecas[0]?.setor || pecas[0]?.tipo_processo || 'CNC',
+            setor: setorSugerido || pecas[0]?.setor || 'CNC',
         });
     };
 
@@ -183,13 +188,10 @@ export default function Moldes({ onNavigate }) {
         setEnviando(true);
         try {
             await Promise.all(pecas.map(async (os) => {
-                const nx = { ...(os.nx_import || os.nxImport || {}), em_fila: false };
                 await editOrdemServico(os.id, {
                     setor,
                     programado: setor === 'EXTERNO',
                     em_fila: false,
-                    emFila: false,
-                    nxImport: nx,
                 });
             }));
             setIdsMarcados(new Set());
@@ -259,10 +261,7 @@ export default function Moldes({ onNavigate }) {
                         {grupos.map((g) => {
                             const prog = progressoGrupo(g.kanbans);
                             const ativo = selecionado === g.grupoId;
-                            const thumb = resolveFolhaImagemSrc(
-                                g.kanbans.find((k) => k.folha_imagem || k.folhaImagem)?.folha_imagem
-                                || g.kanbans.find((k) => k.folha_imagem || k.folhaImagem)?.folhaImagem,
-                            );
+                            const thumb = g.kanbans.find((k) => k.folha_imagem)?.folha_imagem;
                             return (
                                 <button
                                     key={g.grupoId}
@@ -278,11 +277,10 @@ export default function Moldes({ onNavigate }) {
                                 >
                                     <div className="flex gap-3">
                                         <div className="w-14 h-10 rounded-md border border-[#262A33] bg-white overflow-hidden shrink-0 flex items-center justify-center">
-                                            {thumb ? (
-                                                <img src={thumb} alt="" className="max-w-full max-h-full object-contain" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[#565B68] text-[10px]">PDF</div>
-                                            )}
+                                            <Miniatura
+                                                value={thumb}
+                                                vazio={<div className="w-full h-full flex items-center justify-center text-[#565B68] text-[10px]">PDF</div>}
+                                            />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-start justify-between gap-2">
@@ -359,7 +357,7 @@ export default function Moldes({ onNavigate }) {
                                             disabled={enviando}
                                             onClick={() => abrirConfirmacao(
                                                 selecionadasNaFila,
-                                                selecionadasNaFila[0]?.setor || selecionadasNaFila[0]?.tipo_processo || 'CNC',
+                                                selecionadasNaFila[0]?.setor || 'CNC',
                                             )}
                                             className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-md bg-[#D97D3D] text-[#111318] font-semibold disabled:opacity-50"
                                         >
@@ -374,11 +372,10 @@ export default function Moldes({ onNavigate }) {
 
                                 <ul className="divide-y divide-[#262A33] overflow-y-auto max-h-[55vh]">
                                     {pecasFiltradas.map((os) => {
-                                        const img = resolveFolhaImagemSrc(os.folha_imagem || os.folhaImagem);
                                         const done = statusEhConcluido(os);
                                         const naFila = kanbanEmFila(os);
                                         const marcado = idsMarcados.has(os.id);
-                                        const setorSug = os.setor || os.tipo_processo || 'CNC';
+                                        const setorSug = os.setor || 'CNC';
                                         return (
                                             <li key={os.id} className="flex items-center gap-2 px-4 py-2.5 hover:bg-[#1F232B]">
                                                 <input
@@ -392,7 +389,7 @@ export default function Moldes({ onNavigate }) {
                                                     onClick={() => setSelectedOs(os)}
                                                     className="w-[4.5rem] h-10 rounded border border-[#262A33] overflow-hidden bg-white shrink-0 flex items-center justify-center"
                                                 >
-                                                    {img ? <img src={img} alt="" className="max-w-full max-h-full object-contain" /> : null}
+                                                    <Miniatura value={os.folha_imagem} />
                                                 </button>
                                                 <button
                                                     type="button"
@@ -402,7 +399,7 @@ export default function Moldes({ onNavigate }) {
                                                     <div className="min-w-0">
                                                         <p className="text-sm text-[#E7E9ED] truncate font-medium">{codigoPeca(os)}</p>
                                                         <p className="text-[11px] text-[#7B808F] truncate">
-                                                            {labelSetor(setorSug)} · {os.componente_molde || os.componenteMolde || '—'}
+                                                            {labelSetor(setorSug)} · {os.componente_molde || '—'}
                                                         </p>
                                                     </div>
                                                     <ChevronRight className="w-4 h-4 text-[#565B68] shrink-0" />

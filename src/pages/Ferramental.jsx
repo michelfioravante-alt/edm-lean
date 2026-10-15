@@ -109,8 +109,8 @@ export default function Ferramental() {
         : null;
 
     const osAtivaNaMaquina = maquinaAlocada
-        ? ((kanban?.emCorte || []).find((os) => os.maquina_nome === maquinaAlocada.nome || os.maquina === maquinaAlocada.nome) ||
-           (kanban?.setup || []).find((os) => os.maquina_nome === maquinaAlocada.nome || os.maquina === maquinaAlocada.nome))
+        ? ((kanban?.emCorte || []).find((os) => os.maquina_nome === maquinaAlocada.nome) ||
+           (kanban?.setup || []).find((os) => os.maquina_nome === maquinaAlocada.nome))
         : null;
 
     const historicoDaFerramenta = selectedTool
@@ -136,7 +136,7 @@ export default function Ferramental() {
                     <AlertTriangle className="text-kanban-amber shrink-0 mt-0.5" />
                     <div className="text-sm text-[#E7E9ED]">
                         <strong className="text-kanban-amber">Tabelas não encontradas.</strong>{' '}
-                        Execute o arquivo <code className="text-white bg-[#1F232B] px-1 rounded">supabase_ferramental.sql</code> no SQL Editor do Supabase para habilitar este módulo.
+                        Execute o arquivo <code className="text-white bg-[#1F232B] px-1 rounded">supabase/sql/04_ferramental.sql</code> no SQL Editor do Supabase para habilitar este módulo.
                     </div>
                 </div>
             )}
@@ -479,7 +479,7 @@ export default function Ferramental() {
                                             <span className="font-bold text-kanban-amber">{osAtivaNaMaquina.status}</span>
                                         </div>
                                         <div className="font-bold text-white text-base">
-                                            {osAtivaNaMaquina.codigo_peca || osAtivaNaMaquina.codigoPeca} — <span className="text-[#E7E9ED] font-normal">{osAtivaNaMaquina.cliente}</span>
+                                            {osAtivaNaMaquina.codigo_peca} — <span className="text-[#E7E9ED] font-normal">{osAtivaNaMaquina.cliente}</span>
                                         </div>
                                         {osAtivaNaMaquina.total_setups > 1 && (
                                             <div className="text-xs text-[#7B808F] font-mono">

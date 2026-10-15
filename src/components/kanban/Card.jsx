@@ -10,7 +10,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { kanbanPrecisaProgramar, labelSetor, custoHoraKanban, listarKanbansDoGrupo, horasKanban } from '../../constants/osWorkflow';
 import { lerChecklistFerramentas, progressoChecklist, lerLinkPrograma } from '../../utils/ferramentasChecklist';
-import { resolveFolhaImagemSrc } from '../../services/osPrints';
+import { useFolhaImagemSrc } from '../../services/osPrints';
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function observacaoLegivel(obs, maquinas) {
@@ -28,34 +28,20 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     const {
         status,
         codigo_peca,
-        codigoPeca,
-        maquina_nome,
-        maquina: maqLocal,
-        operador_atual,
-        operador: opLocal,
-        programador_nome,
-        programador: pgLocal,
+        maquina_nome: maquina,
+        operador_atual: operador,
+        programador,
         link_desenho,
-        linkDesenho,
         quantidade_concluida,
         quantidade,
         is_prioridade,
-        isPrioridade,
         is_pausado,
-        isPausado,
-        prazo_entrega,
-        prazoEntrega,
+        prazo_entrega: prazoFinal,
         cliente,
-        codigo_molde,
-        codigoMolde,
-        numero_programa,
-        numeroPrograma,
-        componente_molde,
-        componenteMolde,
-        descricao_peca,
-        descricaoPeca,
+        codigo_molde: molde,
+        numero_programa: programa,
+        componente_molde: pecaDesc,
         setor,
-        tipo_processo
     } = data;
 
     const updateOrdemServico = useAppStore(state => state.updateOrdemServico);
@@ -71,20 +57,12 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     const role = useAuthStore((s) => s.role);
     const isGestor = role === 'admin';
 
-    const maquina = maquina_nome || maqLocal;
-    const operador = operador_atual || opLocal;
-    const programador = programador_nome || pgLocal;
-    const molde = codigo_molde || codigoMolde;
-    const programa = numero_programa || numeroPrograma;
-    const pecaDesc = componente_molde || componenteMolde || descricao_peca || descricaoPeca;
-    const codPeca = codigo_peca || codigoPeca || 'S/N';
-    const osSetor = setor || tipo_processo || 'CNC';
+    const codPeca = codigo_peca || 'S/N';
+    const osSetor = setor || 'CNC';
 
-    const _rawLink = link_desenho || linkDesenho;
-    const linkFinal = (_rawLink && !String(_rawLink).startsWith('{') && !String(_rawLink).startsWith('[')) ? _rawLink : null;
-    const isPrioridadeFinal = !!(is_prioridade || isPrioridade);
-    const isPausadoFinal = !!(is_pausado || isPausado);
-    const prazoFinal = prazo_entrega || prazoEntrega;
+    const linkFinal = (link_desenho && !String(link_desenho).startsWith('{') && !String(link_desenho).startsWith('[')) ? link_desenho : null;
+    const isPrioridadeFinal = !!is_prioridade;
+    const isPausadoFinal = !!is_pausado;
 
     const [nowMs, setNowMs] = useState(Date.now());
     const [copied, setCopied] = useState(false);
@@ -124,7 +102,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
         if (isPausadoFinal) {
             return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Pausado</span>;
         }
-        if (data.is_retrabalho || data.isRetrabalho) {
+        if (data.is_retrabalho) {
             return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Retrabalho</span>;
         }
         if (isPrioridadeFinal) {
@@ -160,7 +138,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
     const qtdTotal = quantidade || 1;
     const qtdProntas = quantidade_concluida || 0;
     const progressPct = Math.min(100, Math.round((qtdProntas / qtdTotal) * 100));
-    const thumbSrc = resolveFolhaImagemSrc(data.folha_imagem || data.folhaImagem);
+    const thumbSrc = useFolhaImagemSrc(data.folha_imagem);
 
     return (
         <div
@@ -274,7 +252,7 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                         <span className="font-['IBM_Plex_Mono'] text-[11px] text-[#9DA2AE] font-medium">
                             {qtdProntas}/{qtdTotal}
                         </span>
-                        {status === 'Em Corte' && !isPausadoFinal && (
+                        {status === 'Em Usinagem' && !isPausadoFinal && (
                             <button
                                 onClick={handleProgressInc}
                                 className="text-[#4A9D74] hover:text-white p-0.5 rounded transition-colors ml-0.5 cursor-pointer"
@@ -350,11 +328,11 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
                     <div className="mb-3 p-2.5 bg-[rgba(201,154,74,0.1)] border-l-2 border-[#C99A4A] rounded-r-[6px] text-xs">
                         <div className="flex items-center gap-1.5 text-[#C99A4A] font-semibold text-[11px] uppercase tracking-wider mb-0.5">
                             <AlertCircle className="w-3 h-3" />
-                            <span>Pausa: {data.motivo_pausa || data.motivoPausa || 'Não informado'}</span>
+                            <span>Pausa: {data.motivo_pausa || 'Não informado'}</span>
                         </div>
-                        {(data.observacao_pausa || data.observacaoPausa) && (
+                        {(data.observacao_pausa) && (
                             <p className="text-[10px] text-[#9DA2AE] italic leading-tight mt-1">
-                                "{observacaoLegivel(data.observacao_pausa || data.observacaoPausa, maquinas)}"
+                                "{observacaoLegivel(data.observacao_pausa, maquinas)}"
                             </p>
                         )}
                     </div>

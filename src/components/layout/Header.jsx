@@ -1,32 +1,13 @@
 import React, { useState } from 'react';
-import { Briefcase, LogOut, ShieldCheck, Cpu, Zap, Menu, HelpCircle, FileSpreadsheet } from 'lucide-react';
-import { isLocalMode } from '../../local/mode';
-import { useAppStore } from '../../store/useAppStore';
+import { Briefcase, LogOut, ShieldCheck, Menu, HelpCircle, FileSpreadsheet } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import ManagerPinModal from '../common/ManagerPinModal';
 import { HelpModal } from '../common/HelpModal';
 import ExportarDadosModal from '../common/ExportarDadosModal';
 
 export default function Header({ onMenuToggle }) {
-    const { nomeEmpresa, logout, role, setorPadrao, enterLocalStudyMode, setSetorPadrao } = useAuthStore();
-    const demoMode = isLocalMode();
-    const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+    const { nomeEmpresa, logout, role } = useAuthStore();
     const [helpOpen, setHelpOpen] = useState(false);
     const [exportOpen, setExportOpen] = useState(false);
-
-    const entrarProgramador = (setor) => {
-        if (role === 'programmer') {
-            setSetorPadrao(setor);
-            useAppStore.getState().setActiveSector(setor);
-            return;
-        }
-        enterLocalStudyMode('programmer', setor);
-    };
-
-    const handleGerenteClick = () => {
-        if (role === 'admin' && setorPadrao === 'TODOS') return;
-        setIsPinModalOpen(true);
-    };
 
     const getRoleLabel = () => (role === 'admin' ? 'Gestor' : 'Programador');
 
@@ -61,10 +42,10 @@ export default function Header({ onMenuToggle }) {
 
                 {/* Center text (desktop) */}
                     <div className="hidden lg:block font-mono text-[10px] tracking-[0.18em] uppercase text-[#565B68]">
-                        {demoMode ? 'Fábrica de exemplo · PIN 1234' : 'VISUALIZE · CONTROLE · PRODUZA'}
+                        VISUALIZE · CONTROLE · PRODUZA
                     </div>
 
-                {/* Right side: Empresa + Role + Quick selector in Demo + Logout */}
+                {/* Right side: Empresa + Role + Logout */}
                 <div className="flex items-center gap-2.5 sm:gap-4">
                     {nomeEmpresa && (
                         <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#181B22] rounded-[6px] border border-[#262A33] max-w-[200px]">
@@ -81,39 +62,6 @@ export default function Header({ onMenuToggle }) {
                         <span>{getRoleLabel()}</span>
                     </div>
 
-                    {/* Seletor rápido de Perfil / Setor — Apenas Modo Demonstração */}
-                    {demoMode && (
-                        <>
-                            {/* Desktop Button Set */}
-                            <div className="hidden xl:flex items-center gap-1 bg-[#181B22] p-1 rounded-[7px] border border-[#262A33] text-[11px] font-medium">
-                                <button
-                                    type="button"
-                                    onClick={handleGerenteClick}
-                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role === 'admin' && setorPadrao === 'TODOS' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Carteira e fábrica inteira. PIN desta demo: 1234"
-                                >
-                                    <ShieldCheck className="w-3 h-3" /> Gestor
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => entrarProgramador('CNC')}
-                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'CNC' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Só o quadro CNC — programar e operar"
-                                >
-                                    <Cpu className="w-3 h-3" /> CNC
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => entrarProgramador('EDM_FIO')}
-                                    className={`px-2 py-0.5 rounded-[5px] transition-colors cursor-pointer flex items-center gap-1 ${role !== 'admin' && setorPadrao === 'EDM_FIO' ? 'bg-[#1F232B] text-[#E7E9ED] border border-[#333844] font-semibold' : 'text-[#7B808F] hover:text-[#E7E9ED]'}`}
-                                    title="Só o quadro de eletrofio"
-                                >
-                                    <Zap className="w-3 h-3" /> EDM Fio
-                                </button>
-                            </div>
-                        </>
-                    )}
-
                     <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-[#565B68] tracking-[0.05em] uppercase">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#4A9D74]"></span>
                         <span>ONLINE</span>
@@ -123,8 +71,8 @@ export default function Header({ onMenuToggle }) {
                         type="button"
                         onClick={() => setExportOpen(true)}
                         className="p-1.5 text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] rounded-md"
-                        aria-label="Importar dados"
-                        title="Importar dados"
+                        aria-label="Exportar dados"
+                        title="Exportar dados"
                     >
                         <FileSpreadsheet className="w-4 h-4" />
                     </button>
@@ -151,11 +99,6 @@ export default function Header({ onMenuToggle }) {
                 </div>
             </div>
 
-            <ManagerPinModal
-                isOpen={isPinModalOpen}
-                onClose={() => setIsPinModalOpen(false)}
-                onSuccess={() => enterLocalStudyMode('admin', 'TODOS')}
-            />
             <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
             <ExportarDadosModal open={exportOpen} onClose={() => setExportOpen(false)} />
         </header>

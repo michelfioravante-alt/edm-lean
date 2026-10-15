@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "testar-parser": "node scripts/testar-parser.mjs",
-    "testar-e2e": "node scripts/testar-e2e.mjs",
-    "testar-e2e:mobile": "node scripts/testar-e2e-mobile.mjs"
+    "testar-parser": "node scripts/testar-parser.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

@@ -4,11 +4,9 @@ import {
     History, LogOut, Briefcase, Wrench, Home, ShieldCheck, Code, FolderKanban 
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { isLocalMode } from '../../local/mode';
 
 export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
     const { user, role, logout } = useAuthStore();
-    const demoMode = isLocalMode();
     const isAdmin = role === 'admin';
 
     const getRoleBadge = () => {
@@ -259,8 +257,8 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                         onClick={() => logout()}
                         className="w-full flex items-center gap-2 justify-center p-2.5 rounded-[7px] transition-colors font-medium text-xs border border-[#333844] bg-[#111318] text-[#7B808F] hover:text-[#C85558] hover:border-[#C85558]/40 active:scale-[0.98] cursor-pointer"
                     >
-                        {demoMode ? <Home className="w-3.5 h-3.5" /> : <LogOut className="w-3.5 h-3.5" />}
-                        {demoMode ? 'Sair do Modo Demo' : 'Sair do Sistema'}
+                        <LogOut className="w-3.5 h-3.5" />
+                        Sair do Sistema
                     </button>
                     <div className="text-[10px] text-center text-[#565B68] mt-2.5 font-mono">
                         EDM LEAN &copy; 2026

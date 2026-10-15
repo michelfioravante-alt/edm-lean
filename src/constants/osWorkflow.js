@@ -20,7 +20,6 @@ export const TIPOS_SERVICO_EXTERNO = [
 ];
 
 export function rotuloTipoServicoExterno(tipo) {
-    if (tipo === 'tempera') return 'Tratamento térmico';
     return TIPOS_SERVICO_EXTERNO.find((t) => t.id === tipo)?.label || tipo || '—';
 }
 
@@ -83,7 +82,7 @@ export function montarRoteiro(etapasIds, personalizadas) {
 }
 
 export function statusEhConcluido(os) {
-    const s = os?.statusLocal || os?.status || '';
+    const s = os?.status || '';
     return s === 'Concluído';
 }
 
@@ -92,7 +91,7 @@ export function roteiroDaOs(os, irmaos) {
     if (Array.isArray(r) && r.length) return r;
     const lista = (irmaos && irmaos.length ? irmaos : (os ? [os] : []));
     return lista.map((k, i) => {
-        const setor = k.setor || k.tipo_processo;
+        const setor = k.setor;
         const def = defEtapa(setor);
         return {
             id: k.id || `${setor}-${i}`,
@@ -108,7 +107,7 @@ export function primeiroPassoAberto(head, kanbans) {
     const passos = roteiroDaOs(head, kanbans);
     for (const p of passos) {
         if (p.kind === 'marco' && !p.feito) return { kind: 'marco', label: p.label };
-        const k = (kanbans || []).find((c) => (c.setor || c.tipo_processo) === p.setor && !statusEhConcluido(c));
+        const k = (kanbans || []).find((c) => (c.setor) === p.setor && !statusEhConcluido(c));
         if (k) return { kind: p.kind, os: k, label: p.label };
     }
     return null;
@@ -127,14 +126,14 @@ export function diasEntre(inicio, fim) {
 }
 
 export function rankingFornecedoresExternos(kanban) {
-    const cards = todosKanbans(kanban).filter((k) => (k.setor || k.tipo_processo) === 'EXTERNO');
+    const cards = todosKanbans(kanban).filter((k) => (k.setor) === 'EXTERNO');
     const map = new Map();
     cards.forEach((k) => {
         const nome = k.fornecedor_nome || 'Sem fornecedor';
         if (!map.has(nome)) map.set(nome, { nome, laAgora: 0, ciclos: [] });
         const row = map.get(nome);
-        const s = k.statusLocal || k.status || '';
-        if (!statusEhConcluido(k) && (s === 'Em Usinagem' || s === 'Em Corte')) row.laAgora += 1;
+        const s = k.status || '';
+        if (!statusEhConcluido(k) && s === 'Em Usinagem') row.laAgora += 1;
         const d = diasEntre(k.enviado_em, k.voltou_em);
         if (k.enviado_em && k.voltou_em && d != null) row.ciclos.push(d);
     });
@@ -149,23 +148,15 @@ export function rankingFornecedoresExternos(kanban) {
 /** Cartões antigos (sem flag) já podem ir para set-up. Novos nascem programado=false. */
 export function kanbanPrecisaProgramar(os) {
     if (!os) return false;
-    if ((os.setor || os.tipo_processo) === 'EXTERNO') return false;
+    if ((os.setor) === 'EXTERNO') return false;
     if (os.programado === true) return false;
     if (os.programado === false) return true;
     return false;
 }
 
-/**
- * Peça importada ainda na fila do molde (aba Moldes) — não aparece no quadro do setor
- * até o gestor liberar. Flag em coluna `em_fila` ou em `nx_import.em_fila`.
- */
+/** Peça importada ainda na fila do molde (aba Moldes): só entra no quadro do setor quando o gestor libera. */
 export function kanbanEmFila(os) {
-    if (!os) return false;
-    const nx = os.nx_import || os.nxImport;
-    if (os.em_fila === false || os.emFila === false) return false;
-    if (nx?.em_fila === false) return false;
-    if (os.em_fila === true || os.emFila === true) return true;
-    return nx?.em_fila === true;
+    return os?.em_fila === true;
 }
 
 export function custoHoraDoSetor(setor, config = {}) {
@@ -178,15 +169,15 @@ export function custoHoraDoSetor(setor, config = {}) {
 }
 
 export function horasKanban(os) {
-    const fases = os?.tempos_fases || os?.temposFases || {};
+    const fases = os?.tempos_fases || {};
     const setupReal = Number(fases.setup) || 0;
     const corteReal = Number(fases.emCorte) || 0;
     const afericaoReal = Number(fases.afericao) || 0;
     const reais = setupReal + corteReal + afericaoReal;
-    const setupEst = (Number(os?.tempo_estimado_setup_horas || os?.tempoEstimadoSetupHoras || os?.tempo_estimado_setup_horas) || 0)
-        + (Number(os?.tempo_estimado_setup_minutos || os?.tempoEstimadoSetupMinutos || os?.tempo_estimado_setup_minutos) || 0) / 60;
-    const corteEst = (Number(os?.tempo_estimado_corte_horas || os?.tempoEstimadoCorteHoras || os?.tempo_estimado_corte_horas) || 0)
-        + (Number(os?.tempo_estimado_corte_minutos || os?.tempoEstimadoCorteMinutos || os?.tempo_estimado_corte_minutos) || 0) / 60;
+    const setupEst = (Number(os?.tempo_estimado_setup_horas) || 0)
+        + (Number(os?.tempo_estimado_setup_minutos) || 0) / 60;
+    const corteEst = (Number(os?.tempo_estimado_corte_horas) || 0)
+        + (Number(os?.tempo_estimado_corte_minutos) || 0) / 60;
     const estimadas = setupEst + corteEst;
     const baseReal = setupReal + corteReal;
     const eficienciaCam = (estimadas > 0 && baseReal > 0) ? (estimadas / baseReal) * 100 : null;
@@ -194,19 +185,19 @@ export function horasKanban(os) {
 }
 
 export function custoHoraKanban(os, config) {
-    const rate = custoHoraDoSetor(os?.setor || os?.tipo_processo, config);
+    const rate = custoHoraDoSetor(os?.setor, config);
     const { reais, estimadas } = horasKanban(os);
     const horas = reais > 0 ? reais : estimadas;
     return { rate, horas, custo: horas * rate, reais, estimadas };
 }
 
 export function listarKanbansDoGrupo(kanban, os) {
-    const grupo = os?.os_grupo_id || os?.osGrupoId;
+    const grupo = os?.os_grupo_id;
     if (!grupo) return os ? [os] : [];
     const all = [];
     Object.values(kanban || {}).forEach((col) => {
         (col || []).forEach((card) => {
-            if ((card.os_grupo_id || card.osGrupoId) === grupo) all.push(card);
+            if ((card.os_grupo_id) === grupo) all.push(card);
         });
     });
     return all.sort((a, b) => (a.roteiro_ordem || 0) - (b.roteiro_ordem || 0));
@@ -229,16 +220,16 @@ export function colKeyDoKanban(kanban, osId) {
 }
 
 export function labelStatusExterno(os) {
-    const colish = os?.statusLocal || os?.status || '';
+    const colish = os?.status || '';
     if (colish === 'Concluído') return 'Voltou';
     if (colish === 'Inspeção') return 'Retorno / inspeção';
-    if (colish === 'Em Usinagem' || colish === 'Em Corte') return 'No terceiro';
-    if (colish === 'Set-up' || colish === 'Preparação') return 'Separação';
+    if (colish === 'Em Usinagem') return 'No terceiro';
+    if (colish === 'Set-up') return 'Separação';
     return 'A enviar';
 }
 
 export function prazoOs(os) {
-    return os?.prazo_entrega || os?.prazoEntrega || '';
+    return os?.prazo_entrega || '';
 }
 
 export function atrasadaOs(os) {
@@ -267,24 +258,24 @@ export function agruparCarteira(kanban, config = {}) {
     const cards = todosKanbans(kanban);
     const groups = new Map();
     cards.forEach((c) => {
-        const gid = c.os_grupo_id || c.osGrupoId || c.id;
+        const gid = c.os_grupo_id || c.id;
         if (!groups.has(gid)) groups.set(gid, []);
         groups.get(gid).push(c);
     });
 
     return [...groups.entries()].map(([grupoId, kanbans]) => {
         kanbans.sort((a, b) => (a.roteiro_ordem || 0) - (b.roteiro_ordem || 0));
-        const head = kanbans.find((k) => k.codigo_molde || k.codigoMolde) || kanbans[0];
-        const isMolde = kanbans.length > 1 || !!(head.codigo_molde || head.codigoMolde);
+        const head = kanbans.find((k) => k.codigo_molde) || kanbans[0];
+        const isMolde = kanbans.length > 1 || !!(head.codigo_molde);
         const abertos = kanbans.filter((k) => !statusEhConcluido(k));
         const gargalo = abertos[0] || null;
         const custos = kanbans.map((k) => custoHoraKanban(k, config));
         const custoHora = custos.reduce((s, x) => s + x.custo, 0);
-        const orcado = Number(head.valor_orcado ?? head.valorOrcado);
-        const externos = kanbans.filter((k) => (k.setor || k.tipo_processo) === 'EXTERNO');
+        const orcado = Number(head.valor_orcado);
+        const externos = kanbans.filter((k) => (k.setor) === 'EXTERNO');
         const emTerceiro = externos.some((k) => {
-            const s = k.statusLocal || k.status || '';
-            return s === 'Em Usinagem' || s === 'Em Corte';
+            const s = k.status || '';
+            return s === 'Em Usinagem';
         });
         const aProgramar = kanbans.some(kanbanPrecisaProgramar);
         const pecaPronta = kanbans.some(statusEhConcluido) && abertos.length > 0;
@@ -296,8 +287,8 @@ export function agruparCarteira(kanban, config = {}) {
             kanbans,
             isMolde,
             titulo: isMolde
-                ? (head.codigo_molde || head.codigoMolde || head.codigo_peca || head.codigoPeca)
-                : (head.codigo_peca || head.codigoPeca),
+                ? (head.codigo_molde || head.codigo_peca)
+                : (head.codigo_peca),
             cliente: head.cliente,
             prazo: prazoOs(head),
             atrasada: atrasadaOs(head) || abertos.some(atrasadaOs),

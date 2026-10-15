@@ -8,6 +8,7 @@ import ChartCard, { ChartEmpty } from './ChartCard';
 export default function InsumosLifeChart({ periodo }) {
     const historicoConsumiveis = useAppStore((s) => s.historicoConsumiveis);
     const kanban = useAppStore((s) => s.kanban);
+    const maquinas = useAppStore((s) => s.maquinas);
 
     const logsConcluidos = useMemo(() => {
         const base = (historicoConsumiveis || []).filter((log) => log.dataFim);
@@ -29,15 +30,16 @@ export default function InsumosLifeChart({ periodo }) {
 
     const lifeByItem = {};
     logsConcluidos.forEach((log) => {
-        const osDaMaquina = (kanban.concluido || []).filter((os) => os.maquina === log.maquinaId);
+        const nomeMaquina = maquinas.find((m) => m.id === log.maquinaId)?.nome;
+        const osDaMaquina = (kanban.concluido || []).filter((os) => os.maquina_nome === nomeMaquina);
         let horas = 0;
         osDaMaquina.forEach((os) => {
-            const fim = os.timestampEntrada_afericao || os.timestampEntrada_concluido;
+            const fim = os.timestamp_entrada_afericao || os.timestamp_entrada_concluido;
             if (!fim) return;
             const fimMs = new Date(fim).getTime();
             const start = new Date(log.dataInstalacao).getTime();
             const end = new Date(log.dataFim).getTime();
-            if (fimMs >= start && fimMs <= end) horas += os.temposFases?.emCorte || 0;
+            if (fimMs >= start && fimMs <= end) horas += os.tempos_fases?.emCorte || 0;
         });
         if (horas === 0) {
             horas = Math.max(0, (new Date(log.dataFim) - new Date(log.dataInstalacao)) / 3600000);

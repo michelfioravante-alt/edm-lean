@@ -7,8 +7,8 @@ import ChartCard, { ChartEmpty } from './ChartCard';
 export default function RefugoPorMaquinaChart({ concluidas = [] }) {
     const horas = {};
     const qtd = {};
-    concluidas.filter((os) => (os.resultado_afericao || os.resultadoAfericao) === 'Refugo').forEach((os) => {
-        const maq = os.maquina_nome || os.maquina || 'Não informada';
+    concluidas.filter((os) => (os.resultado_afericao) === 'Refugo').forEach((os) => {
+        const maq = os.maquina_nome || 'Não informada';
         const h = horasKanban(os);
         horas[maq] = (horas[maq] || 0) + h.setupReal + h.corteReal;
         qtd[maq] = (qtd[maq] || 0) + 1;

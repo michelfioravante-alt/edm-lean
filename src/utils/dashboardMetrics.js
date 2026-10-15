@@ -1,12 +1,11 @@
 import { horasKanban, custoHoraKanban, rankingFornecedoresExternos, atrasadaOs } from '../constants/osWorkflow';
 
 export function setorDaOs(os) {
-    return os?.setor || os?.tipo_processo || 'CNC';
+    return os?.setor || 'CNC';
 }
 
 export function dataConclusao(os) {
-    const raw = os?.timestamp_entrada_concluido || os?.timestampEntrada_concluido
-        || os?.timestamp_entrada_concluido || os?.created_at || os?.createdAt;
+    const raw = os?.timestamp_entrada_concluido || os?.created_at;
     const d = raw ? new Date(raw) : null;
     return d && !Number.isNaN(d.getTime()) ? d : null;
 }
@@ -40,7 +39,7 @@ export function noTurno(data, turnoId, turnos) {
 }
 
 export function resultadoAfericao(os) {
-    return os?.resultado_afericao || os?.resultadoAfericao || '';
+    return os?.resultado_afericao || '';
 }
 
 export function ehAprovada(os) {
@@ -53,10 +52,10 @@ export function ehRefugo(os) {
 }
 
 export function horasPausaOs(os, agoraMs = Date.now()) {
-    const hist = os?.historico_pausas || os?.historicoPausas || [];
+    const hist = os?.historico_pausas || [];
     let h = hist.reduce((s, p) => s + Math.max(0, Number(p.duracaoHoras ?? p.duracaoHoras ?? p.duracao_horas) || 0), 0);
-    if (os?.is_pausado || os?.isPausado) {
-        const t = new Date(os.data_pausa || os.dataPausa).getTime();
+    if (os?.is_pausado) {
+        const t = new Date(os.data_pausa).getTime();
         if (!Number.isNaN(t)) h += Math.max(0, (agoraMs - t) / (1000 * 60 * 60));
     }
     return h;
@@ -113,7 +112,7 @@ export function agregarKpis(concluidas, ativas, config) {
         planH += h.estimadas;
         realCamH += realCam;
         custoMaquina += $.custo;
-        const vo = Number(os.valor_orcado ?? os.valorOrcado);
+        const vo = Number(os.valor_orcado);
         if (Number.isFinite(vo) && vo > 0) orcado += vo;
         valorPausa += horasPausaOs(os) * $.rate;
         if (ehAprovada(os)) {
@@ -125,7 +124,7 @@ export function agregarKpis(concluidas, ativas, config) {
             valorTrabalho += realCam * $.rate;
         }
         camSeries.push({
-            label: os.codigo_peca || os.codigoPeca || String(os.id).slice(-4),
+            label: os.codigo_peca || String(os.id).slice(-4),
             cam: Number(h.estimadas.toFixed(2)),
             real: Number(realCam.toFixed(2)),
             eficiencia: h.eficienciaCam,
@@ -143,8 +142,8 @@ export function agregarKpis(concluidas, ativas, config) {
     const oee = planH > 0 && realCamH > 0 ? Math.min((planH / realCamH) * 100, 999) : 100;
 
     const leads = concluidas.map((os) => {
-        const ini = os.created_at || os.createdAt;
-        const fim = os.timestamp_entrada_concluido || os.timestampEntrada_concluido || os.timestamp_entrada_concluido;
+        const ini = os.created_at;
+        const fim = os.timestamp_entrada_concluido;
         if (!ini || !fim) return null;
         const hrs = (new Date(fim) - new Date(ini)) / (1000 * 60 * 60);
         return Number.isFinite(hrs) && hrs >= 0 ? hrs : null;

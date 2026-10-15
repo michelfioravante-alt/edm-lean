@@ -14,7 +14,7 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, osData 
                 </div>
 
                 <h4 className="text-base font-semibold text-[#E7E9ED] text-center mb-2">
-                    Remover O.S. {osData.codigo_peca || osData.codigoPeca || 'S/N'}?
+                    Remover O.S. {osData.codigo_peca || 'S/N'}?
                 </h4>
 
                 <p className="text-[#7B808F] text-center text-sm mb-6 leading-relaxed">

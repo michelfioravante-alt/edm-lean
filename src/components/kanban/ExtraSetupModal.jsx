@@ -43,7 +43,7 @@ export default function ExtraSetupModal({ isOpen, onClose, onConfirm, osData }) 
         >
             <div className="space-y-5">
                 <p className="text-[#7B808F] text-sm leading-relaxed">
-                    Você está movendo o serviço <span className="text-[#E7E9ED] font-semibold">{osData?.codigo_peca || osData?.codigoPeca}</span> de volta para o Set-up. Deseja adicionar tempos extras planejados para esta nova etapa?
+                    Você está movendo o serviço <span className="text-[#E7E9ED] font-semibold">{osData?.codigo_peca}</span> de volta para o Set-up. Deseja adicionar tempos extras planejados para esta nova etapa?
                 </p>
 
                 <div className="flex gap-3">

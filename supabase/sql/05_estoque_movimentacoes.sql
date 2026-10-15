@@ -1,6 +1,6 @@
 -- ==========================================
 -- CNC LEAN — Movimentações de estoque
--- Execute DEPOIS de supabase_schema.sql.
+-- Execute DEPOIS de 01_schema.sql.
 -- Idempotente: pode rodar quantas vezes quiser.
 --
 -- Antes disso o estoque só sabia baixar 1 unidade por vez: não havia como dar

@@ -1,18 +1,70 @@
-import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
+import React, { useEffect, useRef, useState } from 'react';
 import { HelpButton } from '../components/common/HelpModal';
 
 const NAV = [
+    { id: 'telas', label: 'Telas' },
     { id: 'produto', label: 'Produto' },
     { id: 'uso', label: 'Uso' },
 ];
 
+function Janela({ className = '', children }) {
+    return (
+        <figure className={`overflow-hidden rounded-lg border border-[#262A33] bg-[#181B22] shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)] ${className}`}>
+            <div className="flex items-center gap-1.5 border-b border-[#262A33] px-3 py-2">
+                <span className="h-2 w-2 rounded-full bg-[#333844]" />
+                <span className="h-2 w-2 rounded-full bg-[#333844]" />
+                <span className="h-2 w-2 rounded-full bg-[#333844]" />
+            </div>
+            {children}
+        </figure>
+    );
+}
+
+function Captura({ src, alt, largura, altura, className = '' }) {
+    return (
+        <Janela className={className}>
+            <img src={src} alt={alt} width={largura} height={altura} loading="lazy" decoding="async" className="block h-auto w-full" />
+        </Janela>
+    );
+}
+
+function VideoFluxo({ className = '' }) {
+    const [semMovimento] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+    const ref = useRef(null);
+
+    // React não grava o atributo `muted` no HTML; sem ele o navegador bloqueia o autoplay.
+    useEffect(() => {
+        const video = ref.current;
+        if (!video || semMovimento) return;
+        video.muted = true;
+        video.setAttribute('muted', '');
+        video.play().catch(() => {});
+    }, [semMovimento]);
+
+    return (
+        <Janela className={className}>
+            <video
+                ref={ref}
+                src="/landing/fluxo.mp4"
+                poster="/landing/fluxo-capa.jpg"
+                width={1440}
+                height={900}
+                autoPlay={!semMovimento}
+                controls={semMovimento}
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-label="Gravação do quadro: o operador confirma o checklist, o cartão vai para usinagem e depois é pausado por troca de insert"
+                className="block h-auto w-full"
+            />
+        </Janela>
+    );
+}
+
 export default function LandingPage({ onLogin, onRegister }) {
     const [active, setActive] = useState('home');
     const [menuOpen, setMenuOpen] = useState(false);
-    const enterLocalStudyMode = useAuthStore((s) => s.enterLocalStudyMode);
-    const local = isLocalMode();
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -23,7 +75,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             },
             { rootMargin: '-35% 0px -50% 0px', threshold: 0 },
         );
-        ['home', 'produto', 'uso'].forEach((id) => {
+        ['home', 'telas', 'produto', 'uso'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
         });
@@ -68,27 +120,18 @@ export default function LandingPage({ onLogin, onRegister }) {
                         <HelpButton className="hidden items-center gap-1 text-[13px] text-[#7B808F] hover:text-[#E7E9ED] sm:inline-flex" />
                         <button
                             type="button"
-                            onClick={() => enterLocalStudyMode('admin')}
-                            className="hidden text-[13px] text-[#7B808F] hover:text-[#E7E9ED] sm:inline"
-                        >
-                            Ver exemplo
-                        </button>
-                        <button
-                            type="button"
                             onClick={onLogin}
                             className="rounded-md border border-[#333844] px-3.5 py-1.5 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/50 hover:text-white"
                         >
                             Entrar
                         </button>
-                        {!local && (
-                            <button
-                                type="button"
-                                onClick={onRegister}
-                                className="hidden rounded-md bg-[#D97D3D] px-3.5 py-1.5 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32] sm:inline"
-                            >
-                                Criar conta
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={onRegister}
+                            className="hidden rounded-md bg-[#D97D3D] px-3.5 py-1.5 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32] sm:inline"
+                        >
+                            Criar conta
+                        </button>
                         <button
                             type="button"
                             className="p-1 text-[#9DA2AE] md:hidden"
@@ -108,10 +151,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                         ))}
                         <button
                             type="button"
-                            onClick={() => { setMenuOpen(false); enterLocalStudyMode('admin'); }}
-                            className="mt-2 w-full rounded-md border border-[#333844] py-2 text-[13px] text-[#E7E9ED]"
+                            onClick={() => { setMenuOpen(false); onRegister(); }}
+                            className="mt-2 w-full rounded-md bg-[#D97D3D] py-2 text-[13px] font-medium text-[#111318]"
                         >
-                            Abrir fábrica de exemplo
+                            Criar conta grátis
                         </button>
                     </div>
                 )}
@@ -131,27 +174,70 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <div className="mt-10 flex flex-wrap items-center gap-4">
                         <button
                             type="button"
-                            onClick={() => enterLocalStudyMode('admin')}
+                            onClick={onRegister}
                             className="rounded-md bg-[#D97D3D] px-5 py-2.5 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32]"
                         >
-                            Abrir fábrica de exemplo
+                            Testar 30 dias grátis
                         </button>
                         <button
                             type="button"
                             onClick={onLogin}
                             className="text-[13px] text-[#9DA2AE] underline-offset-4 hover:text-[#E7E9ED] hover:underline"
                         >
-                            Entrar
+                            Já tenho conta
                         </button>
-                        {!local && (
-                            <button
-                                type="button"
-                                onClick={onRegister}
-                                className="text-[13px] text-[#9DA2AE] underline-offset-4 hover:text-[#E7E9ED] hover:underline"
-                            >
-                                Criar conta
-                            </button>
-                        )}
+                    </div>
+                    <p className="mt-4 text-[12px] text-[#565B68]">Sem cartão de crédito. Seus dados ficam só com a sua empresa.</p>
+
+                    <div className="relative mt-16">
+                        <div aria-hidden className="pointer-events-none absolute -inset-x-10 -top-10 bottom-1/2 rounded-full bg-[#D97D3D]/10 blur-3xl" />
+                        <VideoFluxo className="relative" />
+                        <p className="mt-3 text-[12px] text-[#565B68]">Quadro do centro CNC: o operador confirma o checklist, o cartão vai para a usinagem e a pausa entra com o motivo.</p>
+                    </div>
+                </section>
+
+                <section id="telas" className="border-t border-[#262A33]">
+                    <div className="mx-auto max-w-[1080px] space-y-24 px-6 py-20">
+                        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.6fr]">
+                            <div>
+                                <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">Gestor</p>
+                                <h2 className="mt-3 font-['Space_Grotesk'] text-[26px] font-medium leading-tight tracking-tight text-white">
+                                    Abre o sistema e já sabe onde agir.
+                                </h2>
+                                <p className="mt-4 text-[14px] leading-relaxed text-[#7B808F]">
+                                    O que está atrasado, o que travou esperando programa, o que está no terceiro e o que já pode ser cobrado. Avisos de estoque baixo no mesmo lugar.
+                                </p>
+                            </div>
+                            <Captura
+                                src="/landing/gestor.webp"
+                                alt="Tela inicial do gestor com atrasos, peças travadas, prontas para cobrar e avisos de estoque"
+                                largura={3360}
+                                altura={1800}
+                            />
+                        </div>
+
+                        <div className="grid items-center gap-10 lg:grid-cols-[1.6fr_1fr]">
+                            <figure className="order-2 overflow-hidden rounded-lg border border-[#262A33] bg-white shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)] lg:order-1">
+                                <img
+                                    src="/landing/folha.webp"
+                                    alt="Folha de processo A4 com código da peça, quantidade, setor, prazo e QR code"
+                                    width={1588}
+                                    height={650}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="block h-auto w-full"
+                                />
+                            </figure>
+                            <div className="order-1 lg:order-2">
+                                <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">Chão de fábrica</p>
+                                <h2 className="mt-3 font-['Space_Grotesk'] text-[26px] font-medium leading-tight tracking-tight text-white">
+                                    A folha acompanha a peça. O QR abre o cartão.
+                                </h2>
+                                <p className="mt-4 text-[14px] leading-relaxed text-[#7B808F]">
+                                    Folha A4 impressa com código, quantidade, prazo e desenho. O operador aponta o celular para o QR e move o cartão sem procurar no sistema.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -211,10 +297,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                             <div className="mt-10 flex flex-wrap gap-4">
                                 <button
                                     type="button"
-                                    onClick={() => enterLocalStudyMode('admin')}
-                                    className="rounded-md border border-[#333844] px-4 py-2 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/40"
+                                    onClick={onRegister}
+                                    className="rounded-md bg-[#D97D3D] px-4 py-2 text-[13px] font-medium text-[#111318] hover:bg-[#c46d32]"
                                 >
-                                    Ver com dados de exemplo
+                                    Testar 30 dias grátis
                                 </button>
                                 <button
                                     type="button"

@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { isLocalMode, localApi } from './localBridge';
 import { useAuthStore } from '../store/useAuthStore';
 
 function getEmpresaId() {
@@ -10,7 +9,6 @@ function getEmpresaId() {
 
 export const movimentacoesEstoqueService = {
     async fetchAll() {
-        if (isLocalMode()) return localApi.movimentacoesEstoque.fetchAll();
         const { data, error } = await supabase
             .from('movimentacoes_estoque')
             .select('*')
@@ -21,7 +19,6 @@ export const movimentacoesEstoqueService = {
     },
 
     async create(payload) {
-        if (isLocalMode()) return localApi.movimentacoesEstoque.create(payload);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('movimentacoes_estoque')

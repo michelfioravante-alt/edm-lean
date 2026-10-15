@@ -14,7 +14,7 @@ export default function RelatorioMoldeModal({ open, grupo, onClose }) {
 
     if (!open || !grupo || !agregado) return null;
 
-    const molde = grupo.head?.codigo_molde || grupo.head?.codigoMolde || grupo.titulo || 'Molde';
+    const molde = grupo.head?.codigo_molde || grupo.titulo || 'Molde';
     const cliente = grupo.cliente || grupo.head?.cliente || '—';
     const maxHoras = Math.max(...agregado.porSetor.map((s) => s.horas), 0.01);
 

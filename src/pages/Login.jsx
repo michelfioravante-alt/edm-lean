@@ -4,7 +4,7 @@ import { Mail, Lock, Factory, Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-re
 import { HelpButton } from '../components/common/HelpModal';
 
 export default function Login({ initialMode = 'login', onBack }) {
-    const { login, signUp, requestPasswordReset, updatePassword, isResettingPassword, enterLocalStudyMode } = useAuthStore();
+    const { login, signUp, requestPasswordReset, updatePassword, isResettingPassword } = useAuthStore();
 
     const [mode, setMode] = useState(isResettingPassword ? 'reset_password' : initialMode);
     const [email, setEmail] = useState('');
@@ -141,35 +141,6 @@ export default function Login({ initialMode = 'login', onBack }) {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {mode === 'login' && (
-                            <div className="space-y-2 border-b border-[#262A33] pb-5">
-                                <p className="text-[12px] text-[#7B808F]">Fábrica de exemplo — sem conta</p>
-                                <button
-                                    type="button"
-                                    onClick={() => enterLocalStudyMode('admin')}
-                                    className="w-full rounded-md border border-[#333844] py-2 text-[13px] text-[#E7E9ED] hover:border-[#D97D3D]/50"
-                                >
-                                    Entrar como gestor
-                                </button>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => enterLocalStudyMode('programmer', 'CNC')}
-                                        className="rounded-md py-2 text-[12px] text-[#9DA2AE] hover:text-[#E7E9ED]"
-                                    >
-                                        Programador CNC
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => enterLocalStudyMode('programmer', 'EDM_FIO')}
-                                        className="rounded-md py-2 text-[12px] text-[#9DA2AE] hover:text-[#E7E9ED]"
-                                    >
-                                        Programador eletrofio
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
                         {error && (
                             <p className="rounded-md border border-[#C85558]/30 bg-[rgba(200,85,88,0.08)] px-3 py-2 text-[12px] text-[#C85558]">{error}</p>
                         )}

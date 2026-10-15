@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 const getEmpresaId = () => {
     const state = useAuthStore.getState();
@@ -11,7 +9,6 @@ const getEmpresaId = () => {
 
 export const estoqueService = {
     async fetchAll() {
-        if (isLocalMode()) return localApi.estoque.fetchAll();
         const state = useAuthStore.getState();
         const user = state?.user;
         const empresaId = state?.empresaId;
@@ -43,7 +40,6 @@ export const estoqueService = {
     },
 
     async create(nome, quantidade, alertaMinimo, setor = 'TODOS', unidade = 'un') {
-        if (isLocalMode()) return localApi.estoque.create(nome, quantidade, alertaMinimo, setor, unidade);
         const empresaId = getEmpresaId();
         const payload = {
             empresa_id: empresaId,
@@ -65,7 +61,6 @@ export const estoqueService = {
     },
 
     async update(id, patch) {
-        if (isLocalMode()) return localApi.estoque.update(id, patch);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('estoque_itens')
@@ -80,9 +75,8 @@ export const estoqueService = {
 
 
     // Entrada (delta positivo) ou saída (delta negativo) em uma só operação atômica.
-    // Requer a função 'movimentar_estoque' (ver supabase_estoque_movimentacoes.sql).
+    // Requer a função 'movimentar_estoque' (ver supabase/sql/05_estoque_movimentacoes.sql).
     async movimentar(id, delta) {
-        if (isLocalMode()) return localApi.estoque.movimentar(id, delta);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .rpc('movimentar_estoque', { item_id: id, delta: parseInt(delta), emp_id: empresaId });
@@ -91,7 +85,6 @@ export const estoqueService = {
     },
 
     async updateQuantidade(id, novaQuantidade) {
-        if (isLocalMode()) return localApi.estoque.updateQuantidade(id, novaQuantidade);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('estoque_itens')
@@ -117,7 +110,6 @@ export const estoqueService = {
     //   RETURNING *;
     // $$;
     async decrementar(id, delta = 1) {
-        if (isLocalMode()) return localApi.estoque.decrementar(id, delta);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .rpc('decrementar_estoque', { item_id: id, delta: parseInt(delta), emp_id: empresaId });
@@ -126,7 +118,6 @@ export const estoqueService = {
     },
 
     async remove(id) {
-        if (isLocalMode()) return localApi.estoque.remove(id);
         const empresaId = getEmpresaId();
         const { error } = await supabase
             .from('estoque_itens')

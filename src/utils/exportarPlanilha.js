@@ -103,9 +103,9 @@ function noIntervalo(data, de, ate) {
 function osNoPeriodo(os, de, ate) {
     if (!de || !ate) return true;
     const ds = [
-        parseData(pick(os, 'created_at', 'createdAt')),
+        parseData(pick(os, 'created_at')),
         parseData(prazoOs(os)),
-        parseData(pick(os, 'timestamp_entrada_concluido', 'timestampEntrada_concluido')),
+        parseData(pick(os, 'timestamp_entrada_concluido')),
     ].filter(Boolean);
     if (!ds.length) return true;
     return ds.some((d) => noIntervalo(d, de, ate));
@@ -117,7 +117,7 @@ function num(v, casas = 2) {
 }
 
 function setorTxt(os) {
-    const s = pick(os, 'setor', 'tipo_processo') || 'CNC';
+    const s = pick(os, 'setor') || 'CNC';
     return SETOR_TXT[s] || s;
 }
 
@@ -335,35 +335,35 @@ function linhaOrdem(kanban, os, config) {
     const h = horasKanban(os);
     const $ = custoHoraKanban(os, config);
     return [
-        pick(os, 'codigo_peca', 'codigoPeca') || '—',
+        pick(os, 'codigo_peca') || '—',
         pick(os, 'cliente') || '—',
         setorTxt(os),
         statusTxt(kanban, os),
-        Number(pick(os, 'quantidade', 'qtd')) || 1,
+        Number(pick(os, 'quantidade')) || 1,
         parseData(prazoOs(os)),
         atrasadaOs(os) ? 'Sim' : 'Não',
-        pick(os, 'maquina_nome', 'maquina') || '—',
-        pick(os, 'operador_atual', 'operadorAtual') || '—',
+        pick(os, 'maquina_nome') || '—',
+        pick(os, 'operador_atual') || '—',
         pick(os, 'programador') || '—',
-        pick(os, 'numero_programa', 'numeroPrograma') || '—',
+        pick(os, 'numero_programa') || '—',
         num(h.estimadas),
         num(h.reais),
         num(h.eficienciaCam, 1),
-        num(pick(os, 'valor_orcado', 'valorOrcado')),
+        num(pick(os, 'valor_orcado')),
         num($.custo),
-        pick(os, 'resultado_afericao', 'resultadoAfericao') || '—',
-        parseData(pick(os, 'created_at', 'createdAt')),
-        parseData(pick(os, 'timestamp_entrada_concluido', 'timestampEntrada_concluido')),
+        pick(os, 'resultado_afericao') || '—',
+        parseData(pick(os, 'created_at')),
+        parseData(pick(os, 'timestamp_entrada_concluido')),
     ];
 }
 
 function linhasPausas(lista) {
     const rows = [];
     lista.forEach((os) => {
-        const hist = pick(os, 'historico_pausas', 'historicoPausas') || [];
+        const hist = pick(os, 'historico_pausas') || [];
         hist.forEach((p) => {
             rows.push([
-                pick(os, 'codigo_peca', 'codigoPeca') || '—',
+                pick(os, 'codigo_peca') || '—',
                 setorTxt(os),
                 pick(p, 'motivo') || '—',
                 num(pick(p, 'duracaoHoras', 'duracao_horas')),
@@ -389,7 +389,15 @@ export async function gerarWorkbook({
     de,
     ate,
     setor,
+    comValores = false,
 }) {
+    const ehValor = (rotulo) => rotulo.includes('R$');
+    const cabOrdens = comValores ? CAB_ORDENS : CAB_ORDENS.filter((c) => !ehValor(c));
+    const linhaOrdemVisivel = (os) => {
+        const linha = linhaOrdem(kanban, os, configHora);
+        return comValores ? linha : linha.filter((_, i) => !ehValor(CAB_ORDENS[i]));
+    };
+
     const mod = await import('exceljs');
     const ExcelJS = mod.default || mod;
     const wb = new ExcelJS.Workbook();
@@ -399,14 +407,14 @@ export async function gerarWorkbook({
 
     let lista = todosKanbans(kanban);
     if (setor && setor !== 'TODOS') {
-        lista = lista.filter((os) => (pick(os, 'setor', 'tipo_processo') || 'CNC') === setor);
+        lista = lista.filter((os) => (pick(os, 'setor') || 'CNC') === setor);
     }
 
     const noPer = lista.filter((os) => osNoPeriodo(os, de, ate));
     const concluidasPeriodo = lista.filter((os) => {
         if (!statusEhConcluido(os)) return false;
-        const d = parseData(pick(os, 'timestamp_entrada_concluido', 'timestampEntrada_concluido'))
-            || parseData(pick(os, 'created_at', 'createdAt'));
+        const d = parseData(pick(os, 'timestamp_entrada_concluido'))
+            || parseData(pick(os, 'created_at'));
         return noIntervalo(d, de, ate);
     });
     const abertas = lista.filter((os) => !statusEhConcluido(os));
@@ -428,16 +436,16 @@ export async function gerarWorkbook({
             ['Valor orçado', num(kpis.orcado), 'R$', ''],
             ['Custo de pausa', num(kpis.valorPausa), 'R$', ''],
             ['Custo de refugo', num(kpis.valorRefugo), 'R$', ''],
-        ]);
+        ].filter((linha) => comValores || linha[2] !== 'R$'));
     }
     if (set.has('ordens')) {
-        adicionarAba(wb, 'Ordens', CAB_ORDENS, noPer.map((os) => linhaOrdem(kanban, os, configHora)));
+        adicionarAba(wb, 'Ordens', cabOrdens, noPer.map(linhaOrdemVisivel));
     }
     if (set.has('carteira')) {
-        adicionarAba(wb, 'Carteira', CAB_ORDENS, abertas.map((os) => linhaOrdem(kanban, os, configHora)));
+        adicionarAba(wb, 'Carteira', cabOrdens, abertas.map(linhaOrdemVisivel));
     }
     if (set.has('concluidas')) {
-        adicionarAba(wb, 'Concluidas', CAB_ORDENS, concluidasPeriodo.map((os) => linhaOrdem(kanban, os, configHora)));
+        adicionarAba(wb, 'Concluidas', cabOrdens, concluidasPeriodo.map(linhaOrdemVisivel));
     }
     if (set.has('pausas')) {
         adicionarAba(wb, 'Pausas', ['Peça', 'Setor', 'Motivo', 'Horas', 'Início', 'Fim', 'Observação'], linhasPausas(noPer));
@@ -445,14 +453,14 @@ export async function gerarWorkbook({
     if (set.has('qualidade')) {
         adicionarAba(wb, 'Qualidade', ['Peça', 'Cliente', 'Setor', 'Máquina', 'Resultado', 'Qtd', 'Qtd concluída', 'Concluída em'],
             concluidasPeriodo.map((os) => [
-                pick(os, 'codigo_peca', 'codigoPeca') || '—',
+                pick(os, 'codigo_peca') || '—',
                 pick(os, 'cliente') || '—',
                 setorTxt(os),
-                pick(os, 'maquina_nome', 'maquina') || '—',
-                pick(os, 'resultado_afericao', 'resultadoAfericao') || '—',
+                pick(os, 'maquina_nome') || '—',
+                pick(os, 'resultado_afericao') || '—',
                 Number(pick(os, 'quantidade')) || 1,
-                Number(pick(os, 'quantidade_concluida', 'quantidadeConcluida')) || null,
-                parseData(pick(os, 'timestamp_entrada_concluido', 'timestampEntrada_concluido')),
+                Number(pick(os, 'quantidade_concluida')) || null,
+                parseData(pick(os, 'timestamp_entrada_concluido')),
             ]));
     }
     if (set.has('cam')) {
@@ -460,7 +468,7 @@ export async function gerarWorkbook({
             noPer.map((os) => {
                 const h = horasKanban(os);
                 return [
-                    pick(os, 'codigo_peca', 'codigoPeca') || '—',
+                    pick(os, 'codigo_peca') || '—',
                     setorTxt(os),
                     num(h.setupEst), num(h.corteEst), num(h.setupReal), num(h.corteReal), num(h.afericaoReal), num(h.eficienciaCam, 1),
                 ];
@@ -472,19 +480,19 @@ export async function gerarWorkbook({
                 pick(item, 'nome') || '—',
                 SETOR_TXT[pick(item, 'setor')] || pick(item, 'setor') || 'Todos',
                 qtdEstoque(item),
-                Number(pick(item, 'alerta_minimo', 'alertaMinimo')) || 0,
+                Number(pick(item, 'alerta_minimo')) || 0,
                 unidadeEstoque(item),
                 precisaPedirEstoque(item) ? 'Sim' : 'Não',
             ]));
     }
     if (set.has('movimentos')) {
-        const movs = (movimentacoes || []).filter((m) => noIntervalo(parseData(pick(m, 'created_at', 'createdAt', 'data')), de, ate));
+        const movs = (movimentacoes || []).filter((m) => noIntervalo(parseData(pick(m, 'created_at', 'data')), de, ate));
         adicionarAba(wb, 'Movimentos', ['Data', 'Item', 'Tipo', 'Quantidade', 'Origem'],
             movs.map((m) => [
-                parseData(pick(m, 'created_at', 'createdAt', 'data')),
-                pick(m, 'item_nome', 'itemNome', 'nome') || '—',
+                parseData(pick(m, 'created_at', 'data')),
+                pick(m, 'item_nome', 'nome') || '—',
                 pick(m, 'tipo', 'tipo_movimento') || '—',
-                num(pick(m, 'quantidade', 'qtd')),
+                num(pick(m, 'quantidade')),
                 pick(m, 'origem', 'observacao') || '',
             ]));
     }
@@ -498,8 +506,8 @@ export async function gerarWorkbook({
                 pick(f, 'nome') || '—',
                 pick(f, 'tipo') || '—',
                 pick(f, 'codigo') || '',
-                num(pick(f, 'vida_util_horas', 'vidaUtilHoras'), 1),
-                num(pick(f, 'alerta_horas', 'alertaHoras'), 1),
+                num(pick(f, 'vida_util_horas'), 1),
+                num(pick(f, 'alerta_horas'), 1),
                 pick(f, 'status') || '—',
             ]));
     }

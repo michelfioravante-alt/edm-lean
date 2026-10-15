@@ -853,7 +853,7 @@ export default function Clientes() {
                                         const setorName = os.setor || 'CNC';
                                         const statusColor = os.status === 'Concluído'
                                             ? 'bg-[rgba(74,157,116,0.1)] border-[#4A9D74]/40 text-[#4A9D74]'
-                                            : os.status === 'Em Usinagem' || os.status === 'Em Corte'
+                                            : os.status === 'Em Usinagem'
                                             ? 'bg-[rgba(123,128,143,0.12)] border-[#7B808F]/40 text-[#9DA2AE]'
                                             : os.status === 'Set-up' || os.status === 'Setup'
                                             ? 'bg-amber-950 border-amber-500/50 text-[#D97D3D]'
@@ -885,7 +885,7 @@ export default function Clientes() {
 
                                                 <div className="flex flex-wrap items-center justify-between text-xs text-[#7B808F] pt-1 border-t border-[#262A33] gap-2">
                                                     <div>
-                                                        <span>Máquina: <strong className="text-[#E7E9ED]">{os.maquina_nome || os.maquina || 'Não atribuída'}</strong></span>
+                                                        <span>Máquina: <strong className="text-[#E7E9ED]">{os.maquina_nome || 'Não atribuída'}</strong></span>
                                                     </div>
                                                     <div className="flex items-center gap-3 text-[11px]">
                                                         <span>Criado: <strong className="text-[#E7E9ED]">{os.created_at ? format(new Date(os.created_at), 'dd/MM/yyyy') : '-'}</strong></span>

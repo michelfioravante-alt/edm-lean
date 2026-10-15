@@ -3,7 +3,7 @@ import Modal from '../common/Modal';
 import EditOSModal from './EditOSModal';
 import { Clock, Settings, CheckCircle2, PauseCircle, PlayCircle, History, AlertTriangle, Trash, Link as LinkIcon, Copy, Check, Pencil, Printer } from 'lucide-react';
 import FolhaProcessoModal from './FolhaProcessoModal';
-import { resolveFolhaImagemSrc } from '../../services/osPrints';
+import { useFolhaImagemSrc } from '../../services/osPrints';
 import { format } from 'date-fns';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -39,7 +39,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     const configuracoesGlobais = useAppStore((s) => s.configuracoesGlobais);
     const syncRoteiroGrupo = useAppStore((s) => s.syncRoteiroGrupo);
     const irmaos = listarKanbansDoGrupo(kanban, activeData);
-    const printSrc = resolveFolhaImagemSrc(activeData.folha_imagem || activeData.folhaImagem);
+    const printSrc = useFolhaImagemSrc(activeData.folha_imagem);
     const custoInfo = custoHoraKanban(activeData, configuracoesGlobais || {});
     const tempos = horasKanban(activeData);
     const editOrdemServico = useAppStore((s) => s.editOrdemServico);
@@ -52,11 +52,11 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     }, [activeData.id, activeData.observacoes]);
 
     useEffect(() => {
-        setSetupH(Number(activeData.tempo_estimado_setup_horas ?? activeData.tempoEstimadoSetupHoras ?? 0) || 0);
-        setSetupM(Number(activeData.tempo_estimado_setup_minutos ?? activeData.tempoEstimadoSetupMinutos ?? 0) || 0);
-        setCorteH(Number(activeData.tempo_estimado_corte_horas ?? activeData.tempoEstimadoCorteHoras ?? 0) || 0);
-        setCorteM(Number(activeData.tempo_estimado_corte_minutos ?? activeData.tempoEstimadoCorteMinutos ?? 0) || 0);
-    }, [activeData.id, activeData.tempo_estimado_setup_horas, activeData.tempoEstimadoSetupHoras, activeData.tempo_estimado_setup_minutos, activeData.tempoEstimadoSetupMinutos, activeData.tempo_estimado_corte_horas, activeData.tempoEstimadoCorteHoras, activeData.tempo_estimado_corte_minutos, activeData.tempoEstimadoCorteMinutos]);
+        setSetupH(Number(activeData.tempo_estimado_setup_horas ?? 0) || 0);
+        setSetupM(Number(activeData.tempo_estimado_setup_minutos ?? 0) || 0);
+        setCorteH(Number(activeData.tempo_estimado_corte_horas ?? 0) || 0);
+        setCorteM(Number(activeData.tempo_estimado_corte_minutos ?? 0) || 0);
+    }, [activeData.id, activeData.tempo_estimado_setup_horas, activeData.tempo_estimado_setup_minutos, activeData.tempo_estimado_corte_horas, activeData.tempo_estimado_corte_minutos]);
 
     const salvarTemposOrcados = async () => {
         await editOrdemServico(activeData.id, {
@@ -67,8 +67,8 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
         });
     };
 
-    const temposFases = activeData.tempos_fases || activeData.temposFases || { setup: 0, emCorte: 0, afericao: 0 };
-    const historicoPausas = activeData.historico_pausas || activeData.historicoPausas || [];
+    const temposFases = activeData.tempos_fases || { setup: 0, emCorte: 0, afericao: 0 };
+    const historicoPausas = activeData.historico_pausas || [];
 
     const formatarHoras = (horasDecimal) => {
         if (!horasDecimal) return '00:00:00';
@@ -79,7 +79,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
     };
 
     const getStatusIcon = () => {
-        const isPausado = osData.is_pausado || osData.isPausado;
+        const isPausado = osData.is_pausado;
         if (isPausado) return <PauseCircle className="w-6 h-6 text-[#C85558]" />;
         if (osData.statusLocal === 'Concluído' || osData.status === 'Concluído') return <CheckCircle2 className="w-6 h-6 text-kanban-green" />;
         if (osData.statusLocal === 'A fazer' || osData.status === 'A fazer') return <History className="w-6 h-6 text-[#565B68]" />;
@@ -88,7 +88,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} title={`O.S. ${activeData.codigo_peca || activeData.codigoPeca || ''} — Detalhes da Ordem`} maxWidth="max-w-3xl">
+            <Modal isOpen={isOpen} onClose={onClose} title={`O.S. ${activeData.codigo_peca || ''} — Detalhes da Ordem`} maxWidth="max-w-3xl">
                 <div className="space-y-6">
 
                     {/* Header Profile */}
@@ -101,9 +101,9 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 <h4 className="text-xl font-bold text-[#E7E9ED]">
                                     {osData.cliente ? `Cliente: ${osData.cliente}` : 'Cliente não informado'}
                                 </h4>
-                                {osData.codigoPeca || osData.codigo_peca ? (
+                                {osData.codigo_peca ? (
                                     <p className="text-sm font-medium text-[#7B808F] mt-1">
-                                        O.S: <span className="text-[#E7E9ED]">{osData.codigoPeca || osData.codigo_peca}</span>
+                                        O.S: <span className="text-[#E7E9ED]">{osData.codigo_peca}</span>
                                     </p>
                                 ) : null}
                             </div>
@@ -136,16 +136,16 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                     </button>
                                 )}
                             </div>
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${(activeData.is_pausado || activeData.isPausado) ? 'bg-[#C85558]/20 text-[#C85558]' :
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${(activeData.is_pausado) ? 'bg-[#C85558]/20 text-[#C85558]' :
                                 (activeData.statusLocal === 'Concluído' || activeData.status === 'Concluído') ? 'bg-kanban-green/20 text-kanban-green' :
                                     (activeData.statusLocal === 'A fazer' || activeData.status === 'A fazer') ? 'bg-[#1F232B] text-[#7B808F]' :
                                         'bg-kanban-cyan/20 text-[#4A9D74]'
                                 }`}>
-                                {(activeData.is_pausado || activeData.isPausado) ? 'Em Pausa' : (activeData.statusLocal || activeData.status || 'Desconhecido')}
+                                {(activeData.is_pausado) ? 'Em Pausa' : (activeData.statusLocal || activeData.status || 'Desconhecido')}
                             </span>
-                            {(activeData.resultadoAfericao || activeData.resultado_afericao) && (
-                                <p className={`text-xs font-bold ${(activeData.resultadoAfericao || activeData.resultado_afericao) === 'Aprovada' ? 'text-kanban-green' : 'text-[#C85558]'}`}>
-                                    Avaliação: {activeData.resultadoAfericao || activeData.resultado_afericao}
+                            {(activeData.resultado_afericao) && (
+                                <p className={`text-xs font-bold ${(activeData.resultado_afericao) === 'Aprovada' ? 'text-kanban-green' : 'text-[#C85558]'}`}>
+                                    Avaliação: {activeData.resultado_afericao}
                                 </p>
                             )}
                         </div>
@@ -231,7 +231,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 <ul className="space-y-1.5 text-xs">
                                     {irmaos.map((k) => (
                                         <li key={k.id} className={`flex justify-between gap-2 ${k.id === activeData.id ? 'text-[#D97D3D]' : 'text-[#E7E9ED]'}`}>
-                                            <span>{k.codigo_peca || k.codigoPeca} · {labelSetor(k.setor)}</span>
+                                            <span>{k.codigo_peca} · {labelSetor(k.setor)}</span>
                                             <span className="text-[#7B808F]">{k.status}</span>
                                         </li>
                                     ))}
@@ -272,31 +272,31 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                         <span className="font-semibold text-[#E7E9ED]">{activeData.programador || activeData.programador_nome}</span>
                                     </li>
                                 )}
-                                {(osData.maquina_nome || osData.maquina) && (
+                                {(osData.maquina_nome) && (
                                     <li className="flex justify-between">
                                         <span className="text-[#565B68]">Máquina:</span>
-                                        <span className="font-semibold text-[#E7E9ED]">{osData.maquina_nome || osData.maquina}</span>
+                                        <span className="font-semibold text-[#E7E9ED]">{osData.maquina_nome}</span>
                                     </li>
                                 )}
-                                {(activeData.operador_atual || activeData.operadorAtual || activeData.operador) && (
+                                {(activeData.operador_atual || activeData.operador) && (
                                     <li className="flex justify-between">
                                         <span className="text-[#565B68]">Operador:</span>
-                                        <span className="font-semibold text-[#E7E9ED]">{activeData.operador_atual || activeData.operadorAtual || activeData.operador}</span>
+                                        <span className="font-semibold text-[#E7E9ED]">{activeData.operador_atual || activeData.operador}</span>
                                     </li>
                                 )}
                                 <li className="flex justify-between">
                                     <span className="text-[#565B68]">Data de Criação:</span>
                                     <span className="font-semibold text-[#E7E9ED]">
-                                        {(osData.created_at || osData.createdAt) ? format(new Date(osData.created_at || osData.createdAt), 'dd/MM/yyyy HH:mm') : '-'}
+                                        {(osData.created_at) ? format(new Date(osData.created_at), 'dd/MM/yyyy HH:mm') : '-'}
                                     </span>
                                 </li>
-                                {(osData.link_desenho || osData.linkDesenho) && (
+                                {(osData.link_desenho) && (
                                     <li className="pt-2 mt-2 border-t border-[#262A33]">
                                         <span className="text-[#565B68] block mb-1">Desenho da peça (gestão):</span>
                                         <div
                                             className="flex items-center justify-between bg-[#111318] border border-[#262A33] rounded p-2 cursor-pointer hover:bg-[#181B22] transition-colors group"
                                             onClick={() => {
-                                                navigator.clipboard.writeText(osData.link_desenho || osData.linkDesenho);
+                                                navigator.clipboard.writeText(osData.link_desenho);
                                                 setCopied(true);
                                                 setTimeout(() => setCopied(false), 2000);
                                             }}
@@ -304,7 +304,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                         >
                                             <div className="flex items-center gap-2 overflow-hidden">
                                                 <LinkIcon className="w-4 h-4 text-[#7B808F] shrink-0" />
-                                                <span className="text-xs font-mono text-[#7B808F] truncate tracking-tight">{osData.link_desenho || osData.linkDesenho}</span>
+                                                <span className="text-xs font-mono text-[#7B808F] truncate tracking-tight">{osData.link_desenho}</span>
                                             </div>
                                             <div className="shrink-0 pl-2">
                                                 {copied ? <Check className="w-4 h-4 text-kanban-green" /> : <Copy className="w-4 h-4 text-[#7B808F] group-hover:text-kanban-amber" />}
@@ -312,20 +312,20 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                         </div>
                                     </li>
                                 )}
-                                {(osData.link_programa || osData.linkPrograma || osData.nx_import?.linkPrograma || osData.nxImport?.linkPrograma) && (
+                                {(osData.link_programa) && (
                                     <li className="pt-2 mt-2 border-t border-[#262A33]">
                                         <span className="text-[#565B68] block mb-1">Programa CAM (depois de programar):</span>
                                         <div className="flex items-center gap-2 bg-[#111318] border border-[#262A33] rounded p-2">
                                             <LinkIcon className="w-4 h-4 text-[#D97D3D] shrink-0" />
-                                            <span className="text-xs font-mono text-[#9DA2AE] truncate">{osData.link_programa || osData.linkPrograma || osData.nx_import?.linkPrograma || osData.nxImport?.linkPrograma}</span>
+                                            <span className="text-xs font-mono text-[#9DA2AE] truncate">{osData.link_programa}</span>
                                         </div>
                                     </li>
                                 )}
-                                {activeData.setor !== 'EDM_FIO' && (activeData.nx_import?.ferramentas || activeData.nxImport?.ferramentas || []).length > 0 && (
+                                {activeData.setor !== 'EDM_FIO' && (activeData.nx_import?.ferramentas || []).length > 0 && (
                                     <li className="pt-2 mt-2 border-t border-[#262A33]">
                                         <span className="text-[#565B68] block mb-1">Ferramentas / Magazine Previsto:</span>
                                         <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                                            {(activeData.nx_import?.ferramentas || activeData.nxImport?.ferramentas).map((f, idx) => (
+                                            {(activeData.nx_import?.ferramentas).map((f, idx) => (
                                                 <span key={idx} className="inline-flex items-center gap-1 bg-[#111318] border border-[#262A33] rounded px-2 py-1 text-xs">
                                                     <span className="font-mono text-kanban-amber font-bold">{f.codigoT || `T${String(idx + 1).padStart(2, '0')}`}</span>
                                                     <span className="text-[#E7E9ED] font-medium">{f.nome || 'Ferramenta'}</span>
@@ -446,7 +446,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                         </div>
 
                         {/* ALERTA DE REFUGO (Reposicionado à direita dos tempos) */}
-                        {(activeData.resultadoAfericao || activeData.resultado_afericao) === 'Refugo' && (activeData.motivo_refugo || activeData.motivoRefugo) && (
+                        {(activeData.resultado_afericao) === 'Refugo' && (activeData.motivo_refugo) && (
                             <div className="bg-[rgba(200,85,88,0.1)] border border-[#C85558]/30 rounded-xl p-4 flex flex-col">
                                 <h5 className="text-xs font-bold uppercase text-[#C85558] mb-3 flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
@@ -454,7 +454,7 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 </h5>
                                 <div className="flex-1 bg-[#111318]/80 rounded-lg p-3 border border-red-500/10 overflow-y-auto max-h-[120px]">
                                     <p className="text-sm text-[#E7E9ED] font-medium italic leading-relaxed break-words whitespace-pre-wrap">
-                                        "{activeData.motivo_refugo || activeData.motivoRefugo}"
+                                        "{activeData.motivo_refugo}"
                                     </p>
                                 </div>
                             </div>
@@ -479,12 +479,12 @@ export default function AcompanhamentoModal({ isOpen, onClose, osData, onDeleteR
                                 'concluido': 'Concluído'
                             };
 
-                            const activePause = (osData.is_pausado || osData.isPausado) ? {
+                            const activePause = (osData.is_pausado) ? {
                                 fase: osData.status,
-                                motivo: osData.motivo_pausa || osData.motivoPausa || 'Não informado',
-                                observacao: osData.observacao_pausa || osData.observacaoPausa,
-                                inicio: osData.data_pausa || osData.dataPausa,
-                                duracaoHoras: (Date.now() - new Date(osData.data_pausa || osData.dataPausa).getTime()) / (1000 * 60 * 60),
+                                motivo: osData.motivo_pausa || 'Não informado',
+                                observacao: osData.observacao_pausa,
+                                inicio: osData.data_pausa,
+                                duracaoHoras: (Date.now() - new Date(osData.data_pausa).getTime()) / (1000 * 60 * 60),
                                 isActive: true
                             } : null;
 

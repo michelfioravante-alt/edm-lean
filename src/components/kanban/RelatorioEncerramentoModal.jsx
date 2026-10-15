@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Download, Clock, History, Loader2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { resumoHorasOs, exportRelatorioPecaCsv, codigoPecaOs } from '../../utils/horasProducao';
 import { osService } from '../../services/osService';
 import { formatarHoras } from '../../utils/formatters';
@@ -21,6 +22,7 @@ function LinhaHoras({ label, real, orcado }) {
 
 export default function RelatorioEncerramentoModal({ isOpen, osData, onClose }) {
     const config = useAppStore((s) => s.configuracoesGlobais);
+    const isGestor = useAuthStore((s) => s.role) === 'admin';
     const [historico, setHistorico] = useState([]);
     const [loadingHist, setLoadingHist] = useState(false);
 
@@ -104,13 +106,15 @@ export default function RelatorioEncerramentoModal({ isOpen, osData, onClose }) 
                         </div>
                     </div>
 
-                    <div className="rounded-[10px] border border-[#333844] bg-[#111318] px-3 py-2.5 text-[12px]">
-                        <p className="text-[#565B68] text-[10px] uppercase mb-0.5">Referência interna (opcional)</p>
-                        <p className="text-[#9DA2AE]">
-                            {resumo.formatado.referenciaInterna} — horas × taxa configurada ({formatarHoras(resumo.taxaHora ? resumo.referenciaInterna / resumo.taxaHora : 0)} × R$/h do setor).
-                            Não substitui o preço comercial do cliente.
-                        </p>
-                    </div>
+                    {isGestor && (
+                        <div className="rounded-[10px] border border-[#333844] bg-[#111318] px-3 py-2.5 text-[12px]">
+                            <p className="text-[#565B68] text-[10px] uppercase mb-0.5">Referência interna (opcional)</p>
+                            <p className="text-[#9DA2AE]">
+                                {resumo.formatado.referenciaInterna} — horas × taxa configurada ({formatarHoras(resumo.taxaHora ? resumo.referenciaInterna / resumo.taxaHora : 0)} × R$/h do setor).
+                                Não substitui o preço comercial do cliente.
+                            </p>
+                        </div>
+                    )}
 
                     {(loadingHist || historico.length > 0) ? (
                         <div className="rounded-[10px] border border-[#262A33] bg-[#111318] p-3">
@@ -140,7 +144,7 @@ export default function RelatorioEncerramentoModal({ isOpen, osData, onClose }) 
                 <div className="sticky bottom-0 flex gap-2 border-t border-[#262A33] bg-[#181B22] px-5 py-3">
                     <button
                         type="button"
-                        onClick={() => exportRelatorioPecaCsv(osData, config || {})}
+                        onClick={() => exportRelatorioPecaCsv(osData, config || {}, isGestor)}
                         className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-[#333844] py-2 text-[13px] text-[#E7E9ED] hover:bg-[#1F232B]"
                     >
                         <Download className="w-4 h-4" />

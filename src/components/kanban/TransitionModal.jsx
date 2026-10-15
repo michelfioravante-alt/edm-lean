@@ -37,7 +37,7 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
     const isEmCorte = destCol === 'emCorte';
     const isSetup = destCol === 'setup';
 
-    const ferramentasCam = osData?.nxImport?.ferramentas || osData?.nx_import?.ferramentas || [];
+    const ferramentasCam = osData?.nx_import?.ferramentas || [];
 
     const [estrategiaFerramental, setEstrategiaFerramental] = useState(
         configuracoesGlobais?.modoMagazineDefault || 'individual'
@@ -138,7 +138,7 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
     };
 
     const isCorteReady = checkFixacao && checkZerar && checkPrograma;
-    const codigoPeca = osData?.codigo_peca || osData?.codigoPeca || '';
+    const codigoPeca = osData?.codigo_peca || '';
 
     return (
         <Modal

@@ -5,11 +5,10 @@
 [![Vercel Deployment](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://edmlean.com.br)
 [![Supabase](https://img.shields.io/badge/Database-Supabase-emerald?logo=supabase)](https://supabase.com)
 [![React 18](https://img.shields.io/badge/Frontend-React%2018-cyan?logo=react)](https://react.dev)
-[![E2E Tests](https://img.shields.io/badge/E2E%20Tests-100%25%20PASS-brightgreen?logo=puppeteer)](scripts/testar-e2e.mjs)
 
 ---
 
-## 🌐 Produção & Demonstração Live
+## 🌐 Produção
 
 - **Domínio Oficial**: [https://edmlean.com.br](https://edmlean.com.br)
 - **Repositório GitHub**: [michelfioravante-alt/edm-lean](https://github.com/michelfioravante-alt/edm-lean)
@@ -64,15 +63,6 @@ O deploy na Vercel é automático a cada push na branch `main`.
 
 ---
 
-## 🧪 Suíte de Testes End-to-End (E2E)
-
-A aplicação conta com uma suíte de testes E2E automatizados desenvolvida com **Puppeteer**:
-
-- **Testes Desktop (1440px)**: `npm run testar-e2e` (8/8 Passados — 100%)
-- **Testes Mobile (390px Touch)**: `npm run testar-e2e:mobile` (10/10 Passados — 100%)
-
----
-
 ## 🛠️ Tecnologias Utilizadas
 
 - **Frontend**: React 18, Vite, TailwindCSS, Lucide Icons, Chart.js, React-ChartJS-2
@@ -92,11 +82,13 @@ cd edm-lean
 # 2. Instalar dependências
 npm install
 
-# 3. Iniciar servidor de desenvolvimento (Modo Estudo / Local)
+# 3. Copiar .env.example para .env e preencher a URL e a chave anon do Supabase
+
+# 4. Iniciar servidor de desenvolvimento
 npm run dev
 ```
 
-Abra **http://localhost:5173** (ou a porta indicada no terminal) no navegador. O modo estudo armazena os dados localmente no `localStorage` do navegador para testes sem necessidade de Supabase.
+Abra **http://localhost:5173** (ou a porta indicada no terminal) no navegador.
 
 ```bash
 # Build de produção (mesmo comando usado pela Vercel)
@@ -107,9 +99,7 @@ npm run build
 
 ## 🗄️ Banco de Dados & Migrações Supabase
 
-Para conectar a uma instância própria do Supabase, execute o script SQL unificado no **SQL Editor** do seu painel Supabase:
-
-- [`supabase_unified_schema.sql`](supabase_unified_schema.sql) — Multi-setor (`CNC`, `EDM_FIO`), programadores, PIN Master, custos hora e campo `em_fila` para fila de moldes.
+Para conectar a uma instância própria do Supabase, execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor** do painel, **na ordem numérica** (`01_schema.sql` → `15_relogio_servidor.sql`). Todos são idempotentes depois do `01`.
 
 ---
 

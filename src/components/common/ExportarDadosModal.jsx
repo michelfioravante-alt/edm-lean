@@ -41,6 +41,7 @@ function Chip({ ativo, onClick, children }) {
 
 export default function ExportarDadosModal({ open, onClose }) {
     const nomeEmpresa = useAuthStore((s) => s.nomeEmpresa);
+    const isGestor = useAuthStore((s) => s.role) === 'admin';
     const kanban = useAppStore((s) => s.kanban);
     const estoque = useAppStore((s) => s.estoque);
     const movimentacoesEstoque = useAppStore((s) => s.movimentacoesEstoque);
@@ -98,6 +99,7 @@ export default function ExportarDadosModal({ open, onClose }) {
                 de: d0,
                 ate: d1,
                 setor,
+                comValores: isGestor,
             });
             await baixarWorkbook(wb, nomeArquivoExport(nomeEmpresa));
             onClose();

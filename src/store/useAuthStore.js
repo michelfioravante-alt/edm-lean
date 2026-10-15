@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
-import { isDemoSession, isLocalMode } from '../local/mode';
-import { loadDb, resetDb } from '../local/localDatabase';
-import { convitesService } from '../services/convitesService';
-import { LOCAL_EMPRESA_ID, LOCAL_USER_ID } from '../local/seedData';
-import { normalizarRole, SETORES_PROGRAMADOR } from '../constants/roles';
+import { normalizarRole } from '../constants/roles';
 
 // Evita registrar vários listeners (React Strict Mode monta o App duas vezes no dev)
 let authStateSubscription = null;
@@ -32,28 +28,16 @@ export const useAuthStore = create((set, get) => ({
             if (!get().isInitialized) set({ isInitialized: true });
         }, SAFETY_TIMEOUT_MS);
 
-        if (isLocalMode()) {
-            const saved = localStorage.getItem('cnc-lean-session');
-            if (saved === 'admin' || saved === 'operador' || saved === 'programmer' || saved === 'programador') {
-                get().enterLocalStudyMode(saved === 'admin' ? 'admin' : 'programmer');
-            } else {
-                set({ isInitialized: true, user: null, role: null, empresaId: null });
-            }
-            clearTimeout(safetyTimer);
-            return;
-        }
-
         // Registrar o listener ANTES de getSession
         if (!authStateSubscription) {
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
                 // No mobile, SIGNED_IN pode disparar no refresh de token anônimo.
                 // Só buscamos perfil se houver usuário e não estivermos já no meio de um cadastro.
-                if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress && !isDemoSession()) {
+                if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !get().signUpInProgress) {
                     setTimeout(() => {
                         get().fetchUserProfile(session.user);
                     }, 0);
                 } else if (event === 'SIGNED_OUT') {
-                    if (isDemoSession()) return;
                     set({ user: null, role: null, empresaId: null, nomeEmpresa: null, codigoConvite: null, signUpInProgress: false });
                 } else if (event === 'PASSWORD_RECOVERY') {
                     set({ isResettingPassword: true });
@@ -88,7 +72,6 @@ export const useAuthStore = create((set, get) => ({
 
     // Busca o perfil estendido (empresa_id e funcao) no banco de dados
     fetchUserProfile: async (authUser) => {
-        if (isDemoSession()) return;
         try {
             const { data, error } = await supabase
                 .from('perfis')
@@ -133,37 +116,7 @@ export const useAuthStore = create((set, get) => ({
         set({ setorPadrao: setor });
     },
 
-    applyLocalSession: (role = 'admin', setor = null) => {
-        const db = loadDb();
-        const roleNorm = normalizarRole(role);
-        localStorage.setItem('cnc-lean-session', roleNorm);
-        const savedSetor = setor
-            || (roleNorm === 'admin' ? 'TODOS' : (SETORES_PROGRAMADOR.includes(localStorage.getItem('cnc-lean-setor-padrao')) ? localStorage.getItem('cnc-lean-setor-padrao') : 'CNC'));
-        localStorage.setItem('cnc-lean-setor-padrao', savedSetor);
-        localStorage.setItem('lean_active_sector', roleNorm === 'admin' ? (localStorage.getItem('lean_active_sector') || 'CNC') : savedSetor);
-        set({
-            user: { id: LOCAL_USER_ID, email: 'demo@edmlean.local' },
-            role: roleNorm,
-            setorPadrao: savedSetor,
-            empresaId: LOCAL_EMPRESA_ID,
-            nomeEmpresa: db.empresa.nome_fantasia,
-            codigoConvite: db.empresa.codigo_convite,
-            plano: 'piloto',
-            dataCriacao: db.empresa.created_at,
-            isInitialized: true,
-            isResettingPassword: false,
-        });
-        return { success: true };
-    },
-
-    enterLocalStudyMode: (role = 'admin', setor = null) => {
-        resetDb();
-        return get().applyLocalSession(role, setor);
-    },
-
-
     login: async (email, password) => {
-        if (isLocalMode()) return get().enterLocalStudyMode('admin');
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
@@ -271,22 +224,6 @@ export const useAuthStore = create((set, get) => ({
         try {
             const normalizedCode = (inviteCode || '').trim().toUpperCase();
 
-            if (isLocalMode()) {
-                const convite = await convitesService.findByPin(normalizedCode, pin);
-                if (convite) {
-                    return get().applyLocalSession(
-                        convite.funcao === 'admin' ? 'admin' : 'programmer',
-                        convite.setor_padrao || (convite.funcao === 'admin' ? 'TODOS' : 'CNC')
-                    );
-                }
-                const db = loadDb();
-                const master = String(db.configuracoes?.pin_onboarding || '1234');
-                if (String(pin) === master) {
-                    return get().applyLocalSession('programmer', 'CNC');
-                }
-                return { success: false, error: 'PIN incorreto.' };
-            }
-
             const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
             if (anonError) throw anonError;
             const anonUser = anonData?.user;
@@ -336,10 +273,6 @@ export const useAuthStore = create((set, get) => ({
 
     logout: async () => {
         set({ user: null, role: null, empresaId: null, nomeEmpresa: null, codigoConvite: null });
-        if (isLocalMode()) {
-            localStorage.removeItem('cnc-lean-session');
-            return;
-        }
         supabase.auth.signOut().catch((e) => console.warn('signOut em background:', e.message));
     }
 }));

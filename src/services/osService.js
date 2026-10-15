@@ -1,8 +1,8 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
-import { blobToDataUrl, uploadOsPrint } from './osPrints';
+import { uploadOsPrint } from './osPrints';
+import { novaOsRow, osPatch } from '../utils/osPayload';
+import { camposLivres } from '../utils/relogioOs';
 
 // Helper: Garante que toda query tenha o empresa_id atrelado (Embora o RLS segure no back, mandamos do front por segurança/organização)
 const getEmpresaId = () => {
@@ -21,19 +21,46 @@ async function resolveFolhaBlob(osData) {
     return null;
 }
 
-async function attachPrintIfNeeded(osRow, osData, empresaId) {
-    if (!osRow?.id) return osRow;
-    const blob = await resolveFolhaBlob(osData);
-    if (!blob) return osRow;
-    const url = await uploadOsPrint(empresaId, osRow.id, blob);
-    if (!url) return osRow;
+const ehGestor = () => useAuthStore.getState().role === 'admin';
+
+/** valor_orcado mora em os_valores (RLS só gestor); aqui volta para dentro do card. */
+async function comValores(rows) {
+    if (!ehGestor() || !rows?.length) return rows || [];
     const { data, error } = await supabase
-        .from('ordens_servico')
-        .update({ folha_imagem: url })
-        .eq('id', osRow.id)
-        .eq('empresa_id', empresaId)
-        .select()
+        .from('os_valores')
+        .select('os_id, valor_orcado')
+        .eq('empresa_id', getEmpresaId());
+    if (error) {
+        console.warn('os_valores:', error.message);
+        return rows;
+    }
+    const porOs = new Map(data.map((v) => [v.os_id, v.valor_orcado]));
+    return rows.map((r) => ({ ...r, valor_orcado: porOs.get(r.id) ?? null }));
+}
+
+async function salvarValor(osId, valor) {
+    if (!ehGestor()) return;
+    const { error } = await supabase
+        .from('os_valores')
+        .upsert({ os_id: osId, empresa_id: getEmpresaId(), valor_orcado: valor }, { onConflict: 'os_id' });
+    if (error) throw error;
+}
+
+async function updateRow(id, payload) {
+    const { valor_orcado: valor, ...campos } = payload;
+    if (valor !== undefined) await salvarValor(id, valor);
+    const tabela = supabase.from('ordens_servico');
+    const query = Object.keys(campos).length ? tabela.update(campos).select() : tabela.select();
+    const { data, error } = await query
+        .eq('id', id)
+        .eq('empresa_id', getEmpresaId())
         .single();
+    if (error) throw error;
+    return valor !== undefined && ehGestor() ? { ...data, valor_orcado: valor } : data;
+}
+
+async function rpcOs(funcao, args) {
+    const { data, error } = await supabase.rpc(funcao, args);
     if (error) throw error;
     return data;
 }
@@ -43,7 +70,6 @@ export const osService = {
     // Busca todas as Ordens de Serviço da Empresa (Exceto Excluídas)
     // limit(1000) evita puxar volume gigante e estourar egress no Supabase
     async fetchAllAtivas() {
-        if (isLocalMode()) return localApi.os.fetchAllAtivas();
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ordens_servico')
@@ -56,12 +82,11 @@ export const osService = {
             .limit(1000);
 
         if (error) throw error;
-        return data || [];
+        return comValores(data);
     },
 
     // Salva a nova posição de cada card da coluna 'A fazer' em lote
     async updatePositions(orderedIds) {
-        if (isLocalMode()) return localApi.os.updatePositions(orderedIds);
         const empresaId = getEmpresaId();
         const updates = orderedIds.map((id, index) => ({
             id,
@@ -78,14 +103,12 @@ export const osService = {
 
     // Busca apenas as O.S excluídas (para a aba Registros)
     async fetchExcluidos() {
-        if (isLocalMode()) return localApi.os.fetchExcluidos();
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ordens_servico')
             .select('*')
             .eq('empresa_id', empresaId)
-            // Filtro robusto para aceitar com ou sem acento
-            .or('status.eq.Excluído,status.eq.Excluido')
+            .eq('status', 'Excluído')
             .order('created_at', { ascending: false })
             .limit(200);
 
@@ -93,13 +116,12 @@ export const osService = {
             console.error('fetchExcluidos error:', error.message);
             return [];
         }
-        return data || [];
+        return comValores(data);
     },
 
     /** Busca histórico de peças/moldes no banco (inclui concluídas fora do kanban). */
     async searchHistorico({ codigoPeca, codigoMolde, cliente, term, limit = 50 } = {}) {
         if (!codigoPeca && !codigoMolde && !cliente && !term) return [];
-        if (isLocalMode()) return localApi.os.searchHistorico({ codigoPeca, codigoMolde, cliente, term, limit });
         const empresaId = getEmpresaId();
         let q = supabase
             .from('ordens_servico')
@@ -126,7 +148,7 @@ export const osService = {
 
         const { data, error } = await q;
         if (error) throw error;
-        return data || [];
+        return comValores(data);
     },
 
     /** Lista concluídas recentes além do recorte do kanban (48h). */
@@ -134,350 +156,69 @@ export const osService = {
         return osService.searchHistorico({
             codigoPeca,
             limit,
-        }).then((rows) => rows.filter((o) => o.status === 'Concluído' || o.status === 'Concluido'));
+        }).then((rows) => rows.filter((o) => o.status === 'Concluído'));
     },
 
-    // Cria nova O.S
     async create(osData) {
-        if (isLocalMode()) {
-            const blob = await resolveFolhaBlob(osData);
-            const folha = blob ? await blobToDataUrl(blob) : (osData.folha_imagem || osData.folhaImagem || null);
-            return localApi.os.create({ ...osData, folha_imagem: folha, folhaImagem: folha });
-        }
+        const blob = await resolveFolhaBlob(osData);
         const empresaId = getEmpresaId();
-
-        // Mapeia o objeto do state pro formato do banco (Snake Case)
-        // Aceita tanto CamelCase (vindo do form) quanto SnakeCase (vindo do banco/split)
-        const payload = {
-            empresa_id: empresaId,
-            codigo_peca: osData.codigo_peca || osData.codigoPeca,
-            cliente: osData.cliente,
-            link_desenho: osData.link_desenho || osData.linkDesenho || null,
-            is_prioridade: osData.is_prioridade !== undefined ? osData.is_prioridade : (osData.isPrioridade || false),
-            is_retrabalho: osData.is_retrabalho !== undefined ? osData.is_retrabalho : (osData.isRetrabalho || false),
-            setor: osData.setor || null,  // Setor produtivo: 'CNC' | 'EDM_FIO' | 'TORNO' | 'RETIFICA' | 'EXTERNO'
-            status: osData.status || 'A fazer',
-            tempo_estimado_corte_horas: parseInt(osData.tempo_estimado_corte_horas || osData.tempoEstimadoCorteHoras) || 0,
-            tempo_estimado_corte_minutos: parseInt(osData.tempo_estimado_corte_minutos || osData.tempoEstimadoCorteMinutos) || 0,
-            tempo_estimado_setup_horas: parseInt(osData.tempo_estimado_setup_horas || osData.tempoEstimadoSetupHoras) || 0,
-            tempo_estimado_setup_minutos: parseInt(osData.tempo_estimado_setup_minutos || osData.tempoEstimadoSetupMinutos) || 0,
-            prazo_entrega: osData.prazo_entrega || (osData.prazoEntrega ? (osData.prazoEntrega.includes('T') ? osData.prazoEntrega : `${osData.prazoEntrega}T12:00:00Z`) : null),
-            programador: osData.programador || osData.programador_nome || null,
-            quantidade: parseInt(osData.quantidade) || 1,
-            quantidade_concluida: parseInt(osData.quantidade_concluida || osData.quantidadeConcluida) || 0,
-            posicao: osData.posicao || null, // Otimização: recebe a posição já calculada do front
-            parent_id: osData.parent_id || null,
-            programado: osData.programado ?? false,
-            valor_orcado: osData.valor_orcado != null ? parseFloat(osData.valor_orcado) : (osData.valorOrcado != null ? parseFloat(osData.valorOrcado) : null),
-            os_grupo_id: osData.os_grupo_id || osData.osGrupoId || null,
-            roteiro_ordem: parseInt(osData.roteiro_ordem || osData.roteiroOrdem) || 1,
-            roteiro: osData.roteiro || [],
-            fornecedor_id: osData.fornecedor_id || null,
-            fornecedor_nome: osData.fornecedor_nome || null,
-            tipo_servico_externo: osData.tipo_servico_externo || null,
-            enviado_em: osData.enviado_em || null,
-            voltou_em: osData.voltou_em || null,
-
-            // Campos do módulo CNC (requer supabase_cnc_campos.sql aplicado)
-            total_setups: parseInt(osData.total_setups || osData.totalSetups) || 1,
-            setup_atual: parseInt(osData.setup_atual || osData.setupAtual) || 1,
-            nomes_setups: osData.nomes_setups || osData.nomesSetups || [],
-            detalhes_setups: osData.detalhes_setups || osData.detalhesSetups || [],
-            codigo_molde: osData.codigo_molde || osData.codigoMolde || null,
-            componente_molde: osData.componente_molde || osData.componenteMolde || null,
-            numero_programa: osData.numero_programa || osData.numeroPrograma || null,
-            link_programa: osData.link_programa || osData.linkPrograma || null,
-            checklist_ferramentas: osData.checklist_ferramentas || osData.checklistFerramentas || [],
-            nx_import: osData.nx_import || osData.nxImport || null,
-            estrategia_ferramental: osData.estrategia_ferramental || osData.estrategiaFerramental || null,
-            aguardando_tt: osData.aguardando_tt ?? false,
-            observacao_tt: osData.observacao_tt || null,
-            em_fila: osData.em_fila ?? osData.emFila ?? false,
-            observacoes: osData.observacoes || osData.observacao || null,
-            folha_imagem: null,
-        };
-
-        try {
-            const { data, error } = await supabase
-                .from('ordens_servico')
-                .insert(payload)
-                .select() // Pede pra devolver o objeto criado com o ID oficial do banco
-                .single();
-
-            if (error) {
-                const msg = `${error.message || ''} ${error.details || ''}`;
-                const dropIfMissing = (col, key) => {
-                    if (msg.includes(col)) delete payload[key];
-                };
-                dropIfMissing('observacoes', 'observacoes');
-                dropIfMissing('folha_imagem', 'folha_imagem');
-                dropIfMissing('roteiro', 'roteiro');
-                dropIfMissing('fornecedor', 'fornecedor_id');
-                dropIfMissing('fornecedor_nome', 'fornecedor_nome');
-                dropIfMissing('tipo_servico_externo', 'tipo_servico_externo');
-                dropIfMissing('enviado_em', 'enviado_em');
-                dropIfMissing('voltou_em', 'voltou_em');
-                dropIfMissing('checklist_ferramentas', 'checklist_ferramentas');
-                dropIfMissing('link_programa', 'link_programa');
-                dropIfMissing('em_fila', 'em_fila');
-                if (msg.includes('is_retrabalho') || msg.includes('parent_id')) {
-                    delete payload.is_retrabalho;
-                    delete payload.parent_id;
-                }
-                const retry = await supabase.from('ordens_servico').insert(payload).select().single();
-                if (retry.error) throw retry.error;
-                return attachPrintIfNeeded(retry.data, osData, empresaId);
-            }
-            return attachPrintIfNeeded(data, osData, empresaId);
-        } catch (err) {
-            console.error('FALHA CRÍTICA NO OSSERVICE.CREATE:', err);
-            throw err;
-        }
-    },
-
-    // Transição de coluna (Arrastar e Soltar)
-    async moveOs(id, newStatus, novosParametros = {}) {
-        if (isLocalMode()) return localApi.os.moveOs(id, newStatus, novosParametros);
-        const empresaId = getEmpresaId();
-
-        // 1. MAPEAMENTO EXPLÍCITO DE COLUNAS DO SUPABASE
-        // IMPORTANTE: Nunca envie campos que não existam no banco, ou o Supabase rejeita com erro 400
-        let payload = {
-            status: newStatus,
-            is_pausado: false,
-            data_pausa: null,
-            motivo_pausa: null,
-            observacao_pausa: null
-        };
-
-        // Mapeamento de Timestamps de entrada em cada fase
-        if (novosParametros.timestampEntrada_setup || novosParametros.timestampEntradaSetup)
-            payload.timestamp_entrada_setup = novosParametros.timestampEntrada_setup || novosParametros.timestampEntradaSetup;
-
-        if (novosParametros.timestampEntrada_emCorte || novosParametros.timestampEntradaCorte)
-            payload.timestamp_entrada_emcorte = novosParametros.timestampEntrada_emCorte || novosParametros.timestampEntradaCorte;
-
-        if (novosParametros.timestampEntrada_afericao || novosParametros.timestampEntradaAfericao)
-            payload.timestamp_entrada_afericao = novosParametros.timestampEntrada_afericao || novosParametros.timestampEntradaAfericao;
-
-        if (novosParametros.timestampEntrada_concluido || novosParametros.timestampEntradaConcluido)
-            payload.timestamp_entrada_concluido = novosParametros.timestampEntrada_concluido || novosParametros.timestampEntradaConcluido;
-
-        // Mapeamento de outros campos de negócio (null explícito para limpar ao devolver para A fazer)
-        if (novosParametros.maquina_nome !== undefined || novosParametros.maquina !== undefined)
-            payload.maquina_nome = novosParametros.maquina_nome ?? novosParametros.maquina ?? null;
-
-        if (novosParametros.operador_atual !== undefined || novosParametros.operadorAtual !== undefined)
-            payload.operador_atual = novosParametros.operador_atual ?? novosParametros.operadorAtual ?? null;
-
-        if (novosParametros.resultadoAfericao || novosParametros.resultado_afericao)
-            payload.resultado_afericao = novosParametros.resultadoAfericao || novosParametros.resultado_afericao;
-
-        if (novosParametros.motivoRefugo || novosParametros.motivo_refugo)
-            payload.motivo_refugo = novosParametros.motivoRefugo || novosParametros.motivo_refugo;
-
-        if (novosParametros.quantidade !== undefined) payload.quantidade = novosParametros.quantidade;
-        if (novosParametros.quantidade_concluida !== undefined) payload.quantidade_concluida = novosParametros.quantidade_concluida;
-        if (novosParametros.posicao !== undefined) payload.posicao = novosParametros.posicao;
-        if (novosParametros.tempos_fases || novosParametros.temposFases)
-            payload.tempos_fases = novosParametros.tempos_fases || novosParametros.temposFases;
-        if (novosParametros.tempo_estimado_setup_horas !== undefined) payload.tempo_estimado_setup_horas = novosParametros.tempo_estimado_setup_horas;
-        if (novosParametros.tempo_estimado_setup_minutos !== undefined) payload.tempo_estimado_setup_minutos = novosParametros.tempo_estimado_setup_minutos;
-        if (novosParametros.tempo_estimado_corte_horas !== undefined) payload.tempo_estimado_corte_horas = novosParametros.tempo_estimado_corte_horas;
-        if (novosParametros.tempo_estimado_corte_minutos !== undefined) payload.tempo_estimado_corte_minutos = novosParametros.tempo_estimado_corte_minutos;
-
-        // Campos do módulo CNC
-        if (novosParametros.setup_atual !== undefined || novosParametros.setupAtual !== undefined)
-            payload.setup_atual = novosParametros.setup_atual ?? novosParametros.setupAtual;
-        if (novosParametros.estrategia_ferramental !== undefined || novosParametros.estrategiaFerramental !== undefined)
-            payload.estrategia_ferramental = novosParametros.estrategia_ferramental ?? novosParametros.estrategiaFerramental ?? null;
-        if (novosParametros.aguardando_tt !== undefined) payload.aguardando_tt = novosParametros.aguardando_tt;
-        if (novosParametros.observacao_tt !== undefined) payload.observacao_tt = novosParametros.observacao_tt;
-        if (novosParametros.roteiro !== undefined) payload.roteiro = novosParametros.roteiro;
-        if (novosParametros.fornecedor_id !== undefined) payload.fornecedor_id = novosParametros.fornecedor_id;
-        if (novosParametros.fornecedor_nome !== undefined) payload.fornecedor_nome = novosParametros.fornecedor_nome;
-        if (novosParametros.tipo_servico_externo !== undefined) payload.tipo_servico_externo = novosParametros.tipo_servico_externo;
-        if (novosParametros.enviado_em !== undefined) payload.enviado_em = novosParametros.enviado_em;
-        if (novosParametros.voltou_em !== undefined) payload.voltou_em = novosParametros.voltou_em;
-
+        const { valor_orcado: valor, ...row } = novaOsRow(osData);
         const { data, error } = await supabase
             .from('ordens_servico')
-            .update(payload)
-            .eq('id', id)
-            .eq('empresa_id', empresaId)
+            .insert({ ...row, empresa_id: empresaId, folha_imagem: null })
             .select()
             .single();
+        if (error) throw error;
+        const pendente = {
+            ...(valor != null && { valor_orcado: valor }),
+            ...(blob && { folha_imagem: await uploadOsPrint(empresaId, data.id, blob) }),
+        };
+        return Object.keys(pendente).length ? updateRow(data.id, pendente) : data;
+    },
 
-        if (error) {
-            console.error("Erro no Supabase moveOs:", error);
-            throw error;
-        }
-        return data;
+    /** Transição de coluna: o banco fecha a fase com a hora do servidor (mover_os). */
+    async moveOs(id, destCol, params = {}) {
+        const { valor_orcado: valor, ...campos } = camposLivres(params);
+        if (valor !== undefined) await salvarValor(id, valor);
+        return rpcOs('mover_os', { p_os_id: id, p_destino: destCol, p_campos: campos });
+    },
+
+    async pausar(id, motivo, observacao = null) {
+        return rpcOs('pausar_os', { p_os_id: id, p_motivo: motivo, p_observacao: observacao });
+    },
+
+    async retomar(id) {
+        return rpcOs('retomar_os', { p_os_id: id });
+    },
+
+    /** Pausa informada depois do fato (falta de energia, quebra de ferramenta). */
+    async registrarPausa(id, { inicio, fim, motivo, observacao = null }) {
+        return rpcOs('registrar_pausa_os', {
+            p_os_id: id, p_inicio: inicio, p_fim: fim, p_motivo: motivo, p_observacao: observacao,
+        });
     },
 
     // Pausar / Retomar / Atualizar Tempos Históricos
     async updateOs(id, updateData) {
-        if (isLocalMode()) return localApi.os.updateOs(id, updateData);
-        const empresaId = getEmpresaId();
-
-        // Mapeia do CamelCase do front pro SnakeCase do Banco
-        // IMPORTANTE: Mapeamento explícito para evitar erros de coluna inválida no Supabase
-        const payload = {};
-        if (updateData.isPausado !== undefined) payload.is_pausado = updateData.isPausado;
-        if (updateData.is_pausado !== undefined) payload.is_pausado = updateData.is_pausado;
-
-        if (updateData.historicoPausas !== undefined) payload.historico_pausas = updateData.historicoPausas;
-        if (updateData.historico_pausas !== undefined) payload.historico_pausas = updateData.historico_pausas;
-
-        if (updateData.temposFases !== undefined) payload.tempos_fases = updateData.temposFases;
-        if (updateData.tempos_fases !== undefined) payload.tempos_fases = updateData.tempos_fases;
-
-        if (updateData.resultadoAfericao !== undefined) payload.resultado_afericao = updateData.resultadoAfericao;
-        if (updateData.resultado_afericao !== undefined) payload.resultado_afericao = updateData.resultado_afericao;
-
-        if (updateData.motivoRefugo !== undefined) payload.motivo_refugo = updateData.motivoRefugo;
-        if (updateData.motivo_refugo !== undefined) payload.motivo_refugo = updateData.motivo_refugo;
-
-        if (updateData.dataPausa !== undefined) payload.data_pausa = updateData.dataPausa;
-        if (updateData.data_pausa !== undefined) payload.data_pausa = updateData.data_pausa;
-
-        if (updateData.motivoPausa !== undefined) payload.motivo_pausa = updateData.motivoPausa;
-        if (updateData.motivo_pausa !== undefined) payload.motivo_pausa = updateData.motivo_pausa;
-
-        if (updateData.observacaoPausa !== undefined) payload.observacao_pausa = updateData.observacaoPausa;
-        if (updateData.observacao_pausa !== undefined) payload.observacao_pausa = updateData.observacao_pausa;
-
-        if (updateData.quantidade !== undefined) payload.quantidade = updateData.quantidade;
-        if (updateData.quantidade_concluida !== undefined) payload.quantidade_concluida = updateData.quantidade_concluida;
-        if (updateData.quantidadeConcluida !== undefined) payload.quantidade_concluida = updateData.quantidadeConcluida;
-
-        const { data, error } = await supabase
-            .from('ordens_servico')
-            .update(payload)
-            .eq('id', id)
-            .eq('empresa_id', empresaId)
-            .select()
-            .single();
-
-        if (error) {
-            console.error("Erro no Supabase updateOs:", error);
-            throw error;
-        }
-        return data;
+        return updateRow(id, osPatch(updateData));
     },
 
     // Edição de campos pelo usuário (cliente, prazo, tempos estimados, etc)
     async editOs(id, fields) {
-        if (isLocalMode()) return localApi.os.editOs(id, fields);
-        const empresaId = getEmpresaId();
-
-        const payload = {};
-        if (fields.cliente !== undefined) payload.cliente = fields.cliente;
-        if (fields.codigoPeca !== undefined) payload.codigo_peca = fields.codigoPeca;
-        if (fields.prazoEntrega !== undefined) payload.prazo_entrega = fields.prazoEntrega ? (fields.prazoEntrega.includes('T') ? fields.prazoEntrega : `${fields.prazoEntrega}T12:00:00Z`) : null;
-        if (fields.tempoEstimadoCorteHoras !== undefined) payload.tempo_estimado_corte_horas = parseInt(fields.tempoEstimadoCorteHoras) || 0;
-        if (fields.tempoEstimadoCorteMinutos !== undefined) payload.tempo_estimado_corte_minutos = parseInt(fields.tempoEstimadoCorteMinutos) || 0;
-        if (fields.tempoEstimadoSetupHoras !== undefined) payload.tempo_estimado_setup_horas = parseInt(fields.tempoEstimadoSetupHoras) || 0;
-        if (fields.tempoEstimadoSetupMinutos !== undefined) payload.tempo_estimado_setup_minutos = parseInt(fields.tempoEstimadoSetupMinutos) || 0;
-        if (fields.programador !== undefined || fields.programador_nome !== undefined) {
-            payload.programador = fields.programador ?? fields.programador_nome ?? null;
-        }
-        if (fields.linkDesenho !== undefined) payload.link_desenho = fields.linkDesenho || null;
-        if (fields.isPrioridade !== undefined) payload.is_prioridade = fields.isPrioridade;
-        if (fields.quantidade !== undefined) payload.quantidade = parseInt(fields.quantidade) || 1;
-
-        // Campos do módulo CNC (requer supabase_cnc_campos.sql aplicado)
-        if (fields.codigoMolde !== undefined) payload.codigo_molde = fields.codigoMolde || null;
-        if (fields.componenteMolde !== undefined) payload.componente_molde = fields.componenteMolde || null;
-        if (fields.setor !== undefined) payload.setor = fields.setor || null;
-        if (fields.numeroPrograma !== undefined) payload.numero_programa = fields.numeroPrograma || null;
-        if (fields.totalSetups !== undefined) payload.total_setups = parseInt(fields.totalSetups) || 1;
-        if (fields.setupAtual !== undefined) payload.setup_atual = parseInt(fields.setupAtual) || 1;
-        if (fields.nomesSetups !== undefined) payload.nomes_setups = fields.nomesSetups;
-        if (fields.detalhesSetups !== undefined) payload.detalhes_setups = fields.detalhesSetups;
-        if (fields.programado !== undefined) payload.programado = fields.programado;
-        if (fields.valorOrcado !== undefined) payload.valor_orcado = fields.valorOrcado === '' || fields.valorOrcado == null ? null : parseFloat(fields.valorOrcado);
-        if (fields.aguardando_tt !== undefined) payload.aguardando_tt = fields.aguardando_tt;
-        if (fields.observacao_tt !== undefined) payload.observacao_tt = fields.observacao_tt;
-        if (fields.em_fila !== undefined || fields.emFila !== undefined) {
-            payload.em_fila = fields.em_fila ?? fields.emFila;
-        }
-        if (fields.nxImport !== undefined) payload.nx_import = fields.nxImport;
-        if (fields.nx_import !== undefined) payload.nx_import = fields.nx_import;
-        if (fields.checklistFerramentas !== undefined) payload.checklist_ferramentas = fields.checklistFerramentas;
-        if (fields.linkPrograma !== undefined) payload.link_programa = fields.linkPrograma || null;
-        if (fields.observacoes !== undefined) payload.observacoes = fields.observacoes || null;
-        if (fields.roteiro !== undefined) payload.roteiro = fields.roteiro;
-        if (fields.fornecedor_id !== undefined) payload.fornecedor_id = fields.fornecedor_id;
-        if (fields.fornecedor_nome !== undefined) payload.fornecedor_nome = fields.fornecedor_nome;
-        if (fields.tipo_servico_externo !== undefined) payload.tipo_servico_externo = fields.tipo_servico_externo;
-        if (fields.enviado_em !== undefined) payload.enviado_em = fields.enviado_em;
-        if (fields.voltou_em !== undefined) payload.voltou_em = fields.voltou_em;
+        const payload = osPatch(fields);
         if (fields.folhaBlob instanceof Blob) {
-            payload.folha_imagem = await uploadOsPrint(empresaId, id, fields.folhaBlob);
-        } else if (fields.folhaImagem !== undefined || fields.folha_imagem !== undefined) {
-            const next = fields.folhaImagem ?? fields.folha_imagem ?? null;
-            payload.folha_imagem = typeof next === 'string' && next.startsWith('data:') ? null : next;
+            payload.folha_imagem = await uploadOsPrint(getEmpresaId(), id, fields.folhaBlob);
+        } else if (typeof payload.folha_imagem === 'string' && payload.folha_imagem.startsWith('data:')) {
+            payload.folha_imagem = null;
         }
-
-        const { data, error } = await supabase
-            .from('ordens_servico')
-            .update(payload)
-            .eq('id', id)
-            .eq('empresa_id', empresaId)
-            .select()
-            .single();
-
-        if (error) {
-            const msg = `${error.message || ''} ${error.details || ''}`;
-            if (msg.includes('em_fila')) {
-                delete payload.em_fila;
-                if (payload.nx_import && typeof payload.nx_import === 'object') {
-                    payload.nx_import = {
-                        ...payload.nx_import,
-                        em_fila: fields.em_fila ?? fields.emFila,
-                    };
-                }
-            }
-            if (msg.includes('checklist_ferramentas') || msg.includes('link_programa')) {
-                delete payload.checklist_ferramentas;
-                delete payload.link_programa;
-                payload.nx_import = {
-                    ...(payload.nx_import || {}),
-                    checklistFerramentas: fields.checklistFerramentas,
-                    linkPrograma: fields.linkPrograma,
-                };
-                const retry = await supabase.from('ordens_servico').update(payload).eq('id', id).eq('empresa_id', empresaId).select().single();
-                if (retry.error) throw retry.error;
-                return retry.data;
-            }
-            if (msg.includes('em_fila')) {
-                const retry = await supabase.from('ordens_servico').update(payload).eq('id', id).eq('empresa_id', empresaId).select().single();
-                if (retry.error) throw retry.error;
-                return retry.data;
-            }
-            throw error;
-        }
-        return data;
+        return updateRow(id, payload);
     },
 
     async delete(id) {
-        if (isLocalMode()) return localApi.os.delete(id);
-        const empresaId = getEmpresaId();
-        const { data, error } = await supabase
-            .from('ordens_servico')
-            .update({ status: 'Excluído' })
-            .eq('id', id)
-            .eq('empresa_id', empresaId)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+        return updateRow(id, { status: 'Excluído' });
     },
 
     async fetchStatsByCliente(clienteNome) {
-        if (isLocalMode()) return localApi.os.fetchStatsByCliente(clienteNome);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('ordens_servico')

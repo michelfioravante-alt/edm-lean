@@ -17,7 +17,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
     const { programadores, estoque, fetchEstoque, editOrdemServico } = useAppStore();
     const [saving, setSaving] = useState(false);
     const [showCalc, setShowCalc] = useState(false);
-    const setorRaw = osData?.setor || osData?.tipo_processo || osData?.tipoProcesso || 'CNC';
+    const setorRaw = osData?.setor || 'CNC';
     const setor = String(setorRaw).toUpperCase();
     const itensEstoque = estoqueFerramentasDoSetor(estoque, setor === 'TORNO' ? 'CNC' : setor);
 
@@ -40,15 +40,15 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
         fetchEstoque?.();
         setForm({
             programador: osData.programador || osData.programador_nome || '',
-            tempoEstimadoCorteHoras: String(osData.tempo_estimado_corte_horas ?? osData.tempoEstimadoCorteHoras ?? ''),
-            tempoEstimadoCorteMinutos: String(osData.tempo_estimado_corte_minutos ?? osData.tempoEstimadoCorteMinutos ?? ''),
-            tempoEstimadoSetupHoras: String(osData.tempo_estimado_setup_horas ?? osData.tempoEstimadoSetupHoras ?? ''),
-            tempoEstimadoSetupMinutos: String(osData.tempo_estimado_setup_minutos ?? osData.tempoEstimadoSetupMinutos ?? ''),
-            numeroPrograma: osData.numero_programa || osData.numeroPrograma || '',
+            tempoEstimadoCorteHoras: String(osData.tempo_estimado_corte_horas ?? ''),
+            tempoEstimadoCorteMinutos: String(osData.tempo_estimado_corte_minutos ?? ''),
+            tempoEstimadoSetupHoras: String(osData.tempo_estimado_setup_horas ?? ''),
+            tempoEstimadoSetupMinutos: String(osData.tempo_estimado_setup_minutos ?? ''),
+            numeroPrograma: osData.numero_programa || '',
             linkPrograma: lerLinkPrograma(osData),
-            totalSetups: osData.total_setups || osData.totalSetups || 1,
-            nomesSetups: osData.nomes_setups || osData.nomesSetups || ['OP10'],
-            nxImport: osData.nx_import || osData.nxImport || null,
+            totalSetups: osData.total_setups || 1,
+            nomesSetups: osData.nomes_setups || ['OP10'],
+            nxImport: osData.nx_import || null,
             checklistFerramentas: lerChecklistFerramentas(osData),
         });
     }, [isOpen, osData?.id, fetchEstoque]);
@@ -59,7 +59,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
     const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
     const isEdm = setor === 'EDM_FIO' || setor.includes('EDM') || setor.includes('FIO');
     const isCnc = !isEdm && setor !== 'EXTERNO';
-    const linkDesenho = osData.link_desenho || osData.linkDesenho || '';
+    const linkDesenho = osData.link_desenho || '';
     const programadoresDoSetor = programadores.filter((p) => !p.setor || p.setor === 'TODOS' || p.setor === setor);
 
     const handleNxImport = (data) => {
@@ -90,11 +90,6 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
         setSaving(true);
         try {
             const checklist = (form.checklistFerramentas || []).filter((r) => r.estoqueItemId || r.nome);
-            const nxImport = {
-                ...(form.nxImport || {}),
-                checklistFerramentas: checklist,
-                linkPrograma: form.linkPrograma || null,
-            };
             await editOrdemServico(osData.id, {
                 programador: form.programador,
                 tempoEstimadoCorteHoras: form.tempoEstimadoCorteHoras,
@@ -103,7 +98,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
                 tempoEstimadoSetupMinutos: form.tempoEstimadoSetupMinutos,
                 numeroPrograma: form.numeroPrograma,
                 linkPrograma: form.linkPrograma || null,
-                nxImport,
+                nxImport: form.nxImport,
                 checklistFerramentas: checklist,
                 programado: true,
             });
@@ -116,7 +111,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
 
     return (
         <>
-        <Modal isOpen={isOpen} onClose={onClose} title={`Programar: ${osData.codigo_peca || osData.codigoPeca || ''}`} maxWidth="max-w-xl">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Programar: ${osData.codigo_peca || ''}`} maxWidth="max-w-xl">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <p className="text-xs text-[#7B808F]">
                     {isEdm

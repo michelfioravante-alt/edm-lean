@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
-import { isLocalMode } from '../local/mode';
-import { localApi } from '../local/localApi';
 
 const getEmpresaId = () => {
     const state = useAuthStore.getState();
@@ -11,7 +9,6 @@ const getEmpresaId = () => {
 
 export const maquinasService = {
     async fetchAll() {
-        if (isLocalMode()) return localApi.maquinas.fetchAll();
         const state = useAuthStore.getState();
         const user = state?.user;
         const empresaId = state?.empresaId;
@@ -47,7 +44,6 @@ export const maquinasService = {
     },
 
     async create(nome, setor = 'CNC') {
-        if (isLocalMode()) return localApi.maquinas.create(nome, setor);
         const empresaId = getEmpresaId();
         const { data, error } = await supabase
             .from('maquinas')
@@ -60,7 +56,6 @@ export const maquinasService = {
 
 
     async remove(id) {
-        if (isLocalMode()) return localApi.maquinas.remove(id);
         const empresaId = getEmpresaId();
         const { error } = await supabase
             .from('maquinas')

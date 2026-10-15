@@ -1,6 +1,6 @@
 -- ========================================================
 -- CNC LEAN — Extensão de Ferramental (Centro de Usinagem)
--- Execute APÓS o supabase_schema.sql principal
+-- Execute APÓS o 01_schema.sql principal
 -- ========================================================
 
 -- Ferramentas cadastradas (fresas, brocas, inserts, etc.)

@@ -2,9 +2,7 @@
 
 export function lerChecklistFerramentas(os) {
     if (!os) return [];
-    const raw = os.checklist_ferramentas || os.checklistFerramentas
-        || os.nx_import?.checklistFerramentas || os.nxImport?.checklistFerramentas
-        || [];
+    const raw = os.checklist_ferramentas || [];
     if (!Array.isArray(raw)) return [];
     return raw.map((row, i) => ({
         id: row.id || `chk-${i}`,
@@ -56,7 +54,5 @@ export function estoqueFerramentasDoSetor(estoque, setor = 'CNC') {
 }
 
 export function lerLinkPrograma(os) {
-    return os?.link_programa || os?.linkPrograma
-        || os?.nx_import?.linkPrograma || os?.nxImport?.linkPrograma
-        || '';
+    return os?.link_programa || '';
 }

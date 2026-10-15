@@ -1,6 +1,6 @@
 -- ==========================================
 -- CNC LEAN — Campos específicos do centro de usinagem
--- Execute DEPOIS de supabase_schema.sql.
+-- Execute DEPOIS de 01_schema.sql.
 -- Idempotente: pode rodar quantas vezes quiser.
 -- ==========================================
 

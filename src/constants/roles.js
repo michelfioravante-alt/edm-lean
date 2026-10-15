@@ -14,7 +14,7 @@ export function setorPermitido(role, setor) {
 export function filtrarPorSetorDoPerfil(lista, role, setorAtivo) {
     if (role === 'admin' || !lista) return lista || [];
     const setor = SETORES_PROGRAMADOR.includes(setorAtivo) ? setorAtivo : 'CNC';
-    return lista.filter((os) => (os.setor || os.tipo_processo || 'CNC') === setor);
+    return lista.filter((os) => (os.setor || 'CNC') === setor);
 }
 
 export function setorEfetivoProgramador(setorPadrao, activeSector) {

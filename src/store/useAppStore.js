@@ -19,7 +19,8 @@ import { supabase } from '../services/supabase';
 import { useAuthStore } from './useAuthStore';
 import { statusToColKey, colKeyToStatus } from '../constants/cncProcess';
 import { novoGrupoId } from '../constants/osWorkflow';
-import { isLocalMode } from '../local/mode';
+import { novaOsRow, osPatch } from '../utils/osPayload';
+import { osMovida } from '../utils/relogioOs';
 import { chaveSku, normalizarItemEstoque, qtdEstoque } from '../utils/estoque';
 
 // Normaliza um registro de historico_consumiveis (snake_case → camelCase)
@@ -80,6 +81,7 @@ export const useAppStore = create((set) => ({
     clientes: [],
     fornecedores: [],
     usuarios: [],
+    erroOperacao: null, // Mensagem de falha ao salvar no banco (exibida no App)
     convites: [],
 
     // Kanbans Automáticos
@@ -132,7 +134,7 @@ export const useAppStore = create((set) => ({
     pedirFiltroCarteira: (filtro) => set({ carteiraFiltroPedido: filtro }),
 
     irParaKanban: (os) => {
-        const setor = os?.setor || os?.tipo_processo || 'CNC';
+        const setor = os?.setor || 'CNC';
         if (typeof window !== 'undefined') {
             localStorage.setItem('lean_active_sector', setor);
         }
@@ -170,60 +172,40 @@ export const useAppStore = create((set) => ({
     },
 
     registrarPausaRetroativaFaltaEnergia: async (osId, colKey, dados) => {
+        const { horaInicioEnergia, horaFimEnergia, observacaoPausa } = dados;
+        await useAppStore.getState().registrarPausaRetroativa(osId, colKey, {
+            horaInicio: horaInicioEnergia,
+            horaFim: horaFimEnergia,
+            motivo: 'Falta de Energia',
+            observacao: observacaoPausa,
+        });
+    },
+
+    /** Pausa informada depois do fato, com horários HH:MM de hoje. */
+    registrarPausaRetroativa: async (osId, colKey, { horaInicio, horaFim, motivo, observacao }) => {
+        const hoje = new Date();
+        const parseHora = (hstr) => {
+            const [h, m] = (hstr || '').split(':').map((n) => parseInt(n, 10));
+            if (Number.isNaN(h) || Number.isNaN(m)) return null;
+            return new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, 0, 0);
+        };
+        const inicio = parseHora(horaInicio);
+        const fim = parseHora(horaFim);
+        if (!inicio || !fim || fim <= inicio) {
+            console.warn('Pausa retroativa ignorada: horários inválidos', horaInicio, horaFim);
+            return;
+        }
         try {
-            const stateNow = useAppStore.getState();
-            const lista = stateNow.kanban[colKey] || [];
-            const os = lista.find(o => o.id === osId);
-            if (!os) return;
-
-            const { horaInicioEnergia, horaFimEnergia, observacaoPausa } = dados;
-
-            const hoje = new Date();
-            const parseHora = (hstr) => {
-                const [h, m] = (hstr || '').split(':').map((n) => parseInt(n, 10));
-                if (Number.isNaN(h) || Number.isNaN(m)) return null;
-                return new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, 0, 0);
-            };
-
-            const inicio = parseHora(horaInicioEnergia);
-            const fim = parseHora(horaFimEnergia);
-            if (!inicio || !fim || fim <= inicio) {
-                console.warn('Pausa retroativa ignorada: horários inválidos', horaInicioEnergia, horaFimEnergia);
-                return;
-            }
-
-            const duracaoHoras = Math.max(0, (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60));
-
-            const historicoExistente = os.historico_pausas || os.historicoPausas || [];
-            const novaPausa = {
+            const updatedOsBanco = await osService.registrarPausa(osId, {
                 inicio: inicio.toISOString(),
                 fim: fim.toISOString(),
-                motivo: 'Falta de Energia',
-                observacao: observacaoPausa,
-                duracaoHoras,
-                fase: colKey
-            };
-
-            const novoHistorico = [...historicoExistente, novaPausa];
-
-            const updatedOsBanco = await osService.updateOs(osId, { historicoPausas: novoHistorico });
-
-            set((draft) => {
-                const k = { ...draft.kanban };
-                const colList = [...(k[colKey] || [])];
-                const idx = colList.findIndex((o) => o.id === osId);
-                if (idx !== -1) {
-                    colList[idx] = {
-                        ...colList[idx],
-                        ...updatedOsBanco,
-                        historico_pausas: novoHistorico
-                    };
-                }
-                k[colKey] = colList;
-                return { kanban: k };
+                motivo,
+                observacao,
             });
+            useAppStore.getState().aplicarOsDoBanco(colKey, updatedOsBanco);
         } catch (e) {
-            console.error('registrarPausaRetroativaFaltaEnergia erro:', e);
+            console.error('registrarPausaRetroativa:', e);
+            set({ erroOperacao: `Não foi possível registrar a pausa: ${e.message || 'erro de conexão'}` });
         }
     },
 
@@ -243,60 +225,13 @@ export const useAppStore = create((set) => ({
     },
 
     registrarPausaRetroativaQuebraFerramenta: async (osId, colKey, dados) => {
-        try {
-            const stateNow = useAppStore.getState();
-            const lista = stateNow.kanban[colKey] || [];
-            const os = lista.find(o => o.id === osId);
-            if (!os) return;
-
-            const { horaInicioQuebra, horaFimQuebra, observacaoPausa } = dados;
-
-            const hoje = new Date();
-            const parseHora = (hstr) => {
-                const [h, m] = (hstr || '').split(':').map((n) => parseInt(n, 10));
-                if (Number.isNaN(h) || Number.isNaN(m)) return null;
-                return new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, 0, 0);
-            };
-
-            const inicio = parseHora(horaInicioQuebra);
-            const fim = parseHora(horaFimQuebra);
-            if (!inicio || !fim || fim <= inicio) {
-                console.warn('Pausa retroativa quebra ignorada: horários inválidos', horaInicioQuebra, horaFimQuebra);
-                return;
-            }
-
-            const duracaoHoras = Math.max(0, (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60));
-
-            const historicoExistente = os.historico_pausas || os.historicoPausas || [];
-            const novaPausa = {
-                inicio: inicio.toISOString(),
-                fim: fim.toISOString(),
-                motivo: 'Quebra de Ferramenta',
-                observacao: observacaoPausa,
-                duracaoHoras,
-                fase: colKey
-            };
-
-            const novoHistorico = [...historicoExistente, novaPausa];
-            const updatedOsBanco = await osService.updateOs(osId, { historicoPausas: novoHistorico });
-
-            set((draft) => {
-                const k = { ...draft.kanban };
-                const colList = [...(k[colKey] || [])];
-                const idx = colList.findIndex((o) => o.id === osId);
-                if (idx !== -1) {
-                    colList[idx] = {
-                        ...colList[idx],
-                        ...updatedOsBanco,
-                        historico_pausas: novoHistorico
-                    };
-                }
-                k[colKey] = colList;
-                return { kanban: k };
-            });
-        } catch (e) {
-            console.error('registrarPausaRetroativaQuebraFerramenta erro:', e);
-        }
+        const { horaInicioQuebra, horaFimQuebra, observacaoPausa } = dados;
+        await useAppStore.getState().registrarPausaRetroativa(osId, colKey, {
+            horaInicio: horaInicioQuebra,
+            horaFim: horaFimQuebra,
+            motivo: 'Quebra de Ferramenta',
+            observacao: observacaoPausa,
+        });
     },
 
     registrarQuebraFerramentaPausa: async (osId, colKey, dados) => {
@@ -782,7 +717,6 @@ export const useAppStore = create((set) => ({
     realtimeLastOkAt: null,
 
     subscribeToKanbanUpdates: () => {
-        if (isLocalMode()) return;
         const state = useAppStore.getState();
         if (state.realtimeChannel) return;
 
@@ -970,16 +904,10 @@ export const useAppStore = create((set) => ({
 
         if (optimistic) {
             const tempId = `temp-${Date.now()}`;
-            const placeholder = {
-                ...osComPosicao,
-                id: tempId,
-                _optimistic: true,
-                codigo_peca: osComPosicao.codigo_peca || osComPosicao.codigoPeca,
-                codigoPeca: osComPosicao.codigo_peca || osComPosicao.codigoPeca
-            };
+            const placeholder = { ...novaOsRow(osComPosicao), id: tempId, _optimistic: true };
             set((state) => {
                 const currentList = state.kanban.aFazer || [];
-                const novaLista = (osComPosicao.is_prioridade || osComPosicao.isPrioridade)
+                const novaLista = placeholder.is_prioridade
                     ? [placeholder, ...currentList]
                     : [...currentList, placeholder];
                 return { kanban: { ...state.kanban, aFazer: novaLista } };
@@ -1000,40 +928,39 @@ export const useAppStore = create((set) => ({
 
     criarKanbanRetrabalho: async (osOrigem, { motivo } = {}) => {
         if (!osOrigem?.id) throw new Error('O.S. de origem inválida.');
-        const codigo = osOrigem.codigo_peca || osOrigem.codigoPeca;
+        const codigo = osOrigem.codigo_peca;
         const nota = [
             `Retrabalho da peça ${codigo || osOrigem.id}.`,
             motivo ? `Motivo do refugo: ${motivo}` : null,
         ].filter(Boolean).join(' ');
         return useAppStore.getState().addOrdemServico({
-            codigoPeca: codigo,
+            codigo_peca: codigo,
             cliente: osOrigem.cliente,
             setor: osOrigem.setor,
-            linkDesenho: osOrigem.link_desenho || osOrigem.linkDesenho,
-            prazoEntrega: osOrigem.prazo_entrega || osOrigem.prazoEntrega,
+            link_desenho: osOrigem.link_desenho,
+            prazo_entrega: osOrigem.prazo_entrega,
             programador: osOrigem.programador,
             quantidade: osOrigem.quantidade || 1,
             programado: osOrigem.programado ?? true,
-            isRetrabalho: true,
+            is_retrabalho: true,
             parent_id: osOrigem.id,
-            os_grupo_id: osOrigem.os_grupo_id || osOrigem.osGrupoId || null,
-            tempoEstimadoCorteHoras: osOrigem.tempo_estimado_corte_horas || osOrigem.tempoEstimadoCorteHoras,
-            tempoEstimadoCorteMinutos: osOrigem.tempo_estimado_corte_minutos || osOrigem.tempoEstimadoCorteMinutos,
-            tempoEstimadoSetupHoras: osOrigem.tempo_estimado_setup_horas || osOrigem.tempoEstimadoSetupHoras,
-            tempoEstimadoSetupMinutos: osOrigem.tempo_estimado_setup_minutos || osOrigem.tempoEstimadoSetupMinutos,
-            totalSetups: osOrigem.total_setups || osOrigem.totalSetups || 1,
-            setupAtual: 1,
-            nomesSetups: osOrigem.nomes_setups || osOrigem.nomesSetups || [],
-            detalhesSetups: osOrigem.detalhes_setups || osOrigem.detalhesSetups || [],
-            codigoMolde: osOrigem.codigo_molde || osOrigem.codigoMolde,
-            componenteMolde: osOrigem.componente_molde || osOrigem.componenteMolde,
-            numeroPrograma: osOrigem.numero_programa || osOrigem.numeroPrograma,
-            linkPrograma: osOrigem.link_programa || osOrigem.linkPrograma,
-            estrategiaFerramental: osOrigem.estrategia_ferramental || osOrigem.estrategiaFerramental,
+            os_grupo_id: osOrigem.os_grupo_id || null,
+            tempo_estimado_corte_horas: osOrigem.tempo_estimado_corte_horas,
+            tempo_estimado_corte_minutos: osOrigem.tempo_estimado_corte_minutos,
+            tempo_estimado_setup_horas: osOrigem.tempo_estimado_setup_horas,
+            tempo_estimado_setup_minutos: osOrigem.tempo_estimado_setup_minutos,
+            total_setups: osOrigem.total_setups || 1,
+            setup_atual: 1,
+            nomes_setups: osOrigem.nomes_setups || [],
+            detalhes_setups: osOrigem.detalhes_setups || [],
+            codigo_molde: osOrigem.codigo_molde,
+            componente_molde: osOrigem.componente_molde,
+            numero_programa: osOrigem.numero_programa,
+            link_programa: osOrigem.link_programa,
+            estrategia_ferramental: osOrigem.estrategia_ferramental,
             observacoes: nota,
         });
     },
-
     addGrupoOrdensServico: async (cabecalho, kanbans) => {
         const { addOrdemServico } = useAppStore.getState();
         const grupoId = cabecalho.os_grupo_id || novoGrupoId();
@@ -1069,24 +996,10 @@ export const useAppStore = create((set) => ({
         try {
             const updated = await osService.editOs(id, fields);
             set((state) => {
-                const patch = { ...updated };
-                if (fields.em_fila !== undefined || fields.emFila !== undefined) {
-                    const v = fields.em_fila ?? fields.emFila;
-                    patch.em_fila = v;
-                    patch.emFila = v;
-                }
-                if (fields.nxImport !== undefined) {
-                    patch.nx_import = fields.nxImport;
-                    patch.nxImport = fields.nxImport;
-                }
-                if (fields.setor !== undefined) {
-                    patch.setor = fields.setor;
-                    patch.tipo_processo = fields.setor;
-                }
                 const newKanban = {};
                 for (const col of Object.keys(state.kanban)) {
                     newKanban[col] = (state.kanban[col] || []).map((os) =>
-                        os.id === id ? { ...os, ...patch } : os,
+                        os.id === id ? { ...os, ...updated } : os,
                     );
                 }
                 return { kanban: newKanban };
@@ -1100,13 +1013,13 @@ export const useAppStore = create((set) => ({
 
     syncRoteiroGrupo: async (os, roteiro) => {
         const { editOrdemServico } = useAppStore.getState();
-        const grupo = os?.os_grupo_id || os?.osGrupoId;
+        const grupo = os?.os_grupo_id;
         const state = useAppStore.getState();
         const ids = new Set();
         if (grupo) {
             Object.values(state.kanban || {}).forEach((col) => {
                 (col || []).forEach((c) => {
-                    if ((c.os_grupo_id || c.osGrupoId) === grupo) ids.add(c.id);
+                    if (c.os_grupo_id === grupo) ids.add(c.id);
                 });
             });
         } else if (os?.id) {
@@ -1116,132 +1029,53 @@ export const useAppStore = create((set) => ({
     },
 
     moveOrdemServico: async (osId, sourceCol, destCol, updatedOsParams = {}) => {
+        const oldState = structuredClone(useAppStore.getState().kanban);
+
+        // Otimista: o servidor devolve os tempos definitivos (mover_os usa a hora do banco).
+        set((draftState) => {
+            const kanban = { ...draftState.kanban };
+            let colAtual = sourceCol;
+            let idx = (kanban[sourceCol] || []).findIndex((o) => o.id === osId);
+            if (idx === -1) {
+                colAtual = Object.keys(kanban).find((k) => (kanban[k] || []).some((o) => o.id === osId));
+                if (!colAtual) return {};
+                idx = kanban[colAtual].findIndex((o) => o.id === osId);
+            }
+            const origem = [...kanban[colAtual]];
+            const [osToMove] = origem.splice(idx, 1);
+            kanban[colAtual] = origem;
+            kanban[destCol] = [...(colAtual === destCol ? origem : kanban[destCol] || []), osMovida(osToMove, destCol, updatedOsParams)];
+            return { kanban };
+        });
+
+        const MOVE_TIMEOUT_MS = 25000;
         try {
-            const state = useAppStore.getState();
-            const sourceList = Array.from(state.kanban[sourceCol]);
-            let os = sourceList.find(o => o.id === osId);
-
-            // Se não encontrou no estado local (ex: viajou no Realtime), tentamos buscar do outro state
-            if (!os) {
-                const destList = Array.from(state.kanban[destCol] || []);
-                os = destList.find(o => o.id === osId);
-            }
-
-            // --- CÁLCULO DE TEMPOS DA FASE ANTERIOR ---
-            if (os) {
-                // Pega do banco ou do estado antigo (normalizado em minúsculas para coincidir com PostgreSQL, ex: timestamp_entrada_emcorte)
-                const colKeyLower = sourceCol.toLowerCase();
-                const timestampEntrada = os[`timestamp_entrada_${colKeyLower}`] || os[`timestamp_entrada_${sourceCol}`] || os.created_at;
-                const nowMs = updatedOsParams[`timestampEntrada_${destCol}`]
-                    ? new Date(updatedOsParams[`timestampEntrada_${destCol}`]).getTime()
-                    : Date.now();
-                const startMs = new Date(timestampEntrada).getTime();
-
-                let tempoBrutoHoras = Math.max(0, (nowMs - startMs) / (1000 * 60 * 60));
-
-                const pausasArray = os.historico_pausas || os.historicoPausas || [];
-                const pausasNestaFase = pausasArray.filter(p => p.fase === sourceCol);
-                const tempoMortoHoras = pausasNestaFase.reduce((acc, p) => acc + p.duracaoHoras, 0);
-
-                const tempoLiquidoHoras = Math.max(0, tempoBrutoHoras - tempoMortoHoras);
-
-                const novosTemposFases = {
-                    ...(os.tempos_fases || os.temposFases || { setup: 0, emCorte: 0, afericao: 0 }),
-                };
-                novosTemposFases[sourceCol] = (novosTemposFases[sourceCol] || 0) + tempoLiquidoHoras;
-
-                // Embutir no pacote que vai pro Supabase
-                updatedOsParams.temposFases = novosTemposFases;
-
-                // Garantir limpeza de pausa se mover de coluna (mesmo que moveOs no service já faça, aqui no front é bom ser explícito)
-                updatedOsParams.is_pausado = false;
-                updatedOsParams.data_pausa = null;
-                updatedOsParams.motivo_pausa = null;
-                updatedOsParams.observacao_pausa = null;
-
-                // Ao devolver para A fazer: libera máquina e operador
-                if (destCol === 'aFazer') {
-                    updatedOsParams.maquina_nome = null;
-                    updatedOsParams.operador_atual = null;
-                } else if (os.aguardando_tt && updatedOsParams.aguardando_tt === undefined) {
-                    // Saiu da fila = peça voltou do tratamento térmico externo
-                    updatedOsParams.aguardando_tt = false;
-                    updatedOsParams.observacao_tt = null;
-                }
-            }
-            // -------------------------------------------
-
-            const novoStatus = colKeyToStatus(destCol);
-            // --- ATUALIZAÇÃO OTIMISTA (FRONT-END PRIMEIRO) ---
-            const oldState = structuredClone(useAppStore.getState().kanban);
-
-            set((draftState) => {
-                const draftSourceList = Array.from(draftState.kanban[sourceCol]);
-                const draftDestList = Array.from(draftState.kanban[destCol]);
-
-                const osIndex = draftSourceList.findIndex(o => o.id === osId);
-                let osToMove = null;
-                if (osIndex !== -1) {
-                    [osToMove] = draftSourceList.splice(osIndex, 1);
-                } else {
-                    // Se não estava na source, procura em todas (fallback para Realtime)
-                    for (const k of Object.keys(draftState.kanban)) {
-                        const idx = draftState.kanban[k].findIndex(o => o.id === osId);
-                        if (idx !== -1) {
-                            [osToMove] = draftState.kanban[k].splice(idx, 1);
-                            break;
-                        }
-                    }
-                }
-
-                if (osToMove) {
-                    const updatedOptimisticOs = { ...osToMove, ...updatedOsParams, status: novoStatus };
-                    draftDestList.push(updatedOptimisticOs);
-                    return {
-                        kanban: {
-                            ...draftState.kanban,
-                            [sourceCol]: draftSourceList,
-                            [destCol]: draftDestList
-                        }
-                    };
-                }
-                return {};
-            });
-
-            // Persiste no banco em background (com timeout para não travar em rede lenta)
-            const MOVE_TIMEOUT_MS = 25000;
-            const moveWithTimeout = Promise.race([
-                osService.moveOs(osId, novoStatus, updatedOsParams),
+            const updatedOsBanco = await Promise.race([
+                osService.moveOs(osId, destCol, updatedOsParams),
                 new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Tempo esgotado ao salvar a movimentação. Tente novamente.')), MOVE_TIMEOUT_MS)
-                )
+                ),
             ]);
-            try {
-                const updatedOsBanco = await moveWithTimeout;
-                set((state) => {
-                    const newKanban = { ...state.kanban };
-                    const colKey = destCol;
-                    newKanban[colKey] = newKanban[colKey].map(os => os.id === osId ? updatedOsBanco : os);
-                    return { kanban: newKanban };
-                });
-            } catch (err) {
-                console.error("Erro na transição no Supabase, revertendo...", err);
-                set({ kanban: oldState });
-                throw err;
-            }
-
-            // Se o destino for 'aFazer', persiste a ordem (inclusive do novo item que entrou)
-            if (destCol === 'aFazer') {
-                const updatedList = useAppStore.getState().kanban.aFazer;
-                osService.updatePositions(updatedList.map(o => o.id)).catch(console.error);
-            }
-
-            if (destCol === 'concluido') {
-                await ferramentasMaquinaService.limparPorOs(osId);
-                await useAppStore.getState().fetchFerramentasMaquina();
-            }
+            set((state) => ({
+                kanban: {
+                    ...state.kanban,
+                    [destCol]: state.kanban[destCol].map((o) => (o.id === osId ? { ...o, ...updatedOsBanco } : o)),
+                },
+            }));
         } catch (err) {
-            console.error("Erro na transição no Supabase", err);
+            console.error('Erro ao mover O.S., revertendo...', err);
+            set({ kanban: oldState, erroOperacao: `Não foi possível mover a O.S.: ${err.message || 'erro de conexão'}` });
+            throw err;
+        }
+
+        if (destCol === 'aFazer') {
+            const updatedList = useAppStore.getState().kanban.aFazer;
+            osService.updatePositions(updatedList.map((o) => o.id)).catch(console.error);
+        }
+
+        if (destCol === 'concluido') {
+            await ferramentasMaquinaService.limparPorOs(osId);
+            await useAppStore.getState().fetchFerramentasMaquina();
         }
     },
 
@@ -1271,71 +1105,29 @@ export const useAppStore = create((set) => ({
     },
 
     togglePausaOrdemServico: async (osId, colKey, pauseData) => {
-        const state = useAppStore.getState();
-        const list = Array.from(state.kanban[colKey]);
-        const index = list.findIndex(os => os.id === osId);
-        if (index === -1) return;
-
-        let os = list[index];
-        let updatePayload = { isPausado: pauseData.isPausado };
-
-        if (!pauseData.isPausado) {
-            // Está despausando
-            const dataRetomada = pauseData.dataRetomada || new Date().toISOString();
-            const startPausa = os.data_pausa || os.dataPausa || os.data_Pausa;
-
-            if (startPausa) {
-                const duracaoMs = new Date(dataRetomada) - new Date(startPausa);
-                const duracaoHoras = Math.max(0, duracaoMs / (1000 * 60 * 60));
-
-                const novaPausa = {
-                    inicio: startPausa,
-                    fim: dataRetomada,
-                    motivo: os.motivo_pausa || os.motivoPausa || os.motivo_pausa,
-                    observacao: os.observacao_pausa || os.observacaoPausa || os.observacao_pausa,
-                    duracaoHoras,
-                    fase: colKey
-                };
-
-                updatePayload.historicoPausas = [...(os.historico_pausas || os.historicoPausas || []), novaPausa];
-            }
-
-            // Limpa campos transientes no banco
-            updatePayload.dataPausa = null;
-            updatePayload.motivoPausa = null;
-            updatePayload.observacaoPausa = null;
-        } else {
-            // Está pausando - garante que o payload leve os dados do modal
-            updatePayload.dataPausa = pauseData.dataPausa;
-            updatePayload.motivoPausa = pauseData.motivoPausa;
-            updatePayload.observacaoPausa = pauseData.observacaoPausa;
-        }
-
         try {
-            const updatedOsBanco = await osService.updateOs(osId, updatePayload);
-
-            // No front end lidamos com as chaves transientes em memória (dataPausa, motivo) pro card
-            set((stateDraft) => {
-                const draftList = Array.from(stateDraft.kanban[colKey]);
-                const dIndex = draftList.findIndex(o => o.id === osId);
-                if (dIndex !== -1) {
-                    if (pauseData.isPausado) {
-                        draftList[dIndex] = { ...updatedOsBanco, ...pauseData };
-                    } else {
-                        draftList[dIndex] = {
-                            ...updatedOsBanco,
-                            dataPausa: null,
-                            motivoPausa: null,
-                            observacaoPausa: null
-                        };
-                    }
-                }
-                return { kanban: { ...stateDraft.kanban, [colKey]: draftList } };
-            });
+            const updatedOsBanco = pauseData.isPausado
+                ? await osService.pausar(osId, pauseData.motivoPausa, pauseData.observacaoPausa)
+                : await osService.retomar(osId);
+            useAppStore.getState().aplicarOsDoBanco(colKey, updatedOsBanco);
         } catch (e) {
-            console.error("Erro ao pausar no supabase", e);
+            console.error('Erro ao pausar/retomar O.S.', e);
+            set({ erroOperacao: `Não foi possível ${pauseData.isPausado ? 'pausar' : 'retomar'} a O.S.: ${e.message || 'erro de conexão'}` });
+            throw e;
         }
     },
+
+    /** Troca o card pela linha devolvida pelo banco, preservando o que só existe no front (ex.: valor_orcado). */
+    aplicarOsDoBanco: (colKey, osBanco) => {
+        set((state) => ({
+            kanban: {
+                ...state.kanban,
+                [colKey]: (state.kanban[colKey] || []).map((o) => (o.id === osBanco.id ? { ...o, ...osBanco } : o)),
+            },
+        }));
+    },
+
+    limparErroOperacao: () => set({ erroOperacao: null }),
 
     updateOrdemServico: async (osId, colKeyOrUpdates, maybeUpdates) => {
         const updates = typeof colKeyOrUpdates === 'object' ? colKeyOrUpdates : maybeUpdates;
@@ -1346,10 +1138,10 @@ export const useAppStore = create((set) => ({
         set((state) => {
             const newKanban = { ...state.kanban };
             if (colKey && newKanban[colKey]) {
-                newKanban[colKey] = newKanban[colKey].map(o => o.id === osId ? { ...o, ...updates } : o);
+                newKanban[colKey] = newKanban[colKey].map(o => o.id === osId ? { ...o, ...osPatch(updates) } : o);
             } else {
                 for (const key of Object.keys(newKanban)) {
-                    newKanban[key] = (newKanban[key] || []).map(o => o.id === osId ? { ...o, ...updates } : o);
+                    newKanban[key] = (newKanban[key] || []).map(o => o.id === osId ? { ...o, ...osPatch(updates) } : o);
                 }
             }
             return { kanban: newKanban };
@@ -1388,10 +1180,10 @@ export const useAppStore = create((set) => ({
         const ratioFaltantes = totalOriginal > 0 ? faltantes / totalOriginal : 0;
 
         // Tempos estimados proporcionais (setup e corte são lineares com a quantidade)
-        const setupH = parseInt(originalOsData.tempo_estimado_setup_horas || originalOsData.tempoEstimadoSetupHoras || 0);
-        const setupM = parseInt(originalOsData.tempo_estimado_setup_minutos || originalOsData.tempoEstimadoSetupMinutos || 0);
-        const corteH = parseInt(originalOsData.tempo_estimado_corte_horas || originalOsData.tempoEstimadoCorteHoras || 0);
-        const corteM = parseInt(originalOsData.tempo_estimado_corte_minutos || originalOsData.tempoEstimadoCorteMinutos || 0);
+        const setupH = parseInt(originalOsData.tempo_estimado_setup_horas || 0);
+        const setupM = parseInt(originalOsData.tempo_estimado_setup_minutos || 0);
+        const corteH = parseInt(originalOsData.tempo_estimado_corte_horas || 0);
+        const corteM = parseInt(originalOsData.tempo_estimado_corte_minutos || 0);
 
         const setupTotalMin = setupH * 60 + setupM;
         const corteTotalMin = corteH * 60 + corteM;

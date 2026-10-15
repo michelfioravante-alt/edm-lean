@@ -96,20 +96,20 @@ export default function Registros() {
 
     // Unique values for filter dropdowns
     const maquinasUnicas = useMemo(() =>
-        [...new Set(osDoPerfil.map(os => os.maquina_nome || os.maquina).filter(Boolean))], [osDoPerfil]);
+        [...new Set(osDoPerfil.map(os => os.maquina_nome).filter(Boolean))], [osDoPerfil]);
     const operadoresUnicos = useMemo(() =>
-        [...new Set(osDoPerfil.map(os => os.operador_atual || os.operadorAtual).filter(Boolean))], [osDoPerfil]);
+        [...new Set(osDoPerfil.map(os => os.operador_atual).filter(Boolean))], [osDoPerfil]);
 
     const hasActiveFilters = operadorFilter || maquinaFilter || mesFilter || searchTerm;
 
     // Filtra
     const filteredOS = useMemo(() => {
         const result = osDoPerfil.filter(os => {
-            const maquina = os.maquina_nome || os.maquina || '';
-            const operador = os.operador_atual || os.operadorAtual || '';
-            const codigo = os.codigo_peca || os.codigoPeca || '';
+            const maquina = os.maquina_nome || '';
+            const operador = os.operador_atual || '';
+            const codigo = os.codigo_peca || '';
             const cliente = os.cliente || '';
-            const dataOS = new Date(os.created_at || os.createdAt || 0);
+            const dataOS = new Date(os.created_at || 0);
             const mesDaOS = isNaN(dataOS) ? '' : `${dataOS.getFullYear()}-${String(dataOS.getMonth() + 1).padStart(2, '0')}`;
 
             const matchSearch = !searchTerm ||
@@ -125,7 +125,7 @@ export default function Registros() {
         });
 
         result.sort((a, b) =>
-            new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0)
+            new Date(b.created_at || 0) - new Date(a.created_at || 0)
         );
         return result;
     }, [osDoPerfil, searchTerm, operadorFilter, maquinaFilter, mesFilter]);
@@ -164,8 +164,8 @@ export default function Registros() {
 
     const getStatusBadge = (os) => {
         const status = os.statusLocal;
-        const isPausado = os.is_pausado || os.isPausado;
-        const resultadoAfericao = os.resultado_afericao || os.resultadoAfericao;
+        const isPausado = os.is_pausado;
+        const resultadoAfericao = os.resultado_afericao;
 
         if (status === 'Excluído')
             return <span className="px-2 py-0.5 rounded bg-[rgba(200,85,88,0.12)] text-[#C85558] text-[10px] font-semibold border border-[#C85558]/30 w-max">Cancelado</span>;
@@ -313,10 +313,10 @@ export default function Registros() {
                                         onClick={() => setSelectedOs(os)}
                                     >
                                         <td className="px-6 py-4 whitespace-nowrap text-xs">
-                                            {(() => { const d = new Date(os.created_at || os.createdAt); return isNaN(d) ? '-' : format(d, 'dd/MM/yyyy HH:mm'); })()}
+                                            {(() => { const d = new Date(os.created_at); return isNaN(d) ? '-' : format(d, 'dd/MM/yyyy HH:mm'); })()}
                                         </td>
                                         <td className="px-6 py-3 font-mono text-sm font-medium text-[#E7E9ED] group-hover:text-kanban-amber">
-                                            {os.codigo_peca || os.codigoPeca || 'S/N'}
+                                            {os.codigo_peca || 'S/N'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-col">
@@ -324,17 +324,17 @@ export default function Registros() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {os.maquina_nome || os.maquina || '-'}
+                                            {os.maquina_nome || '-'}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {os.operador_atual || os.operadorAtual || '-'}
+                                            {os.operador_atual || '-'}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col items-end gap-1">
                                                 {getStatusBadge(os)}
-                                                {(os.resultadoAfericao === 'Refugo' || os.resultado_afericao === 'Refugo') && (os.motivo_refugo || os.motivoRefugo) && (
+                                                {os.resultado_afericao === 'Refugo' && (os.motivo_refugo) && (
                                                     <span className="text-[10px] text-[#C85558]/70 italic text-right max-w-[120px] line-clamp-2">
-                                                        "{os.motivo_refugo || os.motivoRefugo}"
+                                                        "{os.motivo_refugo}"
                                                     </span>
                                                 )}
                                             </div>
@@ -362,14 +362,14 @@ export default function Registros() {
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="text-[10px] font-medium uppercase tracking-wider text-[#565B68]">
-                                    {(() => { const d = new Date(os.created_at || os.createdAt); return isNaN(d) ? '-' : format(d, 'dd/MM/yyyy HH:mm'); })()}
+                                    {(() => { const d = new Date(os.created_at); return isNaN(d) ? '-' : format(d, 'dd/MM/yyyy HH:mm'); })()}
                                 </div>
                                 {getStatusBadge(os)}
                             </div>
 
                             <div className="mb-4">
                                 <h3 className="text-sm font-semibold text-[#E7E9ED] font-mono tracking-tight">
-                                    {os.codigo_peca || os.codigoPeca || 'S/N'}
+                                    {os.codigo_peca || 'S/N'}
                                 </h3>
                                 <p className="text-sm text-[#7B808F] font-medium">
                                     Cliente: <span className="text-[#E7E9ED]">{os.cliente || '-'}</span>
@@ -379,11 +379,11 @@ export default function Registros() {
                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#262A33]">
                                 <div>
                                     <div className="text-[10px] font-medium uppercase tracking-wider text-[#565B68] mb-1">Máquina</div>
-                                    <div className="text-sm text-[#E7E9ED] font-medium">{os.maquina_nome || os.maquina || '-'}</div>
+                                    <div className="text-sm text-[#E7E9ED] font-medium">{os.maquina_nome || '-'}</div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-medium uppercase tracking-wider text-[#565B68] mb-1">Operador</div>
-                                    <div className="text-sm text-[#E7E9ED] font-medium">{os.operador_atual || os.operadorAtual || '-'}</div>
+                                    <div className="text-sm text-[#E7E9ED] font-medium">{os.operador_atual || '-'}</div>
                                 </div>
                             </div>
                         </div>
@@ -417,7 +417,7 @@ export default function Registros() {
                                         <th className="px-5 py-3">Molde</th>
                                         <th className="px-5 py-3">Cliente</th>
                                         <th className="px-5 py-3 text-right">Horas máq.</th>
-                                        <th className="px-5 py-3 text-right">Ref. interna</th>
+                                        {role === 'admin' && <th className="px-5 py-3 text-right">Ref. interna</th>}
                                         <th className="px-5 py-3">Status</th>
                                         <th className="px-5 py-3 text-right">Ação</th>
                                     </tr>
@@ -425,7 +425,7 @@ export default function Registros() {
                                 <tbody>
                                     {execucoesAnteriores.map((os) => {
                                         const hr = resumoHorasOs(os, config || {});
-                                        const d = new Date(os.created_at || os.createdAt);
+                                        const d = new Date(os.created_at);
                                         return (
                                             <tr
                                                 key={os.id}
@@ -439,7 +439,7 @@ export default function Registros() {
                                                 <td className="px-5 py-3">{hr.molde}</td>
                                                 <td className="px-5 py-3">{hr.cliente}</td>
                                                 <td className="px-5 py-3 text-right font-mono text-[#D97D3D]">{hr.formatado.totalReal}</td>
-                                                <td className="px-5 py-3 text-right text-[#9DA2AE]">{hr.formatado.referenciaInterna}</td>
+                                                {role === 'admin' && <td className="px-5 py-3 text-right text-[#9DA2AE]">{hr.formatado.referenciaInterna}</td>}
                                                 <td className="px-5 py-3 text-xs">{os.status || '—'}</td>
                                                 <td className="px-5 py-3 text-right">
                                                     <button

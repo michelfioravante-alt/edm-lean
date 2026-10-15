@@ -7,7 +7,7 @@ import ChartCard, { ChartEmpty } from './ChartCard';
 export default function MachineHoursChart({ concluidas = [] }) {
     const ranking = {};
     concluidas.forEach((os) => {
-        const name = os.maquina_nome || os.maquina;
+        const name = os.maquina_nome;
         if (!name) return;
         const h = horasKanban(os);
         ranking[name] = (ranking[name] || 0) + h.setupReal + h.corteReal;

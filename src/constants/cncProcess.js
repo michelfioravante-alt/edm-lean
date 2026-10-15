@@ -59,16 +59,8 @@ export const COLUMN_LABELS = Object.fromEntries(
     Object.values(KANBAN_COLUMNS).map((col) => [col.key, col.label])
 );
 
-/** Status legados do EDM Lean — compatibilidade se reutilizar banco antigo */
-const LEGACY_STATUS_TO_COL = {
-    'Prep. Ferramental': 'setup',
-    'Set-up': 'setup',
-    'Em Corte': 'emCorte',
-    'Aferição': 'afericao',
-};
-
 export function statusToColKey(status) {
-    return STATUS_TO_COL[status] || LEGACY_STATUS_TO_COL[status] || null;
+    return STATUS_TO_COL[status] || null;
 }
 
 export function colKeyToStatus(colKey) {

@@ -73,7 +73,6 @@ function montarLinhasKanban(pecas, molde, origemLabel) {
         ].filter(Boolean).join('\n');
         const nxBase = {
             origem: origemLabel,
-            em_fila: true,
             material: p.material || null,
             processo: p.processo || null,
             tratamento: p.tratamento || null,

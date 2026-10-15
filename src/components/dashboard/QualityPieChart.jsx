@@ -5,10 +5,10 @@ import ChartCard, { ChartEmpty } from './ChartCard';
 
 export default function QualityPieChart({ concluidas = [] }) {
     const aprovadas = concluidas.filter((os) => {
-        const r = os.resultado_afericao || os.resultadoAfericao;
+        const r = os.resultado_afericao;
         return r === 'Aprovada' || r === 'Aprovada';
     }).length;
-    const refugo = concluidas.filter((os) => (os.resultado_afericao || os.resultadoAfericao) === 'Refugo').length;
+    const refugo = concluidas.filter((os) => (os.resultado_afericao) === 'Refugo').length;
     const total = aprovadas + refugo;
     const fpy = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
 
