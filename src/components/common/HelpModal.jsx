@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { HelpCircle, Printer, X } from 'lucide-react';
 
 const APP_HOST = 'edmlean.com.br';
@@ -71,7 +72,8 @@ export function HelpModal({ open, onClose }) {
 
     const printPdf = () => window.print();
 
-    return (
+    // Portal: cabeçalhos com backdrop-blur prendem elementos `fixed` dentro deles.
+    return createPortal(
         <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center p-0 sm:p-4 print:static print:p-0">
             <button type="button" className="absolute inset-0 bg-black/70 print:hidden" aria-label="Fechar" onClick={onClose} />
             <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-[#262A33] bg-[#181B22] sm:rounded-xl print:hidden">
@@ -115,7 +117,8 @@ export function HelpModal({ open, onClose }) {
                     </p>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }
 

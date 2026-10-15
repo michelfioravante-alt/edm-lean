@@ -28,6 +28,35 @@ function Captura({ src, alt, largura, altura, className = '' }) {
     );
 }
 
+const TITULO = ['Ordem', 'na', 'ferramentaria.', 'Sem', 'o', 'peso', 'de', 'um', 'ERP.'];
+const PASSO_TITULO_MS = 90;
+
+function TituloAnimado() {
+    const fimPalavras = (TITULO.length - 1) * PASSO_TITULO_MS + 700;
+    return (
+        <>
+            <span className="sr-only">{TITULO.join(' ')}</span>
+            <span aria-hidden>
+                {TITULO.map((palavra, i) => {
+                    const ultima = i === TITULO.length - 1;
+                    return (
+                        <React.Fragment key={palavra + i}>
+                            <span className="titulo-palavra" style={{ animationDelay: `${i * PASSO_TITULO_MS}ms` }}>
+                                {ultima ? (
+                                    <>
+                                        <span className="titulo-riscado" style={{ '--atraso-risco': `${fimPalavras}ms` }}>ERP</span>.
+                                    </>
+                                ) : palavra}
+                            </span>
+                            {i < TITULO.length - 1 && ' '}
+                        </React.Fragment>
+                    );
+                })}
+            </span>
+        </>
+    );
+}
+
 function VideoFluxo({ className = '' }) {
     const ref = useRef(null);
 
@@ -164,7 +193,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         Produção · Ferramentaria · CNC · Eletrofio
                     </p>
                     <h1 className="mt-5 max-w-[18ch] font-['Space_Grotesk'] text-[40px] font-medium leading-[1.12] tracking-tight text-white sm:text-[56px]">
-                        Ordem na ferramentaria. Sem o peso de um ERP.
+                        <TituloAnimado />
                     </h1>
                     <p className="mt-6 max-w-[540px] text-[17px] leading-relaxed text-[#9DA2AE]">
                         Software de chão de fábrica para equipes pequenas: kanban por setor, roteiro da peça, folha de processo e estoque de ferramenta — no mesmo lugar.
