@@ -28,12 +28,36 @@ export function novaLinhaChecklist(estoqueItem = null, slot = '') {
     return {
         id,
         estoqueItemId: estoqueItem?.id || '',
+        estoque_item_id: estoqueItem?.id || '',
         nome: estoqueItem?.nome || '',
         slot: slot || '',
         montada: false,
         montadaEm: null,
+        montada_em: null,
         operadorNome: null,
+        operador_nome: null,
     };
+}
+
+/** Serializa checklist no formato estável (snake + camel) para JSONB. */
+export function serializarChecklistFerramentas(lista) {
+    return (lista || []).map((row) => {
+        const estoqueItemId = row.estoqueItemId || row.estoque_item_id || '';
+        const montadaEm = row.montadaEm || row.montada_em || null;
+        const operadorNome = row.operadorNome || row.operador_nome || null;
+        return {
+            id: row.id,
+            estoqueItemId,
+            estoque_item_id: estoqueItemId,
+            nome: row.nome || '',
+            slot: row.slot || '',
+            montada: !!row.montada,
+            montadaEm,
+            montada_em: montadaEm,
+            operadorNome,
+            operador_nome: operadorNome,
+        };
+    });
 }
 
 export function marcarItensChecklist(lista, idsMarcados, operadorNome) {

@@ -15,12 +15,25 @@ export const TIPOS_KANBAN_GESTOR = ETAPAS_ROTEIRO;
 
 export const TIPOS_SERVICO_EXTERNO = [
     { id: 'tratamento', label: 'Tratamento térmico' },
+    { id: 'tempera', label: 'Têmpera' },
     { id: 'usinagem', label: 'Usinagem terceira' },
     { id: 'outro', label: 'Outro' },
 ];
 
+/** Normaliza legado do banco (ex.: tempera) para o id da UI. */
+export function normalizarTipoServicoExterno(tipo) {
+    const t = String(tipo || '').trim().toLowerCase();
+    if (!t) return 'outro';
+    if (t === 'tempera' || t === 'têmpera' || t === 'tt') return 'tempera';
+    if (t === 'tratamento' || t === 'tratamento_termico' || t === 'tratamento térmico') return 'tratamento';
+    if (t === 'usinagem' || t === 'terceiro') return 'usinagem';
+    if (TIPOS_SERVICO_EXTERNO.some((x) => x.id === t)) return t;
+    return 'outro';
+}
+
 export function rotuloTipoServicoExterno(tipo) {
-    return TIPOS_SERVICO_EXTERNO.find((t) => t.id === tipo)?.label || tipo || '—';
+    const id = normalizarTipoServicoExterno(tipo);
+    return TIPOS_SERVICO_EXTERNO.find((t) => t.id === id)?.label || tipo || '—';
 }
 
 export function slugEtapaPersonalizada(label) {
@@ -145,13 +158,11 @@ export function rankingFornecedoresExternos(kanban) {
     })).sort((a, b) => (a.mediaDias ?? 999) - (b.mediaDias ?? 999));
 }
 
-/** Cartões antigos (sem flag) já podem ir para set-up. Novos nascem programado=false. */
+/** Precisa programar enquanto programado !== true (null/legado também bloqueia setup). EXTERNO não programa. */
 export function kanbanPrecisaProgramar(os) {
     if (!os) return false;
     if ((os.setor) === 'EXTERNO') return false;
-    if (os.programado === true) return false;
-    if (os.programado === false) return true;
-    return false;
+    return os.programado !== true;
 }
 
 /** Peça importada ainda na fila do molde (aba Moldes): só entra no quadro do setor quando o gestor libera. */

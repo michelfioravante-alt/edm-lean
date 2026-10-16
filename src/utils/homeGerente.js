@@ -142,7 +142,7 @@ export function montarHomeGerente(kanban, estoque, config = {}) {
             value: wipRs,
             money: true,
             hint: `${open.length} kanban(s) abertos`,
-            legend: 'WIP = trabalho em processo: horas previstas (ou reais, se já rodou) × custo/hora da máquina. É o dinheiro parado no chão, não o faturado.',
+            legend: 'Dinheiro parado no chão: horas (reais se já cronometrou, senão CAM) × tarifa do setor — setup+corte+aferição. Diferente do Dashboard, que mostra WIP em quantidade de peças.',
             tone: 'neutral',
             filtroCarteira: 'todas',
         },

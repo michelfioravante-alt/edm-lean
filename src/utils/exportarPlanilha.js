@@ -426,13 +426,13 @@ export async function gerarWorkbook({
     if (set.has('resumo')) {
         adicionarAba(wb, 'Resumo', ['Indicador', 'Valor', 'Unidade', 'Nota'], [
             ['O.S. concluídas', concluidasPeriodo.length, 'un', 'No período'],
-            ['O.S. abertas (WIP)', abertas.length, 'un', 'Foto agora'],
-            ['Eficiência CAM', num(kpis.oee, 1), '%', 'Previsto ÷ setup + corte reais'],
-            ['FPY', num(kpis.fpy, 1), '%', 'Aprovadas na 1ª aferição'],
+            ['O.S. abertas (WIP peças)', abertas.length, 'un', 'Contagem no quadro agora'],
+            ['Eficiência CAM', kpis.oee != null ? num(kpis.oee, 1) : '—', '%', 'Previsto ÷ setup + corte; sem dado = —'],
+            ['FPY', kpis.fpy != null ? num(kpis.fpy, 1) : '—', '%', 'Aprovadas ÷ aferidas; sem aferição = —'],
             ['Horas CAM', num(kpis.planH), 'h', ''],
-            ['Horas máquina', num(kpis.realCamH), 'h', ''],
+            ['Horas setup+corte', num(kpis.realCamH), 'h', 'Base da eficiência CAM'],
             ['Lead time médio', num(kpis.leadMedio), 'h', ''],
-            ['Custo máquina', num(kpis.custoMaquina), 'R$', 'Horas × R$/h do setor'],
+            ['Custo máquina', num(kpis.custoMaquina), 'R$', 'Setup+corte+aferição × R$/h (inclui aferição)'],
             ['Valor orçado', num(kpis.orcado), 'R$', ''],
             ['Custo de pausa', num(kpis.valorPausa), 'R$', ''],
             ['Custo de refugo', num(kpis.valorRefugo), 'R$', ''],
@@ -512,9 +512,16 @@ export async function gerarWorkbook({
             ]));
     }
     if (set.has('terceiros')) {
+        // Foto atual do quadro (não aplica filtro de mês da capa — ranking é “agora”)
         const rank = rankingFornecedoresExternos(kanban);
-        adicionarAba(wb, 'Servico fora', ['Fornecedor', 'Peças lá agora', 'Ciclos', 'Média de dias'],
-            rank.map((r) => [r.nome, r.laAgora, r.ciclos, r.mediaDias != null ? num(r.mediaDias, 1) : null]));
+        adicionarAba(wb, 'Servico fora', ['Fornecedor', 'Peças lá agora', 'Ciclos', 'Média de dias', 'Nota'],
+            rank.map((r) => [
+                r.nome,
+                r.laAgora,
+                r.ciclos,
+                r.mediaDias != null ? num(r.mediaDias, 1) : null,
+                'Snapshot do kanban agora (independe do período da capa)',
+            ]));
     }
 
     return wb;

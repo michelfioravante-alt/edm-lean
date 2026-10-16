@@ -5,7 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { COLUMN_LABELS, ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
 import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
-import { lerChecklistFerramentas, marcarItensChecklist, progressoChecklist } from '../../utils/ferramentasChecklist';
+import { lerChecklistFerramentas, marcarItensChecklist, progressoChecklist, serializarChecklistFerramentas } from '../../utils/ferramentasChecklist';
 
 export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, targetColumnTitle, destCol, osData }) {
     const close = onClose || onCancel;
@@ -103,10 +103,12 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
             if (isSetup) {
                 payload.estrategia_ferramental = estrategiaFerramental;
                 if (checklistFerramentas.length > 0) {
-                    payload.checklistFerramentas = marcarItensChecklist(
-                        checklistFerramentas,
-                        idsFerramentasAgora,
-                        selectedOperador
+                    payload.checklistFerramentas = serializarChecklistFerramentas(
+                        marcarItensChecklist(
+                            checklistFerramentas,
+                            idsFerramentasAgora,
+                            selectedOperador,
+                        ),
                     );
                 }
                 if (estrategiaFerramental === 'lote') {

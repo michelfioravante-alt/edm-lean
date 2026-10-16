@@ -42,20 +42,34 @@ export default function Estoque() {
         fetchMovimentacoesEstoque();
     }, [fetchMovimentacoesEstoque]);
 
+    // Estado Novo Item
+    const [novoNome, setNovoNome] = useState('');
+    const [novaQtd, setNovaQtd] = useState('');
+    const [novoAlerta, setNovoAlerta] = useState('');
+    const [novoSetor, setNovoSetor] = useState(isProgrammerLocked ? effectiveSector : 'EDM_FIO');
+    const [novaUnidade, setNovaUnidade] = useState('kg');
+    const [setorFiltro, setSetorFiltro] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
+    const [buscaEstoque, setBuscaEstoque] = useState('');
+
     useEffect(() => {
         if (!isProgrammerLocked) return;
         setNovoSetor(effectiveSector);
         setSetorFiltro(effectiveSector);
     }, [isProgrammerLocked, effectiveSector]);
 
-    // Estado Novo Item
-    const [novoNome, setNovoNome] = useState('');
-    const [novaQtd, setNovaQtd] = useState('');
-    const [novoAlerta, setNovoAlerta] = useState('');
-    const [novoSetor, setNovoSetor] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
-    const [novaUnidade, setNovaUnidade] = useState('un');
-    const [setorFiltro, setSetorFiltro] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
-    const [buscaEstoque, setBuscaEstoque] = useState('');
+    // Aba ativa sugere o setor do cadastro (evita gravar fio EDM como "Geral")
+    useEffect(() => {
+        if (isProgrammerLocked) return;
+        if (setorFiltro && setorFiltro !== 'TODOS') {
+            setNovoSetor(setorFiltro);
+            if (setorFiltro === 'EDM_FIO') setNovaUnidade((u) => (u === 'un' ? 'kg' : u));
+        }
+    }, [isProgrammerLocked, setorFiltro]);
+
+    const escolherSetorCadastro = (setor) => {
+        setNovoSetor(setor);
+        if (setor === 'EDM_FIO') setNovaUnidade((u) => (u === 'un' ? 'kg' : u));
+    };
 
     // Estado Deleção de Estoque
     const [itemParaDeletar, setItemParaDeletar] = useState(null);
@@ -73,12 +87,17 @@ export default function Estoque() {
         e.preventDefault();
         if (novoNome.trim() && novaQtd && novoAlerta) {
             setErro('');
+            const setorSalvar = isProgrammerLocked ? effectiveSector : novoSetor;
             try {
-                await addEstoqueItem(novoNome.trim(), novaQtd, novoAlerta, isProgrammerLocked ? effectiveSector : novoSetor, novaUnidade);
+                await addEstoqueItem(novoNome.trim(), novaQtd, novoAlerta, setorSalvar, novaUnidade);
                 setNovoNome('');
                 setNovaQtd('');
                 setNovoAlerta('');
-                setNovoSetor(isProgrammerLocked ? effectiveSector : 'TODOS');
+                // Mantém o setor escolhido (não volta para Geral)
+                setNovoSetor(isProgrammerLocked ? effectiveSector : setorSalvar);
+                if (!isProgrammerLocked && setorSalvar && setorSalvar !== 'TODOS') {
+                    setSetorFiltro(setorSalvar);
+                }
             } catch (err) {
                 setErro(`Não foi possível cadastrar o item: ${err.message}`);
             }
@@ -199,7 +218,9 @@ export default function Estoque() {
                         {/* Formulário Novo Item */}
                         <form onSubmit={handleAddItem} className="bg-[#111318]/80 p-4 rounded-xl border border-[#262A33] space-y-3">
                             <h4 className="font-semibold text-sm text-[#E7E9ED]">Cadastrar ou somar SKU</h4>
-                            <p className="text-[11px] text-[#565B68]">Mesmo nome + setor soma a quantidade. Não cria duplicata.</p>
+                            <p className="text-[11px] text-[#565B68]">
+                                Mesmo nome + setor soma a quantidade. Fio/resina: escolha <span className="text-[#9DA2AE]">Eletroerosão a Fio</span> — “Geral” é só para fluídos comuns.
+                            </p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className={titleClasses}>Nome do Item</label>
@@ -215,7 +236,7 @@ export default function Estoque() {
                                     ) : (
                                     <select
                                         value={novoSetor}
-                                        onChange={e => setNovoSetor(e.target.value)}
+                                        onChange={(e) => escolherSetorCadastro(e.target.value)}
                                         className={inputClasses}
                                     >
                                         <option value="TODOS">Geral / Toda Fábrica (Fluídos, Graxas)</option>
@@ -307,9 +328,9 @@ export default function Estoque() {
                                 const estoqueFiltrado = (isProgrammerLocked
                                     ? estoqueDoPerfil
                                     : estoque.filter(i => {
+                                    // Aba por setor: só o setor exato. "Geral" aparece só em Todos.
                                     if (setorFiltro === 'TODOS') return true;
-                                    if (!i.setor || i.setor === 'TODOS') return true;
-                                    return i.setor === setorFiltro;
+                                    return (i.setor || 'TODOS') === setorFiltro;
                                 })).filter((i) => {
                                     const q = buscaEstoque.trim().toLowerCase();
                                     if (!q) return true;

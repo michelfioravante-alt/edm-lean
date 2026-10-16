@@ -15,6 +15,11 @@ export const configService = {
         return Array.isArray(data) ? (data[0] || null) : data;
     },
 
+    async marcarOnboarding(concluido = true) {
+        const { error } = await supabase.rpc('marcar_onboarding_concluido', { p_concluido: !!concluido });
+        if (error) throw error;
+    },
+
     async upsert({ custoHoraMaquina, custoHoraCnc, custoHoraEdm, turnos, pinOnboarding, modoMagazineDefault, baixaEstoqueNoSetup, etapasPersonalizadas }) {
         const empresaId = getEmpresaId();
         const payload = {

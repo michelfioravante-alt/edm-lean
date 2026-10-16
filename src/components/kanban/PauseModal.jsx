@@ -444,7 +444,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                         required
                                     >
                                         <option value="" disabled>Selecione no estoque...</option>
-                                        {estoque.filter((i) => i.quantidade > 0).map((item) => (
+                                        {filteredEstoque.filter((i) => i.quantidade > 0).map((item) => (
                                             <option key={item.id} value={item.id}>{item.nome} (Disp: {item.quantidade})</option>
                                         ))}
                                     </select>
@@ -532,7 +532,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                     <label className="block text-sm font-bold text-[#7B808F] mb-1">Máquina Parada Onde Ocorreu a Troca</label>
                                     <select value={trocaMaquina} onChange={e => setTrocaMaquina(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]" required>
                                         <option value="" disabled>Selecione...</option>
-                                        {maquinas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                                        {filteredMaquinas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
                                     </select>
                                 </div>
 
@@ -540,7 +540,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                     <label className="block text-sm font-bold text-[#7B808F] mb-1">Insumo Utilizado</label>
                                     <select value={trocaInsumo} onChange={e => setTrocaInsumo(e.target.value)} className="w-full p-2 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark]" required>
                                         <option value="" disabled>Selecione o insumo...</option>
-                                        {estoque.filter(i => i.quantidade > 0).map(item => (
+                                        {filteredEstoque.filter(i => i.quantidade > 0).map(item => (
                                             <option key={item.id} value={item.nome}>{item.nome} (Disp: {item.quantidade})</option>
                                         ))}
                                     </select>
@@ -550,7 +550,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                                     <label className="block text-sm font-bold text-[#7B808F] mb-1">Operador Responsável</label>
                                     <select value={trocaOperador} onChange={e => setTrocaOperador(e.target.value)} className="w-full min-h-[48px] p-3 border border-[#262A33] rounded-lg font-bold text-[#E7E9ED] bg-[#111318] focus:outline-none focus:border-kanban-amber [color-scheme:dark] touch-manipulation" required>
                                         <option value="" disabled>Quem efetuou a troca...</option>
-                                        {operadores.map(o => <option key={o.id} value={o.nome}>{o.nome}</option>)}
+                                        {filteredOperadores.map(o => <option key={o.id} value={o.nome}>{o.nome}</option>)}
                                     </select>
                                 </div>
                             </div>

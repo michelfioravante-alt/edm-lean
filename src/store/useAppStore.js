@@ -78,7 +78,17 @@ export const useAppStore = create((set, get) => ({
         modoMagazineDefault: 'individual',
         baixaEstoqueNoSetup: false,
         etapasPersonalizadas: [],
+        onboardingConcluido: false,
     },
+    configCarregada: false,
+    recursosCarregados: false,
+    assistenteAberto: false,
+    assistenteModo: 'ajuda', // 'setup' | 'ajuda'
+    abrirAssistente: (modo = 'ajuda') => set({
+        assistenteAberto: true,
+        assistenteModo: modo === 'setup' ? 'setup' : 'ajuda',
+    }),
+    fecharAssistente: () => set({ assistenteAberto: false }),
     // Array de máquinas do Supabase (snake_case: { id, nome, status })
     maquinas: [],
 
@@ -164,6 +174,7 @@ export const useAppStore = create((set, get) => ({
             const data = await configService.fetch();
             if (data) {
                 set({
+                    configCarregada: true,
                     configuracoesGlobais: {
                         custoHoraMaquina: data.custo_hora_maquina || 50,
                         custoHoraCnc: data.custo_hora_cnc || 80,
@@ -174,12 +185,26 @@ export const useAppStore = create((set, get) => ({
                         modoMagazineDefault: data.modo_magazine_default || 'individual',
                         baixaEstoqueNoSetup: data.baixa_estoque_setup ?? false,
                         etapasPersonalizadas: data.etapas_personalizadas || [],
+                        onboardingConcluido: !!data.onboarding_concluido,
                     }
                 });
+            } else {
+                set({ configCarregada: true });
             }
         } catch (e) {
             console.warn('fetchConfiguracoes:', e.message);
+            set({ configCarregada: true });
         }
+    },
+
+    marcarOnboardingConcluido: async (concluido = true) => {
+        await configService.marcarOnboarding(concluido);
+        set((state) => ({
+            configuracoesGlobais: {
+                ...state.configuracoesGlobais,
+                onboardingConcluido: !!concluido,
+            },
+        }));
     },
 
     registrarPausaRetroativaFaltaEnergia: async (osId, colKey, dados) => {
@@ -192,18 +217,24 @@ export const useAppStore = create((set, get) => ({
         });
     },
 
-    /** Pausa informada depois do fato, com horários HH:MM de hoje. */
+    /** Pausa informada depois do fato, com horários HH:MM. Se fim < início, assume início no dia anterior. */
     registrarPausaRetroativa: async (osId, colKey, { horaInicio, horaFim, motivo, observacao }) => {
-        const hoje = new Date();
-        const parseHora = (hstr) => {
+        const base = new Date();
+        const parseHora = (hstr, dia) => {
             const [h, m] = (hstr || '').split(':').map((n) => parseInt(n, 10));
             if (Number.isNaN(h) || Number.isNaN(m)) return null;
-            return new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, 0, 0);
+            return new Date(dia.getFullYear(), dia.getMonth(), dia.getDate(), h, m, 0, 0);
         };
-        const inicio = parseHora(horaInicio);
-        const fim = parseHora(horaFim);
+        let inicio = parseHora(horaInicio, base);
+        let fim = parseHora(horaFim, base);
+        if (inicio && fim && fim <= inicio) {
+            // Ex.: 22:00 → 01:30 atravessa meia-noite (início = ontem)
+            const ontem = new Date(base);
+            ontem.setDate(ontem.getDate() - 1);
+            inicio = parseHora(horaInicio, ontem);
+        }
         if (!inicio || !fim || fim <= inicio) {
-            console.warn('Pausa retroativa ignorada: horários inválidos', horaInicio, horaFim);
+            set({ erroOperacao: 'Horários de pausa inválidos. Use HH:MM com fim depois do início (pode cruzar meia-noite).' });
             return;
         }
         try {
@@ -447,7 +478,27 @@ export const useAppStore = create((set, get) => ({
     },
     editCliente: async (id, clienteData) => {
         try {
+            const anterior = useAppStore.getState().clientes.find((c) => c.id === id);
             const atualizado = await clientesService.update(id, clienteData);
+            const nomeAntigo = String(anterior?.nome || '').trim();
+            const nomeNovo = String(atualizado?.nome || clienteData?.nome || '').trim();
+            // Propaga rename nas O.S. que ainda usam o texto antigo (cliente é texto livre)
+            if (nomeAntigo && nomeNovo && nomeAntigo !== nomeNovo) {
+                try {
+                    const { data: sess } = await supabase.auth.getSession();
+                    const empresaId = useAuthStore.getState().empresaId;
+                    if (empresaId && sess?.session) {
+                        await supabase
+                            .from('ordens_servico')
+                            .update({ cliente: nomeNovo })
+                            .eq('empresa_id', empresaId)
+                            .eq('cliente', nomeAntigo);
+                        useAppStore.getState().fetchKanbanDadosInicial({ merge: true });
+                    }
+                } catch (propErr) {
+                    console.warn('Propagar nome do cliente nas O.S.:', propErr?.message);
+                }
+            }
             set((state) => ({
                 clientes: state.clientes.map(c => c.id === id ? atualizado : c)
             }));
@@ -639,7 +690,8 @@ export const useAppStore = create((set, get) => ({
                 descricao: kb.descricao,
                 maquinaNome: kb.maquina_nome,
                 diasIntervalo: kb.dias_intervalo,
-                criadoEm: kb.criado_em
+                criadoEm: kb.criado_em,
+                ultimaExecucao: kb.ultima_execucao || null,
             }));
             set({ kanbansAutomaticos: normalizado });
         } catch (e) {
@@ -1454,9 +1506,15 @@ export const useAppStore = create((set, get) => ({
                         quantidade: 1,
                         prazo_entrega: new Date(now.getTime() + (kb.diasIntervalo * 24 * 60 * 60 * 1000)).toISOString()
                     });
+                    const iso = now.toISOString();
+                    try {
+                        await autoKanbanService.marcarExecucao(kb.id, iso);
+                    } catch (persistErr) {
+                        console.warn('ultima_execucao não persistida:', persistErr?.message);
+                    }
                     set((s) => ({
                         kanbansAutomaticos: s.kanbansAutomaticos.map(k =>
-                            k.id === kb.id ? { ...k, ultimaExecucao: now.toISOString() } : k
+                            k.id === kb.id ? { ...k, ultimaExecucao: iso } : k
                         )
                     }));
                 } catch (err) {

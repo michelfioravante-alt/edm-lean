@@ -43,8 +43,13 @@ export function resultadoAfericao(os) {
 }
 
 export function ehAprovada(os) {
-    const r = resultadoAfericao(os);
-    return r === 'Aprovada' || r === 'Aprovada';
+    return resultadoAfericao(os) === 'Aprovada';
+}
+
+/** Percentual para UI/export — sem dado vira traço, não 100%. */
+export function fmtPct(valor, casas = 1) {
+    if (valor == null || !Number.isFinite(Number(valor))) return '—';
+    return `${Number(valor).toFixed(casas)}%`;
 }
 
 export function ehRefugo(os) {
@@ -138,8 +143,9 @@ export function agregarKpis(concluidas, ativas, config) {
 
     const aprovadas = concluidas.filter(ehAprovada).length;
     const aferidas = concluidas.filter((o) => resultadoAfericao(o)).length;
-    const fpy = aferidas > 0 ? (aprovadas / aferidas) * 100 : 100;
-    const oee = planH > 0 && realCamH > 0 ? Math.min((planH / realCamH) * 100, 999) : 100;
+    // Sem aferição / sem horas CAM+reais → null (UI mostra "—", não infla com 100%)
+    const fpy = aferidas > 0 ? (aprovadas / aferidas) * 100 : null;
+    const oee = planH > 0 && realCamH > 0 ? Math.min((planH / realCamH) * 100, 999) : null;
 
     const leads = concluidas.map((os) => {
         const ini = os.created_at;

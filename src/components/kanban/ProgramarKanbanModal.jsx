@@ -9,6 +9,7 @@ import {
     lerLinkPrograma,
     novaLinhaChecklist,
     estoqueFerramentasDoSetor,
+    serializarChecklistFerramentas,
 } from '../../utils/ferramentasChecklist';
 
 export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
@@ -69,7 +70,9 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
         e.preventDefault();
         setSaving(true);
         try {
-            const checklist = (form.checklistFerramentas || []).filter((r) => r.estoqueItemId || r.nome);
+            const checklist = serializarChecklistFerramentas(
+                (form.checklistFerramentas || []).filter((r) => r.estoqueItemId || r.estoque_item_id || r.nome),
+            );
             await editOrdemServico(osData.id, {
                 programador: form.programador,
                 tempoEstimadoCorteHoras: form.tempoEstimadoCorteHoras,

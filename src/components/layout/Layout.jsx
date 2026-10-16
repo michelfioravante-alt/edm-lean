@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
+import AssistenteFabrica from '../common/AssistenteFabrica';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -18,9 +19,18 @@ export default function Layout({ children, activeView, onViewChange }) {
     useEffect(() => {
         if (!empresaId) return;
 
-        fetchConfiguracoes();
-        fetchMaquinas();
-        fetchOperadores();
+        useAppStore.setState({ recursosCarregados: false, configCarregada: false });
+
+        const carregarBase = async () => {
+            await Promise.all([
+                fetchConfiguracoes(),
+                fetchMaquinas(),
+                fetchOperadores(),
+            ]);
+            useAppStore.setState({ recursosCarregados: true });
+        };
+        carregarBase();
+
         fetchProgramadores();
         fetchEstoque();
         fetchFerramental().catch(() => {});
@@ -106,6 +116,8 @@ export default function Layout({ children, activeView, onViewChange }) {
                 onViewChange={onViewChange}
                 role={role}
             />
+
+            <AssistenteFabrica onViewChange={onViewChange} />
         </div>
     );
 }

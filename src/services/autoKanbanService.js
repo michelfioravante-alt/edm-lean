@@ -47,5 +47,18 @@ export const autoKanbanService = {
             .eq('empresa_id', empresaId);
 
         if (error) throw error;
-    }
+    },
+
+    async marcarExecucao(id, iso = new Date().toISOString()) {
+        const empresaId = getEmpresaId();
+        const { data, error } = await supabase
+            .from('kanbans_automaticos')
+            .update({ ultima_execucao: iso })
+            .eq('id', id)
+            .eq('empresa_id', empresaId)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
 };

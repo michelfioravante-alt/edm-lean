@@ -24,16 +24,16 @@ O deploy na Vercel é automático a cada push na branch `main`.
 - **Eletroerosão a Fio (EDM)**: fluxo WEDM, consumo de fio e acabamento.
 - **Visão do gestor**: consolidado da fábrica (carteira, home, indicadores).
 
-Indicadores usam **eficiência CAM** (previsto ÷ horas reais de setup + corte), FPY, lead time e WIP — **não** OEE clássico (disponibilidade de turno), porque turno, hora extra e máquina ligada à noite sem operador distorcem esse cálculo nestas empresas.
+Indicadores usam **eficiência CAM** (previsto ÷ horas reais de setup + corte), FPY, lead time e WIP — **não** OEE clássico (disponibilidade de turno), porque turno, hora extra e máquina ligada à noite sem operador distorcem esse cálculo nestas empresas. Sem horas/aferição no período o painel mostra **—**, não 100%. WIP no Dashboard = **peças no quadro**; na Home do gestor = **R$ em WIP**.
 
 ### 2. PIN Master e acesso por setor
 - Visão de gestor, indicadores e parâmetros protegidos por **PIN Master de 4 dígitos** (gate de tela, não cofre corporativo).
-- Programadores ficam no setor de atuação; terminal de chão entra via `/join/{código}` + PIN.
+- Programadores ficam no setor de atuação; terminal de chão entra via `/join/{código}` + PIN (RPC `vincular_acesso_por_pin`).
+- **Assistente de fábrica**: abre no 1º acesso do gestor (máquinas/operadores/PIN/link) e depois fica no ícone de ajuda com FAQs.
 
 ### 3. Aba Moldes — Cadastro manual e fila do gestor
 - Moldes agrupam peças por `os_grupo_id` (kanbans pai/filho).
-- Cadastro **manual** das peças e do roteiro em Nova O.S. → Molde.
-- Peças entram na **fila do molde** (`em_fila`) — só aparecem no Kanban do setor após o gestor **liberar** (individual ou em lote).
+- Cadastro **manual** e import CSV: peças entram na **fila do molde** (`em_fila`) — só aparecem no Kanban do setor após o gestor **liberar** (individual ou em lote).
 
 ### 4. Horas máquina — Referência para orçamentos
 - Foco em **horas máquina reais** (setup, corte, aferição, pausas), não em substituir o preço comercial.
@@ -57,10 +57,16 @@ Indicadores usam **eficiência CAM** (previsto ÷ horas reais de setup + corte),
 ### 8. Estoque e vida útil de ferramental
 - Vida útil em horas (fresas, brocas, fios).
 - Alertas de mínimo, quebras/trocas vinculadas à máquina e ao operador.
+- Cadastro: setor do item importa (fio/resina → **EDM Fio**; “Geral” só para fluídos comuns). Quantidade só muda por entrada/saída (RPC).
 
 ### 9. Kanban — concluídos recentes
 - No quadro, **Concluído** mostra só as últimas ~48 h (máx. 20 cartões).
 - Histórico antigo fica no banco e aparece em **Registros** / busca — não some.
+
+### 10. Serviço externo e programação
+- Setor **EXTERNO** usa rótulos próprios no quadro (A enviar / No terceiro / Retorno).
+- Cartões CNC/EDM precisam estar **programados** antes do Setup (`programado === true`).
+- Pausa “aguardando T.T.” aparece no cartão; rotinas automáticas de manutenção persistem `ultima_execucao` no banco.
 
 ---
 
@@ -93,17 +99,19 @@ npm run build
 
 ## Banco de dados (Supabase)
 
-Execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor**, **na ordem** (`01_schema.sql` → `17_regras_no_banco.sql`). Todos são idempotentes depois do `01`.
+Execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor**, **na ordem** (`01_schema.sql` → `19_kanban_auto_ultima_execucao.sql`). Todos são idempotentes depois do `01`.
+
+Destaques recentes no banco: `16` auth/PIN, `17` regras de OS/estoque no Postgres, `18` flag de onboarding do assistente, `19` `ultima_execucao` das rotinas.
 
 ### Checklist de cliente novo (onboarding)
 
-1. Projeto Supabase com scripts `01`→`17` aplicados.
+1. Projeto Supabase com scripts `01`→`19` aplicados.
 2. Auth: e-mail/senha; se usar terminal de chão, habilitar **Anonymous sign-ins**.
 3. Em **Authentication → Providers → Email**: senha mínima **8+**; se o plano permitir, ligar **Leaked password protection** (HaveIBeenPwned — Pro).
 4. Em **Authentication → Rate Limits**: manter limites padrão (ou mais apertados) para login/recover.
 5. Criar conta gestor; confirmar e-mail se estiver ligado.
-6. Trocar PIN padrão `1234`; gerar link `/join/{código}`.
-7. Smoke test: criar O.S. → mover → pausar → concluir → abrir Registros.
+6. Seguir o **Assistente de fábrica** (ou Config): máquinas, operadores, trocar PIN `1234`, copiar `/join/{código}`.
+7. Smoke test: molde → liberar → programar → setup → pausar → inspeção → concluir → Registros; estoque com setor EDM.
 
 ---
 

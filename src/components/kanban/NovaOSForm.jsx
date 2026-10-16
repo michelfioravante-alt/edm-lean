@@ -300,6 +300,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         quantidade: parseInt(quantidade, 10) || 1,
         status: 'A fazer',
         programado: false,
+        // Molde manual entra na fila do gestor (igual import CSV) até liberar
+        em_fila: modo === 'molde',
+        emFila: modo === 'molde',
         isPrioridade,
         is_prioridade: isPrioridade,
         observacoes: observacoes.trim(),
@@ -324,16 +327,18 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
             if (precisaGrupo) {
                 criados = await addGrupoOrdensServico(cabecalho(), linhas);
             } else {
+                const cab = cabecalho();
                 const one = await addOrdemServico({
-                    ...cabecalho(),
+                    ...cab,
                     setor: linhas[0].setor,
                     componenteMolde: linhas[0].componente,
-                    quantidade: linhas[0].quantidade || cabecalho().quantidade,
+                    quantidade: linhas[0].quantidade || cab.quantidade,
                     tempoEstimadoCorteHoras: linhas[0].tempoEstimadoCorteHoras,
                     tempoEstimadoCorteMinutos: linhas[0].tempoEstimadoCorteMinutos,
                     tempoEstimadoSetupHoras: linhas[0].tempoEstimadoSetupHoras,
                     tempoEstimadoSetupMinutos: linhas[0].tempoEstimadoSetupMinutos,
                     programado: linhas[0].setor === 'EXTERNO',
+                    em_fila: cab.em_fila,
                     roteiro_ordem: 1,
                     roteiro: linhas[0].roteiro || montarRoteiro([linhas[0].setor], etapasPersonalizadas),
                 }, { optimistic: false });

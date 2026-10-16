@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { Briefcase, LogOut, ShieldCheck, Menu, HelpCircle, FileSpreadsheet } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useAppStore } from '../../store/useAppStore';
-import { HelpModal } from '../common/HelpModal';
 import ExportarDadosModal from '../common/ExportarDadosModal';
 
 export default function Header({ onMenuToggle }) {
     const { nomeEmpresa, logout, role } = useAuthStore();
     const online = useAppStore((s) => s.online);
     const filaPendente = useAppStore((s) => s.filaPendente);
-    const [helpOpen, setHelpOpen] = useState(false);
+    const abrirAssistente = useAppStore((s) => s.abrirAssistente);
     const [exportOpen, setExportOpen] = useState(false);
 
     const getRoleLabel = () => (role === 'admin' ? 'Gestor' : 'Programador');
@@ -90,10 +89,10 @@ export default function Header({ onMenuToggle }) {
 
                     <button
                         type="button"
-                        onClick={() => setHelpOpen(true)}
+                        onClick={() => abrirAssistente('ajuda')}
                         className="p-1.5 text-[#7B808F] hover:text-[#E7E9ED] hover:bg-[#1F232B] rounded-md"
                         aria-label="Ajuda"
-                        title="Ajuda e acesso na fábrica"
+                        title="Assistente de fábrica"
                     >
                         <HelpCircle className="w-4 h-4" />
                     </button>
@@ -110,7 +109,6 @@ export default function Header({ onMenuToggle }) {
                 </div>
             </div>
 
-            <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
             <ExportarDadosModal open={exportOpen} onClose={() => setExportOpen(false)} />
         </header>
     );

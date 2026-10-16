@@ -44,11 +44,9 @@ export default function ConfigSettings() {
     const [custoHoraCncLocal, setCustoHoraCncLocal] = useState(configuracoesGlobais?.custoHoraCnc || 80);
     const [custoHoraEdmLocal, setCustoHoraEdmLocal] = useState(configuracoesGlobais?.custoHoraEdm || 120);
     const [toastMsg, setToastMsg] = useState('');
-    const [turnosLocal, setTurnosLocal] = useState(configuracoesGlobais?.turnos || [
-        { id: 't1', nome: 'Turno 1', inicio: '07:30', fim: '15:30' },
-        { id: 't2', nome: 'Turno 2', inicio: '15:30', fim: '23:30' },
-        { id: 't3', nome: 'Turno 3', inicio: '23:30', fim: '07:30' }
-    ]);
+    const [turnosLocal, setTurnosLocal] = useState(configuracoesGlobais?.turnos?.length
+        ? configuracoesGlobais.turnos
+        : [{ id: 't1', nome: 'Turno 1', inicio: '07:30', fim: '15:30' }]);
     const [pinLocal, setPinLocal] = useState(configuracoesGlobais?.pinOnboarding ?? '1234');
     const [conviteNome, setConviteNome] = useState('');
     const [convitePapel, setConvitePapel] = useState('cnc');

@@ -22,6 +22,7 @@ import {
     filtrarAtivas,
     filtrarConcluidas,
     fmtLead,
+    fmtPct,
     metricasPorSetor,
     mesesPassados,
     pipelineWip,
@@ -90,7 +91,7 @@ export default function Dashboard() {
                                 {isProgrammerLocked ? 'Indicadores do setor' : 'Painel da ferramentaria'}
                             </h2>
                             <p className="text-[#565B68] mt-0.5 text-xs max-w-xl">
-                                Concluídas seguem o período e o turno. A fila (WIP) é o quadro agora. Eficiência CAM = horas previstas ÷ setup+corte reais.
+                                Concluídas seguem o período e o turno. WIP aqui é contagem de peças no quadro (na Home, WIP é em R$). Eficiência CAM = previsto ÷ setup+corte — sem dado aparece —.
                             </p>
                         </div>
                     </div>
@@ -156,18 +157,21 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <KpiCard
                         title={isEdm ? 'Eficiência CAM (fio)' : isCnc ? 'Eficiência CAM (CNC)' : 'Eficiência CAM'}
-                        value={`${kpis.oee.toFixed(1)}%`}
+                        value={fmtPct(kpis.oee)}
                         icon={Zap}
-                        colorClass={kpis.oee >= 85 ? 'bg-[#4A9D74]' : 'bg-[#C99A4A]'}
-                        tooltipContent="Previsto (cadastro) ÷ horas reais de setup + corte. Acima de 100% = mais rápido que o CAM. Aferição e pausa não entram."
-                        hint={`${kpis.planH.toFixed(1)}h CAM · ${kpis.realCamH.toFixed(1)}h máquina`}
+                        colorClass={kpis.oee == null ? 'bg-[#333844]' : kpis.oee >= 85 ? 'bg-[#4A9D74]' : 'bg-[#C99A4A]'}
+                        tooltipContent="Previsto (cadastro) ÷ horas reais de setup + corte. Acima de 100% = mais rápido que o CAM. Aferição e pausa não entram. Sem previsto e real no período → —."
+                        hint={kpis.oee == null
+                            ? 'Sem horas CAM e reais no período'
+                            : `${kpis.planH.toFixed(1)}h CAM · ${kpis.realCamH.toFixed(1)}h máquina`}
                     />
                     <KpiCard
                         title="FPY (1ª aprovação)"
-                        value={`${kpis.fpy.toFixed(1)}%`}
+                        value={fmtPct(kpis.fpy)}
                         icon={Target}
-                        colorClass="bg-[#4A9D74]"
-                        tooltipContent="Peças aprovadas na aferição sobre as que tiveram resultado. Refugo baixa o índice."
+                        colorClass={kpis.fpy == null ? 'bg-[#333844]' : 'bg-[#4A9D74]'}
+                        tooltipContent="Aprovadas ÷ peças com resultado de aferição no período. Sem aferição registrada → —."
+                        hint={kpis.fpy == null ? 'Nenhuma peça aferida no período' : undefined}
                     />
                     <KpiCard
                         title="Lead time médio"
@@ -177,11 +181,12 @@ export default function Dashboard() {
                         tooltipContent="Da abertura da O.S. até entrar em concluído."
                     />
                     <KpiCard
-                        title="WIP no quadro"
+                        title="Peças no quadro (WIP)"
                         value={String(kpis.wip)}
                         icon={Activity}
                         colorClass="bg-[#9DA2AE]"
-                        tooltipContent="Cartões em fila, set-up, máquina e aferição agora. Não usa o filtro de mês."
+                        tooltipContent="Quantidade de cartões em fila, set-up, máquina e aferição agora. Diferente do «R$ em WIP» da Home, que é dinheiro parado (horas × tarifa)."
+                        hint="Contagem · foto agora"
                     />
                     <KpiCard
                         title="Concluídas no período"
@@ -200,10 +205,10 @@ export default function Dashboard() {
 
                 {isGerente && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <KpiCard title="Valor de corte" value={brl(kpis.valorCorte)} icon={DollarSign} colorClass="bg-[#4A9D74]" tooltipContent="Horas de corte das aprovadas × tarifa do setor." />
-                        <KpiCard title="Custo de máquina" value={brl(kpis.custoMaquina)} icon={DollarSign} colorClass="bg-[#4A9D74]" tooltipContent="Horas reais (ou CAM se ainda sem cronômetro) × tarifa." />
-                        <KpiCard title="Perda por refugo" value={brl(kpis.valorRefugo)} icon={TrendingUp} colorClass="bg-[#C85558]" tooltipContent="Horas de peças refugadas × tarifa." />
-                        <KpiCard title="Custo de pausas" value={brl(kpis.valorPausa)} icon={PauseCircle} colorClass="bg-[#C99A4A]" tooltipContent="Histórico de pausas + pausa aberta agora." />
+                        <KpiCard title="Valor de corte" value={brl(kpis.valorCorte)} icon={DollarSign} colorClass="bg-[#4A9D74]" tooltipContent="Horas de corte das aprovadas × tarifa do setor (sem setup/aferição)." />
+                        <KpiCard title="Custo de máquina" value={brl(kpis.custoMaquina)} icon={DollarSign} colorClass="bg-[#4A9D74]" tooltipContent="(Setup + corte + aferição) reais × tarifa — ou horas CAM se ainda não cronometrou. Inclui aferição; a eficiência CAM não." />
+                        <KpiCard title="Perda por refugo" value={brl(kpis.valorRefugo)} icon={TrendingUp} colorClass="bg-[#C85558]" tooltipContent="Horas setup+corte das peças refugadas × tarifa." />
+                        <KpiCard title="Custo de pausas" value={brl(kpis.valorPausa)} icon={PauseCircle} colorClass="bg-[#C99A4A]" tooltipContent="Histórico de pausas + pausa aberta agora × tarifa." />
                     </div>
                 )}
 
@@ -228,21 +233,21 @@ export default function Dashboard() {
                                     <div className="flex items-baseline justify-between">
                                         <div>
                                             <p className="text-[10px] uppercase text-[#565B68]">CAM</p>
-                                            <p className="text-xl font-semibold text-[#E7E9ED]">{s.oee.toFixed(0)}%</p>
+                                            <p className="text-xl font-semibold text-[#E7E9ED]">{fmtPct(s.oee, 0)}</p>
                                         </div>
                                         {isGerente && (
                                             <div className="text-right">
-                                                <p className="text-[10px] uppercase text-[#565B68]">Máquina</p>
+                                                <p className="text-[10px] uppercase text-[#565B68]">Custo máq.</p>
                                                 <p className="text-sm font-semibold text-[#4A9D74]">{brl(s.custoMaquina)}</p>
                                             </div>
                                         )}
                                     </div>
                                     <div className="h-1.5 rounded-full bg-[#111318] overflow-hidden">
-                                        <div className="h-full bg-[#D97D3D] rounded-full" style={{ width: `${Math.min(s.oee, 100)}%` }} />
+                                        <div className="h-full bg-[#D97D3D] rounded-full" style={{ width: `${s.oee != null ? Math.min(s.oee, 100) : 0}%` }} />
                                     </div>
                                     <div className="text-[11px] space-y-1 text-[#9DA2AE]">
-                                        <div className="flex justify-between"><span>FPY</span><span className="text-[#4A9D74]">{s.fpy.toFixed(0)}%</span></div>
-                                        <div className="flex justify-between"><span>Máquina</span><span>{s.realCamH.toFixed(1)}h</span></div>
+                                        <div className="flex justify-between"><span>FPY</span><span className="text-[#4A9D74]">{fmtPct(s.fpy, 0)}</span></div>
+                                        <div className="flex justify-between"><span>Setup+corte</span><span>{s.realCamH.toFixed(1)}h</span></div>
                                         <div className="flex justify-between"><span>Pausas</span><span className="text-[#C99A4A]">{brl(s.valorPausa)}</span></div>
                                     </div>
                                 </div>

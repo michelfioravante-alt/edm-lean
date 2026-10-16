@@ -278,14 +278,8 @@ export const useAuthStore = create((set, get) => ({
             if (!novo.error && novo.data && (Array.isArray(novo.data) ? novo.data[0] : novo.data)) {
                 row = Array.isArray(novo.data) ? novo.data[0] : novo.data;
             } else if (rpcAusente) {
-                const { data: companyRows, error: rpcError } = await supabase.rpc('vincular_perfil_operador', {
-                    p_invite_code: normalizedCode,
-                    p_pin: pin,
-                    p_nome: 'Terminal de Produção'
-                });
-                if (rpcError) throw new Error(rpcError.message || 'PIN de Segurança incorreto.');
-                if (!companyRows || companyRows.length === 0) throw new Error('Empresa não identificada.');
-                row = { ...companyRows[0], funcao: 'programmer', setor_padrao: 'CNC' };
+                // RPC nova ausente: não inventar setor CNC — pede migração
+                throw new Error('Acesso por PIN desatualizado no banco. Peça ao gestor para aplicar o script de convites (vincular_acesso_por_pin).');
             } else if (novo.error) {
                 throw new Error(novo.error.message || 'PIN de Segurança incorreto.');
             } else {

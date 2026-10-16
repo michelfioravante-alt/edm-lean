@@ -102,6 +102,17 @@ const Card = ({ data, columnId, onViewRequest, onTransitionRequest, onPauseReque
         if (isPausadoFinal) {
             return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Pausado</span>;
         }
+        if (data.aguardando_tt) {
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C85558] bg-[rgba(200,85,88,0.12)] border border-[#C85558]/40">Aguard. T.T.</span>;
+        }
+        if (osSetor === 'EXTERNO' && status !== 'Concluído') {
+            const rotulo = status === 'Em Usinagem' ? 'No terceiro'
+                : status === 'Set-up' ? 'Separação'
+                : status === 'Inspeção' ? 'Retorno'
+                : status === 'A fazer' ? 'A enviar'
+                : status;
+            return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">{rotulo}</span>;
+        }
         if (data.is_retrabalho) {
             return <span className="text-[9.5px] font-semibold uppercase tracking-[0.4px] px-2 py-0.5 rounded-[4px] text-[#C99A4A] bg-[rgba(201,154,74,0.12)] border border-[#C99A4A]/30">Retrabalho</span>;
         }

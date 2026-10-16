@@ -10,7 +10,7 @@ export default function QualityPieChart({ concluidas = [] }) {
     }).length;
     const refugo = concluidas.filter((os) => (os.resultado_afericao) === 'Refugo').length;
     const total = aprovadas + refugo;
-    const fpy = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
+    const fpy = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : null;
 
     const data = {
         labels: ['Aprovadas', 'Refugo'],
@@ -40,7 +40,7 @@ export default function QualityPieChart({ concluidas = [] }) {
     };
 
     return (
-        <ChartCard title="Qualidade (FPY)" subtitle="Primeira aprovação na aferição" badge="CMM">
+        <ChartCard title="Qualidade (FPY)" subtitle="Aprovadas ÷ aferidas no período · sem aferição = —" badge="CMM">
             {total > 0 ? (
                 <div className="h-full flex items-center gap-6">
                     <div className="relative flex-1 h-full min-w-0">
