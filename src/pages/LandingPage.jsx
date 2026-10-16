@@ -32,30 +32,68 @@ function Captura({ src, alt, largura, altura, className = '' }) {
     );
 }
 
-const TITULO = ['Ordem', 'na', 'ferramentaria.', 'Sem', 'o', 'peso', 'de', 'um', 'ERP.'];
-const PASSO_TITULO_MS = 90;
+const LINHA_1 = 'Ordem na ferramentaria.';
+const LINHA_2 = 'Sem o peso de um ERP.';
+const TITULO_PLANO = `${LINHA_1} ${LINHA_2}`;
+const MS_POR_CHAR = 38;
+const PAUSA_ENTRE_LINHAS_MS = 420;
 
 function TituloAnimado() {
-    const fimPalavras = (TITULO.length - 1) * PASSO_TITULO_MS + 700;
+    const [n1, setN1] = useState(0);
+    const [n2, setN2] = useState(0);
+    const [fase, setFase] = useState('l1'); // l1 | pausa | l2 | fim
+
+    useEffect(() => {
+        setN1(0);
+        setN2(0);
+        setFase('l1');
+
+        let cancelled = false;
+        let timer;
+
+        const wait = (ms) =>
+            new Promise((resolve) => {
+                timer = window.setTimeout(resolve, ms);
+            });
+
+        (async () => {
+            for (let i = 1; i <= LINHA_1.length; i += 1) {
+                if (cancelled) return;
+                setN1(i);
+                await wait(MS_POR_CHAR);
+            }
+            if (cancelled) return;
+            setFase('pausa');
+            await wait(PAUSA_ENTRE_LINHAS_MS);
+            if (cancelled) return;
+            setFase('l2');
+            for (let i = 1; i <= LINHA_2.length; i += 1) {
+                if (cancelled) return;
+                setN2(i);
+                await wait(MS_POR_CHAR);
+            }
+            if (cancelled) return;
+            setFase('fim');
+        })();
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, []);
+
     return (
         <>
-            <span className="sr-only">{TITULO.join(' ')}</span>
-            <span aria-hidden>
-                {TITULO.map((palavra, i) => {
-                    const ultima = i === TITULO.length - 1;
-                    return (
-                        <React.Fragment key={palavra + i}>
-                            <span className="titulo-palavra" style={{ animationDelay: `${i * PASSO_TITULO_MS}ms` }}>
-                                {ultima ? (
-                                    <>
-                                        <span className="titulo-riscado" style={{ '--atraso-risco': `${fimPalavras}ms` }}>ERP</span>.
-                                    </>
-                                ) : palavra}
-                            </span>
-                            {i < TITULO.length - 1 && ' '}
-                        </React.Fragment>
-                    );
-                })}
+            <span className="sr-only">{TITULO_PLANO}</span>
+            <span aria-hidden className="titulo-letreiro">
+                <span className="titulo-linha">
+                    {LINHA_1.slice(0, n1)}
+                    {fase === 'l1' ? <span className="titulo-cursor" /> : null}
+                </span>
+                <span className="titulo-linha">
+                    {LINHA_2.slice(0, n2)}
+                    {fase === 'l2' || fase === 'pausa' ? <span className="titulo-cursor" /> : null}
+                </span>
             </span>
         </>
     );
@@ -206,7 +244,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                     <p className="text-[12px] tracking-[0.18em] text-[#7B808F] uppercase">
                         Produção · Ferramentaria · CNC · Eletrofio
                     </p>
-                    <h1 className="mt-5 max-w-[18ch] font-['Space_Grotesk'] text-[40px] font-medium leading-[1.12] tracking-tight text-white sm:text-[56px]">
+                    <h1 className="mt-5 max-w-[22ch] font-['Space_Grotesk'] text-[40px] font-medium leading-[1.12] tracking-tight text-white sm:text-[56px]">
                         <TituloAnimado />
                     </h1>
                     <p className="mt-6 max-w-[540px] text-[17px] leading-relaxed text-[#9DA2AE]">

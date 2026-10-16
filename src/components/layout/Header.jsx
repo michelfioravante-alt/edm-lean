@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
 import { Briefcase, LogOut, ShieldCheck, Menu, HelpCircle, FileSpreadsheet } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAppStore } from '../../store/useAppStore';
 import { HelpModal } from '../common/HelpModal';
 import ExportarDadosModal from '../common/ExportarDadosModal';
 
 export default function Header({ onMenuToggle }) {
     const { nomeEmpresa, logout, role } = useAuthStore();
+    const online = useAppStore((s) => s.online);
+    const filaPendente = useAppStore((s) => s.filaPendente);
     const [helpOpen, setHelpOpen] = useState(false);
     const [exportOpen, setExportOpen] = useState(false);
 
     const getRoleLabel = () => (role === 'admin' ? 'Gestor' : 'Programador');
+    const statusRede = !online
+        ? { cor: 'bg-[#C85558]', label: filaPendente > 0 ? `OFFLINE · ${filaPendente}` : 'OFFLINE' }
+        : filaPendente > 0
+            ? { cor: 'bg-[#C99A4A]', label: `SYNC · ${filaPendente}` }
+            : { cor: 'bg-[#4A9D74]', label: 'ONLINE' };
 
     return (
         <header className="bg-[#111318] border-b border-[#262A33] sticky top-0 z-50 h-[52px] flex items-center px-4 md:px-6">
@@ -62,9 +70,12 @@ export default function Header({ onMenuToggle }) {
                         <span>{getRoleLabel()}</span>
                     </div>
 
-                    <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-[#565B68] tracking-[0.05em] uppercase">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#4A9D74]"></span>
-                        <span>ONLINE</span>
+                    <div
+                        className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-[#565B68] tracking-[0.05em] uppercase"
+                        title={!online ? 'Sem conexão — movimentos e pausas ficam na fila' : filaPendente > 0 ? 'Sincronizando ações pendentes' : 'Conectado'}
+                    >
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusRede.cor}${!online ? ' animate-pulse' : ''}`} />
+                        <span>{statusRede.label}</span>
                     </div>
 
                     <button

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
+import { checarThrottleAuth, mensagemErroAuth, senhaAceitavel } from '../utils/authThrottle';
 import { normalizarRole } from '../constants/roles';
 
 // Evita registrar vários listeners (React Strict Mode monta o App duas vezes no dev)
@@ -118,13 +119,16 @@ export const useAuthStore = create((set, get) => ({
 
     login: async (email, password) => {
         try {
+            const throttle = checarThrottleAuth('login');
+            if (!throttle.ok) return { success: false, error: throttle.error };
+
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
             if (error) {
-                return { success: false, error: error.message };
+                return { success: false, error: mensagemErroAuth(error) };
             }
 
             // Garante perfil mesmo se o listener atrasar (evita tela de login eternamente)
@@ -134,13 +138,24 @@ export const useAuthStore = create((set, get) => ({
             return { success: true };
 
         } catch (err) {
-            return { success: false, error: 'Erro inesperado de servidor' };
+            return { success: false, error: mensagemErroAuth(err) || 'Erro inesperado de servidor' };
         }
     },
 
     signUp: async (email, password, companyNameOrCode) => {
         set({ signUpInProgress: true });
         try {
+            const throttle = checarThrottleAuth('signup', { minIntervalMs: 2000, maxPorJanela: 5, janelaMs: 60 * 60 * 1000 });
+            if (!throttle.ok) {
+                set({ signUpInProgress: false });
+                return { success: false, error: throttle.error };
+            }
+            const senha = senhaAceitavel(password);
+            if (!senha.ok) {
+                set({ signUpInProgress: false });
+                return { success: false, error: senha.error };
+            }
+
             const input = companyNameOrCode.trim();
 
             // 1. Criar o usuário no Supabase Auth
@@ -155,7 +170,7 @@ export const useAuthStore = create((set, get) => ({
 
             if (authError) {
                 set({ signUpInProgress: false });
-                return { success: false, error: authError.message };
+                return { success: false, error: mensagemErroAuth(authError) };
             }
             if (!authData.user) {
                 set({ signUpInProgress: false });
@@ -175,9 +190,19 @@ export const useAuthStore = create((set, get) => ({
 
             if (rpcError) {
                 console.error("Erro na RPC de cadastro:", rpcError);
-                // Se der erro aqui, ideal seria limpar o auth user criado, mas fica complexo no client-side.
+                // Usuário Auth pode ter sido criado; sem admin API não dá para apagar daqui.
                 set({ signUpInProgress: false });
-                return { success: false, error: 'Erro ao inicializar perfil: ' + rpcError.message };
+                const msg = rpcError.message || '';
+                if (/does not exist|schema cache|registrar_conta_inicial/i.test(msg)) {
+                    return {
+                        success: false,
+                        error: 'Banco incompleto: falta rodar as migrações SQL (01→16) no Supabase desta conta.',
+                    };
+                }
+                return {
+                    success: false,
+                    error: mensagemErroAuth(rpcError) || ('Não foi possível criar a empresa/perfil: ' + msg),
+                };
             }
 
             set({ signUpInProgress: false });
@@ -200,34 +225,49 @@ export const useAuthStore = create((set, get) => ({
 
     requestPasswordReset: async (email) => {
         try {
+            const throttle = checarThrottleAuth('recover', { minIntervalMs: 5000, maxPorJanela: 4, janelaMs: 60 * 60 * 1000 });
+            if (!throttle.ok) return { success: false, error: throttle.error };
+
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.origin, // Volta pro index, o onAuthStateChange pegará PASSWORD_RECOVERY
             });
-            if (error) return { success: false, error: error.message };
+            if (error) return { success: false, error: mensagemErroAuth(error) };
+            // Mesma mensagem com ou sem e-mail cadastrado (não vazar existência da conta)
             return { success: true };
         } catch (err) {
-            return { success: false, error: 'Erro inesperado ao solicitar redefinição' };
+            return { success: false, error: mensagemErroAuth(err) || 'Erro inesperado ao solicitar redefinição' };
         }
     },
 
     updatePassword: async (newPassword) => {
         try {
+            const senha = senhaAceitavel(newPassword);
+            if (!senha.ok) return { success: false, error: senha.error };
             const { error } = await supabase.auth.updateUser({ password: newPassword });
-            if (error) return { success: false, error: error.message };
+            if (error) return { success: false, error: mensagemErroAuth(error) };
             return { success: true };
         } catch (err) {
-            return { success: false, error: 'Erro inesperado ao atualizar a senha' };
+            return { success: false, error: mensagemErroAuth(err) || 'Erro inesperado ao atualizar a senha' };
         }
     },
 
     loginComoOperador: async (inviteCode, pin) => {
         try {
+            const throttle = checarThrottleAuth('pin', { minIntervalMs: 800, maxPorJanela: 12, janelaMs: 5 * 60 * 1000 });
+            if (!throttle.ok) return { success: false, error: throttle.error };
+
             const normalizedCode = (inviteCode || '').trim().toUpperCase();
 
             const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
-            if (anonError) throw anonError;
+            if (anonError) {
+                const m = anonError.message || '';
+                if (/anonymous|Anon|disabled|not enabled/i.test(m)) {
+                    throw new Error('Acesso de terminal desligado no Supabase (Anonymous sign-ins). Peça ao gestor para habilitar.');
+                }
+                throw anonError;
+            }
             const anonUser = anonData?.user;
-            if (!anonUser) throw new Error('Falha ao criar sessão anônima do terminal.');
+            if (!anonUser) throw new Error('Falha ao criar sessão do terminal.');
 
             let row = null;
             const novo = await supabase.rpc('vincular_acesso_por_pin', {
@@ -267,7 +307,7 @@ export const useAuthStore = create((set, get) => ({
             return { success: true };
         } catch (err) {
             console.error('loginComoOperador error:', err);
-            return { success: false, error: 'Falha no acesso: ' + (err.message || 'Erro de rede') };
+            return { success: false, error: 'Falha no acesso: ' + mensagemErroAuth(err) };
         }
     },
 
@@ -276,8 +316,4 @@ export const useAuthStore = create((set, get) => ({
         supabase.auth.signOut().catch((e) => console.warn('signOut em background:', e.message));
     }
 }));
-
-if (typeof window !== 'undefined') {
-    window.useAuthStore = useAuthStore;
-}
 

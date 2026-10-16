@@ -113,6 +113,16 @@ export default function JoinCompany({ inviteCode }) {
                             </button>.
                         </p>
                     </div>
+                ) : !company ? (
+                    <div className="bg-[#181B22]/80 backdrop-blur-xl border border-[#262A33] p-8 rounded-[14px] text-center shadow-2xl">
+                        <div className="w-16 h-16 bg-[rgba(200,85,88,0.12)] rounded-full flex items-center justify-center mx-auto mb-5 border border-[#C85558]/30">
+                            <AlertCircle className="w-8 h-8 text-[#C85558]" />
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2">Convite inválido</h2>
+                        <p className="text-sm text-[#7B808F] leading-relaxed">
+                            {error || 'Código de convite inválido ou expirado. Peça um link novo ao gestor.'}
+                        </p>
+                    </div>
                 ) : (
                     <div className="bg-[#181B22]/70 backdrop-blur-2xl border border-white/10 p-8 rounded-[14px] shadow-2xl shadow-black/50 animate-in slide-in-from-bottom-8 duration-700">
                         <div className="flex items-center gap-3 mb-8 bg-[#111318]/80 p-4 rounded-2xl border border-[#262A33]">
@@ -121,7 +131,7 @@ export default function JoinCompany({ inviteCode }) {
                             </div>
                             <div>
                                 <p className="text-[10px] font-semibold text-[#565B68] uppercase tracking-widest leading-none mb-1">Você está entrando em</p>
-                                <p className="text-lg font-bold text-white leading-none">{company?.nome_fantasia}</p>
+                                <p className="text-lg font-bold text-white leading-none">{company.nome_fantasia}</p>
                             </div>
                         </div>
 

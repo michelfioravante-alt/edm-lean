@@ -31,7 +31,9 @@ export default function Layout({ children, activeView, onViewChange }) {
         fetchUsuarios();
         fetchClientes();
         fetchFornecedores();
-        useAppStore.getState().fetchKanbanDadosInicial();
+        const store = useAppStore.getState();
+        store.initNetworkWatch();
+        store.fetchKanbanDadosInicial();
     }, [empresaId]);
 
     // Realtime + reconexão ao voltar de aba/foco
@@ -39,6 +41,7 @@ export default function Layout({ children, activeView, onViewChange }) {
         if (!role || !useAuthStore.getState().empresaId) return;
 
         const store = useAppStore.getState();
+        store.initNetworkWatch();
         store.subscribeToKanbanUpdates();
 
         const handleVisibilityChange = () => {

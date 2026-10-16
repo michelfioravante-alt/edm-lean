@@ -22,6 +22,13 @@ import { novoGrupoId } from '../constants/osWorkflow';
 import { novaOsRow, osPatch } from '../utils/osPayload';
 import { osMovida } from '../utils/relogioOs';
 import { chaveSku, normalizarItemEstoque, qtdEstoque } from '../utils/estoque';
+import {
+    drenarFila,
+    enfileirarAcao,
+    estaOnline,
+    ouvirOnline,
+    tamanhoFila,
+} from '../utils/networkQueue';
 
 // Normaliza um registro de historico_consumiveis (snake_case → camelCase)
 const normalizarHistoricoConsumivel = (r) => ({
@@ -61,7 +68,7 @@ const normalizarFerramentaMaquina = (r) => ({
 });
 
 // Store global para substituir as variáveis soltas do arquivo antigo logic.js
-export const useAppStore = create((set) => ({
+export const useAppStore = create((set, get) => ({
     configuracoesGlobais: {
         custoHoraMaquina: 50, // default R$ 50/h
         turnos: [
@@ -82,6 +89,10 @@ export const useAppStore = create((set) => ({
     fornecedores: [],
     usuarios: [],
     erroOperacao: null, // Mensagem de falha ao salvar no banco (exibida no App)
+    avisoOperacao: null, // Aviso de rede / fila (não é erro)
+    online: typeof navigator === 'undefined' ? true : navigator.onLine !== false,
+    filaPendente: 0,
+    _unsubNetwork: null,
     convites: [],
 
     // Kanbans Automáticos
@@ -1048,6 +1059,15 @@ export const useAppStore = create((set) => ({
             return { kanban };
         });
 
+        if (!estaOnline()) {
+            enfileirarAcao({ type: 'move', osId, destCol, params: updatedOsParams });
+            set({
+                filaPendente: tamanhoFila(),
+                avisoOperacao: 'Sem conexão — movimento na fila. Salva quando a rede voltar.',
+            });
+            return;
+        }
+
         const MOVE_TIMEOUT_MS = 25000;
         try {
             const updatedOsBanco = await Promise.race([
@@ -1105,6 +1125,39 @@ export const useAppStore = create((set) => ({
     },
 
     togglePausaOrdemServico: async (osId, colKey, pauseData) => {
+        if (!estaOnline()) {
+            enfileirarAcao(
+                pauseData.isPausado
+                    ? {
+                        type: 'pause',
+                        osId,
+                        motivo: pauseData.motivoPausa,
+                        observacao: pauseData.observacaoPausa,
+                    }
+                    : { type: 'resume', osId },
+            );
+            set((state) => ({
+                filaPendente: tamanhoFila(),
+                avisoOperacao: pauseData.isPausado
+                    ? 'Sem conexão — pausa na fila. Salva quando a rede voltar.'
+                    : 'Sem conexão — retomada na fila. Salva quando a rede voltar.',
+                kanban: {
+                    ...state.kanban,
+                    [colKey]: (state.kanban[colKey] || []).map((o) =>
+                        o.id === osId
+                            ? {
+                                ...o,
+                                is_pausado: !!pauseData.isPausado,
+                                motivo_pausa: pauseData.isPausado ? pauseData.motivoPausa : null,
+                                observacao_pausa: pauseData.isPausado ? pauseData.observacaoPausa : null,
+                            }
+                            : o,
+                    ),
+                },
+            }));
+            return;
+        }
+
         try {
             const updatedOsBanco = pauseData.isPausado
                 ? await osService.pausar(osId, pauseData.motivoPausa, pauseData.observacaoPausa)
@@ -1128,6 +1181,53 @@ export const useAppStore = create((set) => ({
     },
 
     limparErroOperacao: () => set({ erroOperacao: null }),
+    limparAvisoOperacao: () => set({ avisoOperacao: null }),
+
+    initNetworkWatch: () => {
+        if (get()._unsubNetwork) return;
+        set({ online: estaOnline(), filaPendente: tamanhoFila() });
+        const unsub = ouvirOnline(
+            () => {
+                set({ online: true });
+                get().flushActionQueue();
+            },
+            () => set({ online: false, avisoOperacao: 'Sem conexão. Movimentos e pausas ficam na fila.' }),
+        );
+        set({ _unsubNetwork: unsub });
+        if (estaOnline() && tamanhoFila() > 0) get().flushActionQueue();
+    },
+
+    flushActionQueue: async () => {
+        if (!estaOnline()) return;
+        try {
+            const { ok } = await drenarFila(async (item) => {
+                if (item.type === 'move') {
+                    await osService.moveOs(item.osId, item.destCol, item.params || {});
+                    if (item.destCol === 'concluido') {
+                        await ferramentasMaquinaService.limparPorOs(item.osId);
+                        await get().fetchFerramentasMaquina();
+                    }
+                } else if (item.type === 'pause') {
+                    await osService.pausar(item.osId, item.motivo, item.observacao);
+                } else if (item.type === 'resume') {
+                    await osService.retomar(item.osId);
+                } else {
+                    throw new Error(`Ação desconhecida na fila: ${item.type}`);
+                }
+            });
+            set({ filaPendente: tamanhoFila() });
+            if (ok > 0) {
+                set({ avisoOperacao: ok === 1 ? 'Conexão ok — 1 ação sincronizada.' : `Conexão ok — ${ok} ações sincronizadas.` });
+                get().fetchKanbanDadosInicial({ merge: true });
+            }
+        } catch (err) {
+            set({
+                filaPendente: tamanhoFila(),
+                erroOperacao: `Não foi possível sincronizar: ${err.message || 'erro de conexão'}. Tentamos de novo ao estabilizar a rede.`,
+            });
+            get().fetchKanbanDadosInicial({ merge: true });
+        }
+    },
 
     updateOrdemServico: async (osId, colKeyOrUpdates, maybeUpdates) => {
         const updates = typeof colKeyOrUpdates === 'object' ? colKeyOrUpdates : maybeUpdates;

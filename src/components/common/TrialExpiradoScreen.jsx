@@ -19,7 +19,7 @@ export default function TrialExpiradoScreen({ nomeEmpresa, onLogout }) {
                 <h2 className="text-2xl font-bold text-white tracking-tight">Período de Testes Expirado</h2>
 
                 <p className="text-[#7B808F] text-sm leading-relaxed">
-                    Seu período de avaliação gratuita de 30 dias do <strong className="text-white">EDM Lean</strong> para a empresa <strong className="text-white">{nomeEmpresa}</strong> chegou ao fim. Esperamos que o painel Kanban e os relatórios OEE tenham ajudado a otimizar a sua produção!
+                    Seu período de avaliação gratuita de 30 dias do <strong className="text-white">EDM Lean</strong> para a empresa <strong className="text-white">{nomeEmpresa}</strong> chegou ao fim. Esperamos que o kanban e as horas máquina tenham ajudado no chão de fábrica.
                 </p>
 
                 <div className="bg-[#111318]/80 border border-[#262A33] rounded-2xl p-5 text-left flex flex-col gap-3">

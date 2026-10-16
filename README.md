@@ -1,6 +1,6 @@
-# ⚡ EDM Lean — Sistema MES, OEE e Kanban para Ferramentarias & Usinagem
+# EDM Lean — Kanban de chão de fábrica para ferramentaria e usinagem
 
-> **Plataforma SaaS Integrada de Gestão Industrial (MES) para Eletroerosão a Fio (WEDM) e Centros de Usinagem CNC.**
+> Software de shop floor para equipes pequenas: kanban por setor, roteiro da peça, folha de processo, horas máquina e estoque de ferramenta — sem o peso de um ERP.
 
 [![Vercel Deployment](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://edmlean.com.br)
 [![Supabase](https://img.shields.io/badge/Database-Supabase-emerald?logo=supabase)](https://supabase.com)
@@ -8,110 +8,116 @@
 
 ---
 
-## 🌐 Produção
+## Produção
 
-- **Domínio Oficial**: [https://edmlean.com.br](https://edmlean.com.br)
-- **Repositório GitHub**: [michelfioravante-alt/edm-lean](https://github.com/michelfioravante-alt/edm-lean)
+- **Domínio**: [https://edmlean.com.br](https://edmlean.com.br)
+- **Repositório**: [michelfioravante-alt/edm-lean](https://github.com/michelfioravante-alt/edm-lean)
 
 O deploy na Vercel é automático a cada push na branch `main`.
 
 ---
 
-## 🔥 Principais Recursos da Aplicação
+## Principais recursos
 
-### 🌀 1. Arquitetura Multi-Setor Produtivo
-- **`🌀 Centro de Usinagem CNC`**: Kanban, OEE e cálculo de horas direcionados a centros de usinagem.
-- **`⚡ Eletroerosão a Fio (EDM)`**: Gestão especializada de WEDM, com controle de consumo de fio e acabamento.
-- **`🏭 Visão Geral da Fábrica (Diretoria)`**: Visão consolidada de todas as células de produção e ferramentaria.
+### 1. Multi-setor produtivo
+- **Centro de Usinagem CNC**: kanban, tempos e horas máquina.
+- **Eletroerosão a Fio (EDM)**: fluxo WEDM, consumo de fio e acabamento.
+- **Visão do gestor**: consolidado da fábrica (carteira, home, indicadores).
 
-### 👑 2. Segurança Executiva & Proteção por PIN Master
-- Acesso à Visão de Gestor, Indicadores Financeiros da Planta e Parâmetros Globais protegido por **PIN Master de 4 dígitos** configurável em tempo real.
-- Bloqueio automático de programadores ao seu setor de atuação (`🔒 KPIs Exclusivos`).
+Indicadores usam **eficiência CAM** (previsto ÷ horas reais de setup + corte), FPY, lead time e WIP — **não** OEE clássico (disponibilidade de turno), porque turno, hora extra e máquina ligada à noite sem operador distorcem esse cálculo nestas empresas.
 
-### 🧩 3. Aba Moldes — Cadastro manual e fila do gestor
+### 2. PIN Master e acesso por setor
+- Visão de gestor, indicadores e parâmetros protegidos por **PIN Master de 4 dígitos** (gate de tela, não cofre corporativo).
+- Programadores ficam no setor de atuação; terminal de chão entra via `/join/{código}` + PIN.
+
+### 3. Aba Moldes — Cadastro manual e fila do gestor
 - Moldes agrupam peças por `os_grupo_id` (kanbans pai/filho).
 - Cadastro **manual** das peças e do roteiro em Nova O.S. → Molde.
 - Peças entram na **fila do molde** (`em_fila`) — só aparecem no Kanban do setor após o gestor **liberar** (individual ou em lote).
 
-### ⏱️ 4. Horas Máquina — Referência para Orçamentos
+### 4. Horas máquina — Referência para orçamentos
 - Foco em **horas máquina reais** (setup, corte, aferição, pausas), não em substituir o preço comercial.
-- **Relatório ao concluir peça**: modal automático no Kanban com breakdown de tempos, eficiência CAM e export CSV.
+- **Relatório ao concluir peça**: breakdown de tempos, eficiência CAM e export CSV.
 - **Relatório de molde**: totais, barras por setor e tabela por peça na aba Moldes.
-- **Referência interna em R$** (opcional): horas × taxa configurada por setor — apenas apoio interno.
+- **Referência interna em R$** (opcional): horas × taxa configurada por setor.
 
-### 🔁 5. Histórico & Repetir Peça
-- **Registros**: busca no banco por peça, cliente ou molde — inclui execuções fora do kanban ativo (ex.: concluídas há meses).
-- Botão **Repetir**: abre Nova O.S. pré-preenchida com dados e tempos da última execução.
-- **Nova O.S.**: ao digitar o código, sugere execuções anteriores e permite copiar os dados com um clique.
-- Cada repetição gera um **kanban novo** independente, com `parent_id` ligado à O.S. de origem.
+### 5. Histórico e repetir peça
+- **Registros**: busca no banco por peça, cliente ou molde — inclui execuções fora do kanban ativo.
+- **Repetir**: abre Nova O.S. pré-preenchida com a última execução.
+- Cada repetição gera um **kanban novo**, com `parent_id` ligado à O.S. de origem.
 
-### 💰 6. Motor de Cálculo de Custos Hora por Setor
-- Avaliação financeira dinâmica por setor produtivo:
-  - `custoHoraCnc`: Custo hora específico para Usinagem CNC (Padrão: R$ 80/h).
-  - `custoHoraEdm`: Custo hora específico para Eletroerosão a Fio (Padrão: R$ 120/h).
-- Apuração do valor gerado em ciclo, valor total de setup + trabalho, perdas por refugo e custo de tempo morto / pausas.
+### 6. Custo hora por setor
+- `custoHoraCnc` / `custoHoraEdm` (e demais setores) para apoio interno.
+- Valor gerado em ciclo, setup + trabalho, refugo e tempo morto / pausas.
 
-### 📄 7. Folha e tempos no cartão
-- Anexo de print/imagem da peça no cartão e na folha A4.
-- Tempos previstos (setup/corte) digitados na abertura ou na programação; calculadora WEDM opcional para eletrofio.
+### 7. Folha e tempos no cartão
+- Anexo de print/imagem no cartão e na folha A4.
+- Tempos previstos na abertura ou na programação; calculadora WEDM opcional para eletrofio.
 
-### 📦 8. Controle de Estoque & Vida Útil de Ferramental
-- Registro e controle de vida útil em horas de ferramentas de corte (fresas, brocas, fios).
-- Alerta visual de consumo mínimo e registro de quebras/trocas de ferramentas vinculadas à máquina e ao operador.
+### 8. Estoque e vida útil de ferramental
+- Vida útil em horas (fresas, brocas, fios).
+- Alertas de mínimo, quebras/trocas vinculadas à máquina e ao operador.
 
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Frontend**: React 18, Vite, TailwindCSS, Lucide Icons, Chart.js, React-ChartJS-2
-- **Gerenciamento de Estado**: Zustand
-- **Backend & Realtime**: Supabase (PostgreSQL 17, Row Level Security, Auth & Realtime Subscriptions)
-- **Hospedagem & CI/CD**: Vercel (deploy automático via GitHub)
+### 9. Kanban — concluídos recentes
+- No quadro, **Concluído** mostra só as últimas ~48 h (máx. 20 cartões).
+- Histórico antigo fica no banco e aparece em **Registros** / busca — não some.
 
 ---
 
-## 🚀 Como Rodar Localmente
+## Tecnologias
+
+- **Frontend**: React 18, Vite, TailwindCSS, Lucide Icons, Chart.js
+- **Estado**: Zustand
+- **Backend & Realtime**: Supabase (PostgreSQL, RLS, Auth, Realtime)
+- **Hospedagem**: Vercel (deploy automático via GitHub)
+
+---
+
+## Como rodar localmente
 
 ```bash
-# 1. Clonar o repositório
 git clone https://github.com/michelfioravante-alt/edm-lean.git
 cd edm-lean
-
-# 2. Instalar dependências
 npm install
-
-# 3. Copiar .env.example para .env e preencher a URL e a chave anon do Supabase
-
-# 4. Iniciar servidor de desenvolvimento
+# Copiar .env.example → .env (URL e chave anon do Supabase)
 npm run dev
 ```
 
-Abra **http://localhost:5173** (ou a porta indicada no terminal) no navegador.
+Abra **http://localhost:5173** (ou a porta do terminal).
 
 ```bash
-# Build de produção (mesmo comando usado pela Vercel)
 npm run build
 ```
 
 ---
 
-## 🗄️ Banco de Dados & Migrações Supabase
+## Banco de dados (Supabase)
 
-Para conectar a uma instância própria do Supabase, execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor** do painel, **na ordem numérica** (`01_schema.sql` → `15_relogio_servidor.sql`). Todos são idempotentes depois do `01`.
+Execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor**, **na ordem** (`01_schema.sql` → `17_regras_no_banco.sql`). Todos são idempotentes depois do `01`.
+
+### Checklist de cliente novo (onboarding)
+
+1. Projeto Supabase com scripts `01`→`17` aplicados.
+2. Auth: e-mail/senha; se usar terminal de chão, habilitar **Anonymous sign-ins**.
+3. Em **Authentication → Providers → Email**: senha mínima **8+**; se o plano permitir, ligar **Leaked password protection** (HaveIBeenPwned — Pro).
+4. Em **Authentication → Rate Limits**: manter limites padrão (ou mais apertados) para login/recover.
+5. Criar conta gestor; confirmar e-mail se estiver ligado.
+6. Trocar PIN padrão `1234`; gerar link `/join/{código}`.
+7. Smoke test: criar O.S. → mover → pausar → concluir → abrir Registros.
 
 ---
 
-## 📋 Fluxo resumido — Molde → Produção
+## Fluxo resumido — Molde → Produção
 
 ```text
 Nova O.S. (molde/peças manuais) → Fila do molde (em_fila) → Gestor libera → Kanban do setor
        → Setup → Corte → Aferição → Concluído → Relatório de horas
 ```
 
-Peças que retornam meses depois: buscar em **Registros** → **Repetir** → revisar Nova O.S. → novo kanban.
+Peças que voltam meses depois: **Registros** → **Repetir** → revisar Nova O.S. → novo kanban.
 
 ---
 
-## 📄 Licença & Créditos
+## Licença
 
 Desenvolvido para **EDM Lean / Módulo CNC** · Todos os direitos reservados © 2026.

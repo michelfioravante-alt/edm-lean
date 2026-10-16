@@ -55,7 +55,7 @@ export default function Login({ initialMode = 'login', onBack }) {
             }
         } else if (mode === 'reset_password') {
             if (password !== confirmPassword) { setError('As senhas não coincidem.'); setIsProcessing(false); return; }
-            if (password.length < 6) { setError('A senha deve ter no mínimo 6 caracteres.'); setIsProcessing(false); return; }
+            if (password.length < 8) { setError('A senha deve ter no mínimo 8 caracteres.'); setIsProcessing(false); return; }
             const res = await updatePassword(password);
             if (res.success) {
                 setSuccessMsg('Senha atualizada.');

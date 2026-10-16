@@ -62,9 +62,12 @@ export const estoqueService = {
 
     async update(id, patch) {
         const empresaId = getEmpresaId();
+        const seguro = { ...patch };
+        delete seguro.quantidade; // saldo só via movimentar/decrementar
+        delete seguro.empresa_id;
         const { data, error } = await supabase
             .from('estoque_itens')
-            .update(patch)
+            .update(seguro)
             .eq('id', id)
             .eq('empresa_id', empresaId)
             .select()
@@ -84,17 +87,9 @@ export const estoqueService = {
         return data?.[0] ?? null;
     },
 
-    async updateQuantidade(id, novaQuantidade) {
-        const empresaId = getEmpresaId();
-        const { data, error } = await supabase
-            .from('estoque_itens')
-            .update({ quantidade: novaQuantidade })
-            .eq('id', id)
-            .eq('empresa_id', empresaId)
-            .select()
-            .single();
-        if (error) throw error;
-        return data;
+    /** @deprecated Quantidade só via movimentar/decrementar (RPC). */
+    async updateQuantidade() {
+        throw new Error('Quantidade de estoque só muda por entrada/saída oficial.');
     },
 
     // Decremento atômico via RPC: garante que dois usuários simultâneos não corrompam o estoque.

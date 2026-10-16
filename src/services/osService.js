@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { uploadOsPrint } from './osPrints';
-import { novaOsRow, osPatch } from '../utils/osPayload';
+import { novaOsRow, osPatchEditavel } from '../utils/osPayload';
 import { camposLivres } from '../utils/relogioOs';
 
 // Helper: Garante que toda query tenha o empresa_id atrelado (Embora o RLS segure no back, mandamos do front por segurança/organização)
@@ -67,19 +67,20 @@ async function rpcOs(funcao, args) {
 
 export const osService = {
 
-    // Busca todas as Ordens de Serviço da Empresa (Exceto Excluídas)
-    // limit(1000) evita puxar volume gigante e estourar egress no Supabase
+    // Abertas + concluídas das últimas 48h (histórico antigo fica em Registros / searchHistorico)
     async fetchAllAtivas() {
         const empresaId = getEmpresaId();
+        const corteConcluido = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
         const { data, error } = await supabase
             .from('ordens_servico')
             .select('*')
             .eq('empresa_id', empresaId)
             .neq('status', 'Excluído')
+            .or(`status.neq.Concluído,timestamp_entrada_concluido.gte."${corteConcluido}"`)
             .order('posicao', { ascending: true })
             .order('is_prioridade', { ascending: false })
             .order('created_at', { ascending: true })
-            .limit(1000);
+            .limit(500);
 
         if (error) throw error;
         return comValores(data);
@@ -198,14 +199,14 @@ export const osService = {
         });
     },
 
-    // Pausar / Retomar / Atualizar Tempos Históricos
+    // Atualização de campos editáveis (nunca status/tempos/pausas — isso é RPC)
     async updateOs(id, updateData) {
-        return updateRow(id, osPatch(updateData));
+        return updateRow(id, osPatchEditavel(updateData));
     },
 
     // Edição de campos pelo usuário (cliente, prazo, tempos estimados, etc)
     async editOs(id, fields) {
-        const payload = osPatch(fields);
+        const payload = osPatchEditavel(fields);
         if (fields.folhaBlob instanceof Blob) {
             payload.folha_imagem = await uploadOsPrint(getEmpresaId(), id, fields.folhaBlob);
         } else if (typeof payload.folha_imagem === 'string' && payload.folha_imagem.startsWith('data:')) {
@@ -215,7 +216,7 @@ export const osService = {
     },
 
     async delete(id) {
-        return updateRow(id, { status: 'Excluído' });
+        return rpcOs('excluir_os', { p_os_id: id });
     },
 
     async fetchStatsByCliente(clienteNome) {

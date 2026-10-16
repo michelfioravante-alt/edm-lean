@@ -110,9 +110,32 @@ function extrair(src, colunas) {
     return out;
 }
 
+/** Colunas de estado — só mudam via RPC (mover/pausar/excluir) no banco. */
+export const CAMPOS_ESTADO_OS = [
+    'status',
+    'tempos_fases',
+    'historico_pausas',
+    'is_pausado',
+    'data_pausa',
+    'motivo_pausa',
+    'observacao_pausa',
+    'timestamp_entrada_setup',
+    'timestamp_entrada_emcorte',
+    'timestamp_entrada_afericao',
+    'timestamp_entrada_concluido',
+    'empresa_id',
+];
+
 /** Atualização parcial: só as colunas presentes em `fields`. */
 export function osPatch(fields) {
     return extrair(fields, COLUNAS);
+}
+
+/** Remove campos de estado para updates diretos (cadastro/edição). */
+export function osPatchEditavel(fields) {
+    const patch = osPatch(fields);
+    for (const col of CAMPOS_ESTADO_OS) delete patch[col];
+    return patch;
 }
 
 /** Linha completa de uma O.S. nova (sem id/empresa_id). */
