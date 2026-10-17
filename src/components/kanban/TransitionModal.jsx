@@ -3,14 +3,14 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { useAppStore } from '../../store/useAppStore';
 import { COLUMN_LABELS, ESTRATEGIA_FERRAMENTAL_OPTIONS } from '../../constants/cncProcess';
-import { SECTORS } from '../../constants/sectorConstants';
+import { SECTORS, filtrarRecursosDoSetor, rotuloSetorCurto, normalizarSetorId } from '../../constants/sectorConstants';
 import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { lerChecklistFerramentas, marcarItensChecklist, progressoChecklist, serializarChecklistFerramentas } from '../../utils/ferramentasChecklist';
 
 export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, targetColumnTitle, destCol, osData }) {
     const close = onClose || onCancel;
     const { maquinas, operadores, estoque, configuracoesGlobais, activeSector } = useAppStore();
-    const osSector = osData?.setor || activeSector || 'CNC';
+    const osSector = normalizarSetorId(osData?.setor || activeSector || 'CNC');
     const etapaLabel = targetColumnTitle
         || SECTORS[osSector]?.kanbanColumns?.[destCol]?.label
         || COLUMN_LABELS[destCol]
@@ -23,15 +23,8 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
     const [idsFerramentasAgora, setIdsFerramentasAgora] = useState([]);
     const checklistFerramentas = lerChecklistFerramentas(osData);
 
-    const filteredMaquinas = maquinas.filter(m => {
-        if (!m.setor || m.setor === 'TODOS' || osSector === 'TODOS') return true;
-        return m.setor === osSector;
-    });
-
-    const filteredOperadores = operadores.filter(op => {
-        if (!op.setor || op.setor === 'TODOS' || osSector === 'TODOS') return true;
-        return op.setor === osSector;
-    });
+    const { itens: filteredMaquinas, usouFallback: maquinasFallback } = filtrarRecursosDoSetor(maquinas, osSector);
+    const { itens: filteredOperadores, usouFallback: operadoresFallback } = filtrarRecursosDoSetor(operadores, osSector);
 
 
     const isEmCorte = destCol === 'emCorte';
@@ -188,11 +181,27 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
                                     required
                                     className="w-full min-h-[44px] p-3 border border-[#262A33] rounded-[7px] focus:outline-none focus:border-[#D97D3D] bg-[#111318] text-[#E7E9ED] font-medium [color-scheme:dark] transition-colors"
                                 >
-                                    <option value="" disabled>Escolha na lista...</option>
+                                    <option value="" disabled>
+                                        {filteredMaquinas.length ? 'Escolha na lista...' : 'Nenhuma máquina cadastrada'}
+                                    </option>
                                     {filteredMaquinas.map((m) => (
-                                        <option key={m.id} value={m.nome}>{m.nome}</option>
+                                        <option key={m.id} value={m.nome}>
+                                            {m.nome}
+                                            {maquinasFallback && m.setor ? ` (${rotuloSetorCurto(m.setor)})` : ''}
+                                        </option>
                                     ))}
                                 </select>
+                                {maquinasFallback ? (
+                                    <p className="text-[11px] text-[#C99A4A] mt-1.5 leading-snug">
+                                        Nenhuma máquina de <strong>{rotuloSetorCurto(osSector)}</strong> cadastrada.
+                                        Listando as outras — em Configurações, cadastre a máquina com o setor certo (ex.: EDM Fio).
+                                    </p>
+                                ) : null}
+                                {!filteredMaquinas.length ? (
+                                    <p className="text-[11px] text-[#C85558] mt-1.5 leading-snug">
+                                        Cadastre máquinas em Configurações → Máquinas &amp; CAM.
+                                    </p>
+                                ) : null}
                             </div>
 
                             <div>
@@ -203,15 +212,20 @@ export default function TransitionModal({ isOpen, onClose, onCancel, onConfirm, 
                                     required
                                     className="w-full min-h-[44px] p-3 border border-[#262A33] rounded-[7px] focus:outline-none focus:border-[#D97D3D] bg-[#111318] text-[#E7E9ED] font-medium [color-scheme:dark] transition-colors"
                                 >
-                                    <option value="" disabled>Escolha na lista...</option>
+                                    <option value="" disabled>
+                                        {filteredOperadores.length ? 'Escolha na lista...' : 'Nenhum operador cadastrado'}
+                                    </option>
                                     {filteredOperadores.map((op) => (
-                                        <option key={op.id} value={op.nome}>{op.nome}</option>
+                                        <option key={op.id} value={op.nome}>
+                                            {op.nome}
+                                            {operadoresFallback && op.setor ? ` (${rotuloSetorCurto(op.setor)})` : ''}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                         </div>
 
-                        {isSetup && osData?.setor !== 'EDM_FIO' && (
+                        {isSetup && osSector !== 'EDM_FIO' && (
                             <div className="bg-[#111318] border border-[#262A33] rounded-[8px] p-4 space-y-4 mt-4">
                                 <h4 className="font-semibold text-[#E7E9ED] text-xs uppercase tracking-wider">Estratégia de ferramentas</h4>
                                 <p className="text-xs text-[#565B68]">Escolha por O.S. — ex.: peça longa noturna = magazine completo.</p>

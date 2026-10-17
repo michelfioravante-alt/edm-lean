@@ -4,28 +4,21 @@ import Button from '../common/Button';
 import { useAppStore } from '../../store/useAppStore';
 
 import { MOTIVOS_PAUSA_CNC } from '../../constants/cncProcess';
-import { SECTORS } from '../../constants/sectorConstants';
+import { SECTORS, filtrarRecursosDoSetor, normalizarSetorId } from '../../constants/sectorConstants';
 
 export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
     const { estoque, maquinas, operadores, registrarTrocaConsumivel, configuracoesGlobais, ferramentasMaquina, activeSector, notificarApp } = useAppStore();
 
-    const osSector = osData?.setor || activeSector || 'CNC';
+    const osSector = normalizarSetorId(osData?.setor || activeSector || 'CNC');
     const MOTIVOS_PAUSA = SECTORS[osSector]?.motivosPausa || MOTIVOS_PAUSA_CNC;
 
     const filteredEstoque = (estoque || []).filter(item => {
         if (!item.setor || item.setor === 'TODOS' || osSector === 'TODOS') return true;
-        return item.setor === osSector;
+        return normalizarSetorId(item.setor) === osSector;
     });
 
-    const filteredMaquinas = (maquinas || []).filter(m => {
-        if (!m.setor || m.setor === 'TODOS' || osSector === 'TODOS') return true;
-        return m.setor === osSector;
-    });
-
-    const filteredOperadores = (operadores || []).filter(op => {
-        if (!op.setor || op.setor === 'TODOS' || osSector === 'TODOS') return true;
-        return op.setor === osSector;
-    });
+    const { itens: filteredMaquinas } = filtrarRecursosDoSetor(maquinas, osSector);
+    const { itens: filteredOperadores } = filtrarRecursosDoSetor(operadores, osSector);
 
 
 

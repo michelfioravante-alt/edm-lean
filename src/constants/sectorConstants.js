@@ -174,3 +174,43 @@ export const SECTOR_OPTIONS = [
     { value: SECTORS.EXTERNO.id, label: SECTORS.EXTERNO.label, shortLabel: SECTORS.EXTERNO.shortLabel },
     { value: SECTORS.TODOS.id, label: SECTORS.TODOS.label, shortLabel: SECTORS.TODOS.shortLabel },
 ];
+
+/** Normaliza textos legados (EDM, eletrofio…) para o id canônico. */
+export function normalizarSetorId(setor) {
+    const s = String(setor || '').trim().toUpperCase().replace(/\s+/g, '_');
+    if (!s || s === 'TODOS' || s === 'GERAL' || s === 'ALL') return 'TODOS';
+    if (s === 'EDM' || s === 'EDM_FIO' || s.includes('FIO') || s.includes('WEDM') || s.includes('ELETRO')) return 'EDM_FIO';
+    if (s === 'CNC' || s.includes('USINAGEM') || s.includes('CENTRO')) return 'CNC';
+    if (s === 'TORNO') return 'TORNO';
+    if (s === 'RETIFICA') return 'RETIFICA';
+    if (s === 'EXTERNO' || s.includes('TERCEIR')) return 'EXTERNO';
+    return s;
+}
+
+export function rotuloSetorCurto(setor) {
+    const id = normalizarSetorId(setor);
+    return SECTORS[id]?.shortLabel || id;
+}
+
+/**
+ * Filtra máquinas/operadores pelo setor da O.S.
+ * Sem match: devolve a lista inteira (fallback) para o chão não ficar travado.
+ */
+export function filtrarRecursosDoSetor(lista, setorOs, { fallbackTodos = true } = {}) {
+    const items = lista || [];
+    const alvo = normalizarSetorId(setorOs);
+    if (!items.length) return { itens: [], usouFallback: false, alvo };
+
+    if (!alvo || alvo === 'TODOS') {
+        return { itens: items, usouFallback: false, alvo: 'TODOS' };
+    }
+
+    const doSetor = items.filter((row) => {
+        const s = normalizarSetorId(row.setor);
+        return !s || s === 'TODOS' || s === alvo;
+    });
+
+    if (doSetor.length > 0) return { itens: doSetor, usouFallback: false, alvo };
+    if (fallbackTodos) return { itens: items, usouFallback: true, alvo };
+    return { itens: [], usouFallback: false, alvo };
+}
