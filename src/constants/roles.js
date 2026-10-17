@@ -25,7 +25,11 @@ export function setorEfetivoProgramador(setorPadrao, activeSector) {
 
 export function filtrarEstoqueDoPerfil(itens, role, setor) {
     if (role === 'admin' || !itens) return itens || [];
-    return itens.filter((i) => (i.setor || '') === setor);
+    // Inclui TODOS (fluídos comuns) + itens do setor do programador
+    return itens.filter((i) => {
+        const s = i.setor || 'TODOS';
+        return s === setor || s === 'TODOS';
+    });
 }
 
 export function nomesClienteAutocomplete(clientes = [], nomeEmpresa) {

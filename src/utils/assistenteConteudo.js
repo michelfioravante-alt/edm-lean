@@ -5,9 +5,9 @@ export const FAQ_TOPICOS = [
         id: 'criar_os',
         titulo: 'Criar e liberar peça',
         resposta:
-            'No Início ou em Nova O.S., cadastre a peça (e o molde, se houver). Peças de molde entram em fila — o gestor libera individual ou em lote. Só então aparecem no Kanban do setor.',
-        irPara: 'home',
-        cta: 'Ir ao Início',
+            'Peça avulsa: Nova O.S. no Início, Carteira ou Kanban. Molde (várias peças da mesma ferramenta): só na aba Moldes — as peças entram na fila e o gestor libera para o setor. Só então aparecem no Kanban.',
+        irPara: 'moldes',
+        cta: 'Abrir Moldes',
     },
     {
         id: 'fluxo_kanban',
@@ -35,9 +35,9 @@ export const FAQ_TOPICOS = [
     },
     {
         id: 'molde',
-        titulo: 'Molde e repetir peça',
+        titulo: 'O que é um molde?',
         resposta:
-            'Moldes agrupam peças irmãs. Em Registros você busca execuções antigas e usa Repetir para abrir Nova O.S. pré-preenchida — cada repetição gera um kanban novo.',
+            'Molde = conjunto de peças atreladas à mesma ferramenta/job (código do molde). Cada peça vira um cartão; ficam na fila até liberar. Em Registros, Repetir abre uma Nova O.S. de peça avulsa pré-preenchida — não recria o molde inteiro.',
         irPara: 'moldes',
         cta: 'Ver Moldes',
     },
@@ -45,7 +45,7 @@ export const FAQ_TOPICOS = [
         id: 'estoque',
         titulo: 'Estoque e ferramental',
         resposta:
-            'Estoque registra entrada/saída (quantidade só muda por movimentação). No Setup a baixa pode ser automática se estiver ligada em Configurações. Ferramental acompanha vida útil na máquina.',
+            'Estoque: saldo por setor. CNC/Torno (fresas, insertos) podem ser serializados em Ferramental com vida útil. EDM fio (fio, resina, filtro) fica só no Estoque e nas trocas do kanban — não vai para Ferramental. Quantidade só muda por movimentação.',
         irPara: 'estoque',
         cta: 'Abrir estoque',
     },

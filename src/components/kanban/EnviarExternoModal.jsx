@@ -2,17 +2,19 @@ import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { TIPOS_SERVICO_EXTERNO, rotuloTipoServicoExterno } from '../../constants/osWorkflow';
+import { useAppStore } from '../../store/useAppStore';
 
 export default function EnviarExternoModal({ isOpen, onClose, onConfirm, fornecedores }) {
     const [fornecedorId, setFornecedorId] = useState('');
     const [tipo, setTipo] = useState('tratamento');
+    const notificarApp = useAppStore((s) => s.notificarApp);
 
     if (!isOpen) return null;
 
     const handle = () => {
         const f = (fornecedores || []).find((x) => x.id === fornecedorId);
         if (!f) {
-            alert('Selecione o fornecedor.');
+            notificarApp('Selecione o fornecedor.', 'aviso');
             return;
         }
         onConfirm({

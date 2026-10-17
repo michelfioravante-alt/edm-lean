@@ -46,8 +46,8 @@ export default function Estoque() {
     const [novoNome, setNovoNome] = useState('');
     const [novaQtd, setNovaQtd] = useState('');
     const [novoAlerta, setNovoAlerta] = useState('');
-    const [novoSetor, setNovoSetor] = useState(isProgrammerLocked ? effectiveSector : 'EDM_FIO');
-    const [novaUnidade, setNovaUnidade] = useState('kg');
+    const [novoSetor, setNovoSetor] = useState(isProgrammerLocked ? effectiveSector : 'CNC');
+    const [novaUnidade, setNovaUnidade] = useState('un');
     const [setorFiltro, setSetorFiltro] = useState(isProgrammerLocked ? effectiveSector : 'TODOS');
     const [buscaEstoque, setBuscaEstoque] = useState('');
 
@@ -69,6 +69,7 @@ export default function Estoque() {
     const escolherSetorCadastro = (setor) => {
         setNovoSetor(setor);
         if (setor === 'EDM_FIO') setNovaUnidade((u) => (u === 'un' ? 'kg' : u));
+        else if (setor === 'CNC' || setor === 'TORNO') setNovaUnidade((u) => (u === 'kg' || u === 'm' || u === 'rolo' ? 'un' : u));
     };
 
     // Estado Deleção de Estoque
@@ -164,7 +165,7 @@ export default function Estoque() {
                     </div>
                     <div>
                         <h2 className="text-xl font-semibold text-white">Estoque de insumos</h2>
-                        <p className="text-[#7B808F] text-xs mt-0.5">SKU (caixa) · saldo e unidade. Instância serializada fica em Ferramental. Quebra no Kanban e troca na máquina baixam com histórico.</p>
+                        <p className="text-[#7B808F] text-xs mt-0.5">SKU por setor · CNC/Torno podem virar peça física em Ferramental; EDM fio (fio, resina, filtro) fica só aqui e na troca/pausa do kanban.</p>
                     </div>
                 </div>
             </div>

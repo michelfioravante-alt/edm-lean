@@ -127,9 +127,6 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                         >
                             <FolderKanban className="h-4 w-4 shrink-0 text-[#D97D3D]" />
                             <span>Moldes</span>
-                            <span className="ml-auto text-[8px] bg-[#D97D3D]/15 text-[#D97D3D] px-1.5 py-0.5 rounded-[4px] font-semibold uppercase tracking-wider">
-                                ZW3D
-                            </span>
                         </button>
                         </>
                         )}
@@ -193,7 +190,7 @@ export default function Sidebar({ isOpen, onClose, activeView, onViewChange }) {
                             }`}
                         >
                             <Wrench className="h-4 w-4 shrink-0 text-[#7B808F]" />
-                            <span>Ferramental & Magazines</span>
+                            <span>Ferramental CNC</span>
                         </button>
 
                         {isAdmin && (

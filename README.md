@@ -31,9 +31,10 @@ Indicadores usam **eficiência CAM** (previsto ÷ horas reais de setup + corte),
 - Programadores ficam no setor de atuação; terminal de chão entra via `/join/{código}` + PIN (RPC `vincular_acesso_por_pin`).
 - **Assistente de fábrica**: abre no 1º acesso do gestor (máquinas/operadores/PIN/link) e depois fica no ícone de ajuda com FAQs.
 
-### 3. Aba Moldes — Cadastro manual e fila do gestor
-- Moldes agrupam peças por `os_grupo_id` (kanbans pai/filho).
-- Cadastro **manual** e import CSV: peças entram na **fila do molde** (`em_fila`) — só aparecem no Kanban do setor após o gestor **liberar** (individual ou em lote).
+### 3. Aba Moldes — conjunto de peças da mesma ferramenta
+- **Molde** = peças atreladas ao mesmo código de ferramenta/job (ex.: cavidade + macho do KINNER).
+- Cadastro **só na aba Moldes** (“Novo molde”). No Kanban/Carteira, Nova O.S. é **peça avulsa**.
+- Peças entram na **fila** (`em_fila`) e só aparecem no Kanban do setor após o gestor **liberar**.
 
 ### 4. Horas máquina — Referência para orçamentos
 - Foco em **horas máquina reais** (setup, corte, aferição, pausas), não em substituir o preço comercial.
@@ -54,10 +55,10 @@ Indicadores usam **eficiência CAM** (previsto ÷ horas reais de setup + corte),
 - Anexo de print/imagem no cartão e na folha A4.
 - Tempos previstos na abertura ou na programação; calculadora WEDM opcional para eletrofio.
 
-### 8. Estoque e vida útil de ferramental
-- Vida útil em horas (fresas, brocas, fios).
+### 8. Estoque e ferramental
+- **Estoque**: saldo por setor. Fio/resina/filtro → **EDM Fio**; fresas/insertos → **CNC**; fluídos comuns → **Geral**. Quantidade só muda por entrada/saída (RPC).
+- **Ferramental**: só CNC/Torno — instância física com vida útil (magazine). Insumos de EDM fio **não** se serializam aqui; usam troca/pausa no kanban.
 - Alertas de mínimo, quebras/trocas vinculadas à máquina e ao operador.
-- Cadastro: setor do item importa (fio/resina → **EDM Fio**; “Geral” só para fluídos comuns). Quantidade só muda por entrada/saída (RPC).
 
 ### 9. Kanban — concluídos recentes
 - No quadro, **Concluído** mostra só as últimas ~48 h (máx. 20 cartões).
@@ -99,9 +100,9 @@ npm run build
 
 ## Banco de dados (Supabase)
 
-Execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor**, **na ordem** (`01_schema.sql` → `19_kanban_auto_ultima_execucao.sql`). Todos são idempotentes depois do `01`.
+Execute os scripts de [`supabase/sql/`](supabase/sql/) no **SQL Editor**, **na ordem** (`01_schema.sql` → `21_mover_os_security_definer.sql`). Todos são idempotentes depois do `01`.
 
-Destaques recentes no banco: `16` auth/PIN, `17` regras de OS/estoque no Postgres, `18` flag de onboarding do assistente, `19` `ultima_execucao` das rotinas.
+Destaques recentes no banco: `16` auth/PIN, `17` regras de OS/estoque, `18` onboarding, `19` `ultima_execucao`, `20` `em_fila`, `21` `mover_os` SECURITY DEFINER (corrige permission denied).
 
 ### Checklist de cliente novo (onboarding)
 

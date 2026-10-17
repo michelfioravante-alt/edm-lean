@@ -13,7 +13,7 @@ import {
 } from '../../utils/ferramentasChecklist';
 
 export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
-    const { programadores, estoque, fetchEstoque, editOrdemServico } = useAppStore();
+    const { programadores, estoque, fetchEstoque, editOrdemServico, notificarApp } = useAppStore();
     const [saving, setSaving] = useState(false);
     const [showCalc, setShowCalc] = useState(false);
     const setorRaw = osData?.setor || 'CNC';
@@ -86,7 +86,7 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
             });
             onClose();
         } catch (err) {
-            alert(err?.message || 'Não foi possível salvar a programação.');
+            notificarApp(err?.message || 'Não foi possível salvar a programação.');
         }
         setSaving(false);
     };

@@ -111,7 +111,6 @@ export default function HomeGerente({ onNavigate }) {
     const setActiveSector = useAppStore((s) => s.setActiveSector);
     const pedirFiltroCarteira = useAppStore((s) => s.pedirFiltroCarteira);
     const [novaOs, setNovaOs] = useState(false);
-    const [novaOsMolde, setNovaOsMolde] = useState(false);
 
     const painel = useMemo(
         () => montarHomeGerente(kanban, estoque, config || {}),
@@ -172,10 +171,17 @@ export default function HomeGerente({ onNavigate }) {
                     </button>
                     <button
                         type="button"
-                        onClick={() => { setNovaOsMolde(false); setNovaOs(true); }}
+                        onClick={() => onNavigate?.('moldes')}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] border border-[#333844] text-[#9DA2AE] text-xs font-semibold cursor-pointer"
+                    >
+                        Novo molde
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setNovaOs(true)}
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold cursor-pointer"
                     >
-                        <Plus className="w-4 h-4" /> Nova O.S.
+                        <Plus className="w-4 h-4" /> Peça avulsa
                     </button>
                 </div>
             </div>
@@ -291,12 +297,9 @@ export default function HomeGerente({ onNavigate }) {
 
             <NovaOSForm
                 isOpen={novaOs}
-                onClose={() => { setNovaOs(false); setNovaOsMolde(false); }}
-                initialModo={novaOsMolde ? 'molde' : undefined}
-                onCreated={() => {
-                    if (novaOsMolde) onNavigate?.('moldes');
-                    setNovaOsMolde(false);
-                }}
+                onClose={() => setNovaOs(false)}
+                variante="avulsa"
+                onIrParaMoldes={() => onNavigate?.('moldes')}
             />
         </div>
     );

@@ -72,6 +72,8 @@ export function marcarItensChecklist(lista, idsMarcados, operadorNome) {
 export function estoqueFerramentasDoSetor(estoque, setor = 'CNC') {
     return (estoque || []).filter((item) => {
         const s = item.setor || item.setor_padrao || 'TODOS';
+        // Fio/resina/filtro são consumível de processo EDM — não entram no magazine CNC
+        if (s === 'EDM_FIO') return false;
         if (setor && setor !== 'TODOS' && s !== 'TODOS' && s !== setor) return false;
         return true;
     });

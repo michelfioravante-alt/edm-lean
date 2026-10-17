@@ -50,6 +50,7 @@ export default function Carteira({ onNavigate }) {
     const moveOrdemServico = useAppStore((s) => s.moveOrdemServico);
     const syncRoteiroGrupo = useAppStore((s) => s.syncRoteiroGrupo);
     const fornecedores = useAppStore((s) => s.fornecedores);
+    const notificarApp = useAppStore((s) => s.notificarApp);
     const [filtro, setFiltro] = useState('todas');
     const [busca, setBusca] = useState('');
     const [ficha, setFicha] = useState(null);
@@ -110,7 +111,7 @@ export default function Carteira({ onNavigate }) {
 
     const pedirNoTerceiro = (k) => {
         if (!k.fornecedor_id && !(fornecedores || []).length) {
-            alert('Cadastre um fornecedor em Configurações → Máquinas & CAM.');
+            notificarApp('Cadastre um fornecedor em Configurações → Máquinas & CAM.', 'aviso');
             return;
         }
         if (k.fornecedor_id) {
@@ -130,16 +131,25 @@ export default function Carteira({ onNavigate }) {
                 <div>
                     <h1 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Carteira de O.S.</h1>
                     <p className="text-xs text-[#7B808F] mt-1">
-                        Moldes e peças avulsas. O Kanban do setor fica no menu, para olhar gargalo.
+                        Acompanha moldes e peças avulsas. Para cadastrar um molde (várias peças da mesma ferramenta), use a aba Moldes.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => setNovaOs(true)}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold cursor-pointer"
-                >
-                    <Plus className="w-4 h-4" /> Nova O.S.
-                </button>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onNavigate?.('moldes')}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] border border-[#333844] text-[#9DA2AE] text-xs font-semibold cursor-pointer"
+                    >
+                        Novo molde
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setNovaOs(true)}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold cursor-pointer"
+                    >
+                        <Plus className="w-4 h-4" /> Peça avulsa
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
@@ -250,7 +260,7 @@ export default function Carteira({ onNavigate }) {
                                             <td className="px-3 py-2.5">
                                                 <div className="font-medium text-[#E7E9ED]">{row.titulo || 'S/N'}</div>
                                                 <div className="text-[10px] text-[#565B68] uppercase tracking-wider">
-                                                    {row.isMolde ? `Molde · ${row.kanbans.length} kanbans` : 'Peça avulsa'}
+                                                    {row.isMolde ? `Molde · ${row.kanbans.length} peça${row.kanbans.length === 1 ? '' : 's'}` : 'Peça avulsa'}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-2.5 text-[#9DA2AE]">{row.cliente || '—'}</td>
@@ -278,7 +288,12 @@ export default function Carteira({ onNavigate }) {
                 </div>
             )}
 
-            <NovaOSForm isOpen={novaOs} onClose={() => setNovaOs(false)} />
+            <NovaOSForm
+                isOpen={novaOs}
+                onClose={() => setNovaOs(false)}
+                variante="avulsa"
+                onIrParaMoldes={() => onNavigate?.('moldes')}
+            />
             <EnviarExternoModal
                 isOpen={!!envioExterno}
                 onClose={() => setEnvioExterno(null)}

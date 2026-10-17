@@ -9,7 +9,7 @@ import Modal from '../components/common/Modal';
 import { format } from 'date-fns';
 
 export default function Clientes() {
-    const { clientes, addCliente, editCliente, removeCliente, fetchClientStats } = useAppStore();
+    const { clientes, addCliente, editCliente, removeCliente, fetchClientStats, notificarApp } = useAppStore();
 
     // Form state for adding primary client info
     const [nome, setNome] = useState('');
@@ -159,7 +159,7 @@ export default function Clientes() {
             setFeedback('Cliente atualizado com sucesso!');
             setTimeout(() => setFeedback(''), 2500);
         } catch (err) {
-            alert('Erro ao atualizar: ' + err.message);
+            notificarApp('Erro ao atualizar: ' + err.message);
         }
         setUpdating(false);
     };

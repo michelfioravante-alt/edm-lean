@@ -26,21 +26,36 @@ function CamposHm({ label, horas, minutos, onHoras, onMinutos, inputCls }) {
     );
 }
 
-export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHistorico, initialModo }) {
+/**
+ * variante:
+ * - 'avulsa' — peça única (Kanban / Carteira / Início). Sem toggle Molde.
+ * - 'molde'  — conjunto de peças da mesma ferramenta (só aba Moldes).
+ */
+export default function NovaOSForm({
+    isOpen,
+    onClose,
+    onCreated,
+    initialFromHistorico,
+    initialModo,
+    variante,
+    onIrParaMoldes,
+}) {
     const clientes = useAppStore((s) => s.clientes);
     const config = useAppStore((s) => s.configuracoesGlobais);
     const activeSector = useAppStore((s) => s.activeSector);
     const addOrdemServico = useAppStore((s) => s.addOrdemServico);
     const addGrupoOrdensServico = useAppStore((s) => s.addGrupoOrdensServico);
+    const notificarApp = useAppStore((s) => s.notificarApp);
     const etapasPersonalizadas = useAppStore((s) => s.configuracoesGlobais?.etapasPersonalizadas) || [];
     const salvarEtapasPersonalizadas = useAppStore((s) => s.salvarEtapasPersonalizadas);
     const role = useAuthStore((s) => s.role);
     const nomeEmpresa = useAuthStore((s) => s.nomeEmpresa);
     const isGestor = role === 'admin';
 
+    const varianteEfetiva = variante || (initialModo === 'molde' ? 'molde' : 'avulsa');
     const setorPadrao = activeSector && activeSector !== 'TODOS' ? activeSector : 'CNC';
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [modo, setModo] = useState('avulsa');
+    const [modo, setModo] = useState(varianteEfetiva === 'molde' ? 'molde' : 'avulsa');
     const [cliente, setCliente] = useState('');
     const [codigoPeca, setCodigoPeca] = useState('');
     const [codigoMolde, setCodigoMolde] = useState('');
@@ -115,10 +130,8 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
 
     useEffect(() => {
         if (!isOpen) return;
-        if (initialModo === 'molde') {
-            setModo('molde');
-        }
-    }, [isOpen, initialModo]);
+        setModo(varianteEfetiva === 'molde' ? 'molde' : 'avulsa');
+    }, [isOpen, varianteEfetiva]);
 
     useEffect(() => {
         if (!isOpen || modo !== 'avulsa') {
@@ -318,7 +331,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         try {
             const linhas = flattenKanbans().filter((k) => k.setor);
             if (linhas.length === 0) {
-                alert('Inclua pelo menos CNC, eletrofio ou serviço externo. As outras etapas (laser, torno, ou as que você criar) entram só no caminho da peça, sem cartão no quadro.');
+                notificarApp('Inclua pelo menos CNC, eletrofio ou serviço externo. As outras etapas (laser, torno, ou as que você criar) entram só no caminho da peça, sem cartão no quadro.', 'aviso');
                 setIsSubmitting(false);
                 return;
             }
@@ -347,7 +360,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
             handleClose();
             if (criados?.length) onCreated?.(criados);
         } catch (err) {
-            alert(err?.message || 'Falha ao criar O.S.');
+            notificarApp(err?.message || 'Falha ao criar O.S.');
         }
         setIsSubmitting(false);
     };
@@ -469,28 +482,35 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title={isGestor ? 'Nova O.S. — despacho para o setor' : 'Novo kanban'}
+            title={
+                modo === 'molde'
+                    ? 'Novo molde'
+                    : (isGestor ? 'Nova O.S. — peça avulsa' : 'Novo kanban')
+            }
             maxWidth="max-w-lg"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
-                {isGestor && (
-                    <div className="flex bg-[#111318] p-1 rounded-[7px] border border-[#262A33] gap-1">
-                        <button
-                            type="button"
-                            onClick={() => { setModo('avulsa'); setPecas([pecas[0] || novaPeca()]); }}
-                            className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold uppercase tracking-wider cursor-pointer ${modo === 'avulsa' ? 'bg-[#D97D3D] text-[#111318]' : 'text-[#7B808F]'}`}
-                        >
-                            Uma peça
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setModo('molde')}
-                            className={`flex-1 py-2 rounded-[5px] text-[11px] font-semibold uppercase tracking-wider cursor-pointer ${modo === 'molde' ? 'bg-[#D97D3D] text-[#111318]' : 'text-[#7B808F]'}`}
-                        >
-                            Molde (várias peças)
-                        </button>
+                {modo === 'molde' && isGestor ? (
+                    <div className="rounded-[8px] border border-[#D97D3D]/25 bg-[rgba(217,125,61,0.08)] px-3 py-2.5">
+                        <p className="text-[12px] text-[#E7E9ED] leading-relaxed">
+                            <strong className="text-[#D97D3D]">Molde</strong> = peças da mesma ferramenta / mesmo job
+                            (ex.: cavidade, macho, placa). Cada peça vira um cartão; entram na fila até você liberar para o setor.
+                        </p>
                     </div>
-                )}
+                ) : null}
+
+                {modo === 'avulsa' && isGestor && onIrParaMoldes ? (
+                    <p className="text-[11px] text-[#7B808F] leading-relaxed">
+                        Uma peça / um cartão no Kanban.{' '}
+                        <button
+                            type="button"
+                            onClick={() => { handleClose(); onIrParaMoldes(); }}
+                            className="text-[#D97D3D] font-semibold hover:underline cursor-pointer"
+                        >
+                            É um molde com várias peças?
+                        </button>
+                    </p>
+                ) : null}
 
                 <div>
                     <label className={labelCls}>Cliente *</label>
@@ -514,8 +534,9 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
 
                 {modo === 'molde' && isGestor ? (
                     <div>
-                        <label className={labelCls}>Código do molde</label>
-                        <input value={codigoMolde} onChange={(e) => setCodigoMolde(e.target.value)} placeholder="Ex: KINNER" className={inputCls} />
+                        <label className={labelCls}>Código do molde / ferramenta</label>
+                        <input value={codigoMolde} onChange={(e) => setCodigoMolde(e.target.value)} placeholder="Ex: KINNER" className={inputCls} required />
+                        <p className="text-[10px] text-[#565B68] mt-1">Identifica o conjunto. As peças abaixo ficam ligadas a este código.</p>
                     </div>
                 ) : modo !== 'molde' ? (
                     <div>
@@ -694,7 +715,7 @@ export default function NovaOSForm({ isOpen, onClose, onCreated, initialFromHist
                                 });
                                 setFolhaBlob(blob);
                             } catch (err) {
-                                alert(err?.message || 'Não foi possível ler a imagem.');
+                                notificarApp(err?.message || 'Não foi possível ler a imagem.');
                             }
                         }}
                     />

@@ -5,6 +5,7 @@ import Modal from '../components/common/Modal';
 import { Plus, Wrench, AlertTriangle, Trash2, History, MapPin, User, Cpu, Info, Clock } from 'lucide-react';
 import { TIPOS_FERRAMENTAL, STATUS_FERRAMENTAL } from '../constants/cncProcess';
 import { formatarDataBR, formatarHoras } from '../utils/formatters';
+import { estoqueParaFerramental, setorPermiteFerramental, SETORES_FERRAMENTAL } from '../utils/estoque';
 
 export default function Ferramental() {
     const {
@@ -19,7 +20,13 @@ export default function Ferramental() {
         removeFerramentalItem,
         vincularFerramentalAoSku,
         estoque,
+        notificarApp,
     } = useAppStore();
+
+    const skusFerramental = estoqueParaFerramental(estoque);
+    const maquinasUsinagem = (maquinas || []).filter((m) =>
+        SETORES_FERRAMENTAL.includes(m.setor || m.tipo || 'CNC')
+    );
 
     const [nome, setNome] = useState('');
     const [skuId, setSkuId] = useState('');
@@ -49,11 +56,15 @@ export default function Ferramental() {
     const handleAdd = async (e) => {
         e.preventDefault();
         if (!skuId) {
-            alert('Escolha o SKU do estoque. Ferramental é a peça física; o saldo fica no estoque.');
+            notificarApp('Escolha o SKU do estoque. Ferramental é a peça física; o saldo fica no estoque.', 'aviso');
             return;
         }
         try {
-            const sku = estoque.find((i) => i.id === skuId);
+            const sku = skusFerramental.find((i) => i.id === skuId) || estoque.find((i) => i.id === skuId);
+            if (!setorPermiteFerramental(sku?.setor)) {
+                notificarApp('Ferramental é só CNC/Torno. Fio, resina e filtro ficam no Estoque (Eletrofio).', 'aviso');
+                return;
+            }
             await addFerramentalItem({
                 nome: nome.trim() || sku?.nome,
                 tipo,
@@ -73,7 +84,7 @@ export default function Ferramental() {
             setSchemaMissing(false);
         } catch (err) {
             console.error(err);
-            alert(err.message || 'Erro ao cadastrar ferramenta.');
+            notificarApp(err.message || 'Erro ao cadastrar ferramenta.');
         }
     };
 
@@ -94,7 +105,7 @@ export default function Ferramental() {
             setQuebraObs('');
         } catch (err) {
             console.error(err);
-            alert('Erro ao registrar quebra.');
+            notificarApp('Erro ao registrar quebra.');
         }
     };
 
@@ -124,9 +135,9 @@ export default function Ferramental() {
                     <Wrench className="text-kanban-amber w-5 h-5" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-semibold text-white">Ferramental</h1>
+                    <h1 className="text-xl font-semibold text-white">Ferramental CNC</h1>
                     <p className="text-[#7B808F] text-xs mt-0.5 max-w-2xl">
-                        Instância física ligada a um SKU do estoque. Cadastrar aqui baixa 1 do saldo. Sem saldo, dê entrada no estoque primeiro.
+                        Peça física de usinagem (fresa, broca, inserto) com vida útil e magazine. Só SKUs de CNC/Torno. Fio, resina e filtro ficam no Estoque (Eletrofio) — não se serializam aqui.
                     </p>
                 </div>
             </div>
@@ -143,25 +154,29 @@ export default function Ferramental() {
 
             <div className="grid lg:grid-cols-2 gap-5">
                 <section className="bg-[#181B22] border border-[#262A33] rounded-xl p-4">
-                    <h2 className="text-sm font-semibold text-white mb-1">Serializar do estoque</h2>
-                    <p className="text-xs text-[#565B68] mb-4">Obrigatório escolher o SKU. Baixa 1 unidade e cria esta ferramenta com vida útil própria.</p>
+                    <h2 className="text-sm font-semibold text-white mb-1">Serializar do estoque CNC/Torno</h2>
+                    <p className="text-xs text-[#565B68] mb-4">Escolha o SKU de usinagem. Baixa 1 unidade e cria a ferramenta com vida útil própria.</p>
                     <form onSubmit={handleAdd} className="space-y-3">
                         <select
                             className="w-full bg-[#111318] border border-[#333844] rounded-xl px-4 py-2.5 text-sm text-white focus:border-kanban-amber outline-none"
                             value={skuId}
                             onChange={(e) => {
                                 setSkuId(e.target.value);
-                                const sku = estoque.find((i) => i.id === e.target.value);
+                                const sku = skusFerramental.find((i) => i.id === e.target.value);
                                 if (sku && !nome) setNome(sku.nome);
                             }}
                             required
                         >
-                            <option value="">SKU do estoque…</option>
-                            {estoque.map((i) => (
-                                <option key={i.id} value={i.id} disabled={(i.quantidade || 0) < 1}>
-                                    {i.nome} · {i.quantidade || 0} {i.unidade || 'un'} {(i.quantidade || 0) < 1 ? '(sem saldo)' : ''}
-                                </option>
-                            ))}
+                            <option value="">SKU CNC/Torno…</option>
+                            {skusFerramental.length === 0 ? (
+                                <option value="" disabled>Nenhum SKU CNC/Torno — cadastre no Estoque</option>
+                            ) : (
+                                skusFerramental.map((i) => (
+                                    <option key={i.id} value={i.id} disabled={(i.quantidade || 0) < 1}>
+                                        {i.nome} · {i.setor === 'TORNO' ? 'Torno' : 'CNC'} · {i.quantidade || 0} {i.unidade || 'un'} {(i.quantidade || 0) < 1 ? '(sem saldo)' : ''}
+                                    </option>
+                                ))
+                            )}
                         </select>
                         <input
                             className="w-full bg-[#111318] border border-[#333844] rounded-xl px-4 py-2.5 text-sm text-white focus:border-kanban-amber outline-none"
@@ -269,8 +284,8 @@ export default function Ferramental() {
                             value={quebraMaquina}
                             onChange={(e) => setQuebraMaquina(e.target.value)}
                         >
-                            <option value="">Máquina</option>
-                            {maquinas.map((m) => (
+                            <option value="">Máquina (CNC/Torno)</option>
+                            {(maquinasUsinagem.length ? maquinasUsinagem : maquinas).map((m) => (
                                 <option key={m.id} value={m.id}>{m.nome}</option>
                             ))}
                         </select>
@@ -346,14 +361,19 @@ export default function Ferramental() {
                                                     className="mt-2 w-full bg-[#111318] border border-[#333844] rounded-lg px-2 py-1.5 text-[11px] text-white"
                                                     defaultValue=""
                                                     onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => {
+                                                    onChange={async (e) => {
                                                         e.stopPropagation();
-                                                        if (e.target.value) vincularFerramentalAoSku(f.id, e.target.value);
+                                                        if (!e.target.value) return;
+                                                        try {
+                                                            await vincularFerramentalAoSku(f.id, e.target.value);
+                                                        } catch (err) {
+                                                            notificarApp(err.message || 'Não foi possível vincular o SKU.');
+                                                        }
                                                     }}
                                                 >
-                                                    <option value="">Vincular a um SKU (sem baixar saldo)</option>
-                                                    {estoque.map((i) => (
-                                                        <option key={i.id} value={i.id}>{i.nome}</option>
+                                                    <option value="">Vincular SKU CNC/Torno (sem baixar)</option>
+                                                    {skusFerramental.map((i) => (
+                                                        <option key={i.id} value={i.id}>{i.nome} · {i.setor === 'TORNO' ? 'Torno' : 'CNC'}</option>
                                                     ))}
                                                 </select>
                                             )}

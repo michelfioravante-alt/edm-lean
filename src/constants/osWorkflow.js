@@ -277,7 +277,8 @@ export function agruparCarteira(kanban, config = {}) {
     return [...groups.entries()].map(([grupoId, kanbans]) => {
         kanbans.sort((a, b) => (a.roteiro_ordem || 0) - (b.roteiro_ordem || 0));
         const head = kanbans.find((k) => k.codigo_molde) || kanbans[0];
-        const isMolde = kanbans.length > 1 || !!(head.codigo_molde);
+        // Molde = tem código de ferramenta/job. Roteiro multi-setor sem código ≠ molde.
+        const isMolde = !!(head.codigo_molde && String(head.codigo_molde).trim());
         const abertos = kanbans.filter((k) => !statusEhConcluido(k));
         const gargalo = abertos[0] || null;
         const custos = kanbans.map((k) => custoHoraKanban(k, config));

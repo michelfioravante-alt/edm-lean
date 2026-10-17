@@ -24,7 +24,7 @@ import { SECTORS } from '../../constants/sectorConstants';
 import { kanbanPrecisaProgramar, todosKanbans, kanbanEmFila } from '../../constants/osWorkflow';
 import { SETORES_PROGRAMADOR, setorPermitido, filtrarEstoqueDoPerfil, setorEfetivoProgramador } from '../../constants/roles';
 
-export default function Board() {
+export default function Board({ onNavigate }) {
     // Seletores granulares
     const kanban = useAppStore(state => state.kanban);
     const estoque = useAppStore(state => state.estoque);
@@ -48,6 +48,7 @@ export default function Board() {
     }, [isGestor, role, activeSector, setorPadrao, setActiveSector]);
 
     const moveOrdemServico = useAppStore(state => state.moveOrdemServico);
+    const notificarApp = useAppStore(state => state.notificarApp);
     const togglePausaOrdemServico = useAppStore(state => state.togglePausaOrdemServico);
     const deleteOrdemServico = useAppStore(state => state.deleteOrdemServico);
 
@@ -118,7 +119,7 @@ export default function Board() {
             if (pauseData?.tipo === 'quebraFerramenta') {
                 state.registrarQuebraFerramentaPausa(osData.id, colKey, pauseData)
                     .catch((err) => {
-                        alert(err?.message || 'Erro ao registrar quebra de ferramenta.');
+                        notificarApp(err?.message || 'Erro ao registrar quebra de ferramenta.');
                     });
                 setPauseContext(null);
                 return;
@@ -127,7 +128,7 @@ export default function Board() {
             if (pauseData?.tipo === 'trocaFerramentaEstoque') {
                 state.registrarTrocaFerramentaPausa(osData.id, colKey, pauseData)
                     .catch((err) => {
-                        alert(err?.message || 'Erro ao registrar troca de ferramenta.');
+                        notificarApp(err?.message || 'Erro ao registrar troca de ferramenta.');
                     });
                 setPauseContext(null);
                 return;
@@ -144,7 +145,7 @@ export default function Board() {
                     timestampEntrada_aFazer: nowIso
                 }).catch((err) => {
                     console.error("Erro ao enviar para T.T.:", err);
-                    alert("Erro ao enviar peça para Tratamento Térmico.");
+                    notificarApp('Erro ao enviar peça para Tratamento Térmico.');
                 });
                 setPauseContext(null);
                 return;
@@ -265,8 +266,7 @@ export default function Board() {
             mostrarRelatorioSeConcluido(ctx);
         }).catch((err) => {
             console.error("Erro ao mover O.S.:", err);
-            setTransitionError(err?.message || "Falha ao salvar. Tente novamente.");
-            setTimeout(() => setTransitionError(null), 4000);
+            notificarApp(err?.message || 'Falha ao salvar. Tente novamente.');
         });
     };
 
@@ -282,8 +282,7 @@ export default function Board() {
         }).catch((err) => {
             console.error("Erro ao devolver Corte para Set-up:", err);
             setPendingDevolverCorteSetup(ctx);
-            setTransitionError(err?.message || "Falha ao salvar.");
-            setTimeout(() => setTransitionError(null), 4000);
+            notificarApp(err?.message || 'Falha ao devolver para Prep. ferramental.');
         });
     };
 
@@ -301,8 +300,7 @@ export default function Board() {
         }).catch((err) => {
             console.error("Erro ao devolver:", err);
             setPendingDevolverAFazer(ctx);
-            setTransitionError(err?.message || "Falha ao salvar.");
-            setTimeout(() => setTransitionError(null), 4000);
+            notificarApp(err?.message || 'Falha ao devolver para A fazer.');
         });
     };
 
@@ -558,29 +556,30 @@ export default function Board() {
                                 onTransitionRequest={(osId, sourceCol, destCol) => {
                                     if (!destCol) return;
                                     if (sourceCol === 'concluido') {
-                                        setTransitionError('O.S. concluída não pode ser movida.');
-                                        setTimeout(() => setTransitionError(null), 3000);
+                                        notificarApp('O.S. concluída não pode ser movida.', 'aviso');
                                         return;
                                     }
                                     if (sourceCol === 'emCorte' && destCol === 'concluido') {
                                         setShowRegraAfericaoAlert(true);
                                         return;
                                     }
+                                    if (destCol === 'setup' && sourceCol === 'emCorte') {
+                                        // Voltar usinagem → prep: confirmação dedicada (não o modal de avanço)
+                                        const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
+                                        setPendingDevolverCorteSetup({ osId, sourceCol, destCol, osData: osToMove });
+                                        return;
+                                    }
                                     if (destCol === 'setup' || destCol === 'emCorte') {
                                         const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
                                         if (sourceCol === 'aFazer' && kanbanPrecisaProgramar(osToMove)) {
-                                            setTransitionError('Este kanban ainda não foi programado. Programe no A fazer antes do set-up.');
+                                            notificarApp('Este kanban ainda não foi programado. Programe no A fazer antes do set-up.', 'aviso');
                                             setProgramarOs(osToMove);
-                                            setTimeout(() => setTransitionError(null), 4000);
                                             return;
                                         }
-                                        if (destCol === 'setup' && sourceCol === 'emCorte') {
-                                            setPendingTransition({ osId, sourceCol, destCol, osData: osToMove });
-                                        } else if (destCol === 'setup' && sourceCol === 'afericao') {
+                                        if (destCol === 'setup' && sourceCol === 'afericao') {
                                             setExtraSetupContext({ osId, sourceCol, destCol, osData: osToMove });
                                         } else if (sourceCol === 'afericao' && destCol === 'emCorte') {
-                                            setTransitionError('De Aferição só pode ir para Set-up.');
-                                            setTimeout(() => setTransitionError(null), 3000);
+                                            notificarApp('De Inspeção só pode voltar para Prep. ferramental (Set-up).', 'aviso');
                                             return;
                                         } else {
                                             setPendingTransition({ osId, sourceCol, destCol, osData: osToMove });
@@ -627,6 +626,8 @@ export default function Board() {
                 <NovaOSForm
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                    variante="avulsa"
+                    onIrParaMoldes={isGestor ? () => onNavigate?.('moldes') : undefined}
                 />
 
                 <ProgramarKanbanModal

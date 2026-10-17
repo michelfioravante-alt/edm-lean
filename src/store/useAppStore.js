@@ -21,7 +21,7 @@ import { statusToColKey, colKeyToStatus } from '../constants/cncProcess';
 import { novoGrupoId } from '../constants/osWorkflow';
 import { novaOsRow, osPatch } from '../utils/osPayload';
 import { osMovida } from '../utils/relogioOs';
-import { chaveSku, normalizarItemEstoque, qtdEstoque } from '../utils/estoque';
+import { chaveSku, normalizarItemEstoque, qtdEstoque, setorPermiteFerramental } from '../utils/estoque';
 import {
     drenarFila,
     enfileirarAcao,
@@ -98,8 +98,9 @@ export const useAppStore = create((set, get) => ({
     clientes: [],
     fornecedores: [],
     usuarios: [],
-    erroOperacao: null, // Mensagem de falha ao salvar no banco (exibida no App)
-    avisoOperacao: null, // Aviso de rede / fila (não é erro)
+    erroOperacao: null, // Mensagem de falha (toast no layout)
+    avisoOperacao: null, // Aviso de rede / validação (toast âmbar)
+    sucessoOperacao: null, // Confirmação breve (toast verde)
     online: typeof navigator === 'undefined' ? true : navigator.onLine !== false,
     filaPendente: 0,
     _unsubNetwork: null,
@@ -1136,7 +1137,11 @@ export const useAppStore = create((set, get) => ({
             }));
         } catch (err) {
             console.error('Erro ao mover O.S., revertendo...', err);
-            set({ kanban: oldState, erroOperacao: `Não foi possível mover a O.S.: ${err.message || 'erro de conexão'}` });
+            const raw = err?.message || 'erro de conexão';
+            const msg = /permission denied|os_gravar_linha/i.test(raw)
+                ? 'Não foi possível mover a O.S.: falha de permissão no banco. Atualize a página e tente de novo; se persistir, avise o suporte.'
+                : `Não foi possível mover a O.S.: ${raw}`;
+            set({ kanban: oldState, erroOperacao: msg });
             throw err;
         }
 
@@ -1234,6 +1239,22 @@ export const useAppStore = create((set, get) => ({
 
     limparErroOperacao: () => set({ erroOperacao: null }),
     limparAvisoOperacao: () => set({ avisoOperacao: null }),
+    limparSucessoOperacao: () => set({ sucessoOperacao: null }),
+
+    /** Toast no layout do app — substitui alert() do navegador. */
+    notificarApp: (mensagem, tipo = 'erro') => {
+        const msg = String(mensagem || '').trim();
+        if (!msg) return;
+        if (tipo === 'sucesso') {
+            set({ sucessoOperacao: msg, erroOperacao: null });
+            return;
+        }
+        if (tipo === 'aviso') {
+            set({ avisoOperacao: msg });
+            return;
+        }
+        set({ erroOperacao: msg, sucessoOperacao: null });
+    },
 
     initNetworkWatch: () => {
         if (get()._unsubNetwork) return;
@@ -1685,6 +1706,9 @@ export const useAppStore = create((set, get) => ({
         if (!sku || qtdEstoque(sku) < 1) {
             throw new Error('Sem saldo no estoque para serializar esta ferramenta. Dê entrada no SKU primeiro.');
         }
+        if (!setorPermiteFerramental(sku.setor)) {
+            throw new Error('Ferramental é só para CNC/Torno. Fio, resina e filtro ficam no Estoque (setor Eletrofio).');
+        }
         await useAppStore.getState().movimentarEstoque({
             itemId: skuId,
             tipo: 'saida',
@@ -1700,6 +1724,10 @@ export const useAppStore = create((set, get) => ({
     },
 
     vincularFerramentalAoSku: async (ferramentalId, estoqueItemId) => {
+        const sku = useAppStore.getState().estoque.find((i) => i.id === estoqueItemId);
+        if (sku && !setorPermiteFerramental(sku.setor)) {
+            throw new Error('Só é possível vincular SKU de CNC ou Torno. Insumos de EDM fio ficam no Estoque.');
+        }
         const atualizado = await ferramentalService.update(ferramentalId, { estoque_item_id: estoqueItemId });
         set((state) => ({
             ferramental: state.ferramental.map((f) => (f.id === ferramentalId ? { ...f, ...atualizado } : f)),

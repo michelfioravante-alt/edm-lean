@@ -5,22 +5,22 @@ import { RotateCcw } from 'lucide-react';
 
 export default function ConfirmDevolverCorteModal({ isOpen, onClose, onConfirm }) {
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Devolver para Set-up">
+        <Modal isOpen={isOpen} onClose={onClose} title="Voltar para Prep. ferramental">
             <div className="flex flex-col items-center justify-center py-2">
                 <div className="w-14 h-14 rounded-full bg-[rgba(74,157,116,0.1)] border border-[#4A9D74]/30 flex items-center justify-center mb-5">
                     <RotateCcw className="w-7 h-7 text-[#4A9D74]" />
                 </div>
 
                 <h4 className="text-base font-semibold text-[#E7E9ED] text-center mb-2">
-                    Devolver para Set-up?
+                    Voltar uma etapa?
                 </h4>
 
                 <p className="text-[#7B808F] text-center text-sm mb-6 leading-relaxed">
-                    Esta O.S. será devolvida de{' '}
-                    <span className="font-semibold text-[#4A9D74]">Em Corte</span> para{' '}
-                    <span className="font-semibold text-[#C99A4A]">Set-up</span>.
+                    Esta O.S. volta de{' '}
+                    <span className="font-semibold text-[#4A9D74]">Em usinagem</span> para{' '}
+                    <span className="font-semibold text-[#C99A4A]">Prep. ferramental</span>.
                     <br />
-                    O tempo já gasto em Corte será mantido nos registros.
+                    O tempo já gasto em usinagem permanece nos registros.
                 </p>
 
                 <div className="flex w-full gap-3">

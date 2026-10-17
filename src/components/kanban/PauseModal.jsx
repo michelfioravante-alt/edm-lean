@@ -7,7 +7,7 @@ import { MOTIVOS_PAUSA_CNC } from '../../constants/cncProcess';
 import { SECTORS } from '../../constants/sectorConstants';
 
 export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
-    const { estoque, maquinas, operadores, registrarTrocaConsumivel, configuracoesGlobais, ferramentasMaquina, activeSector } = useAppStore();
+    const { estoque, maquinas, operadores, registrarTrocaConsumivel, configuracoesGlobais, ferramentasMaquina, activeSector, notificarApp } = useAppStore();
 
     const osSector = osData?.setor || activeSector || 'CNC';
     const MOTIVOS_PAUSA = SECTORS[osSector]?.motivosPausa || MOTIVOS_PAUSA_CNC;
@@ -99,7 +99,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
 
         if (!isAlreadyPaused && motivo === 'Troca de Insumo') {
             if (!trocaMaquina || !trocaInsumo || !trocaOperador) {
-                alert("Por favor, preencha a máquina, o insumo e o operador para registrar a troca.");
+                notificarApp('Preencha a máquina, o insumo e o operador para registrar a troca.', 'aviso');
                 return;
             }
             registrarTrocaConsumivel(trocaMaquina, trocaInsumo, trocaOperador);
@@ -108,7 +108,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
             obsFinal = `Troca de insumo: ${trocaInsumo} na máquina ${nomeMaquina} por ${trocaOperador}. ${observacao}`.trim();
         } else if (!isAlreadyPaused && motivo === 'Troca de Ferramenta') {
             if (!ferramentaEstoqueId || !ferramentaMaquina || !ferramentaOperador) {
-                alert('Selecione a ferramenta do estoque, a máquina e o operador.');
+                notificarApp('Selecione a ferramenta do estoque, a máquina e o operador.', 'aviso');
                 return;
             }
             const item = estoque.find((i) => i.id === ferramentaEstoqueId);
@@ -129,12 +129,12 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
             return;
         } else if (!isAlreadyPaused && motivo === 'Quebra de Ferramenta') {
             if (!ferramentaEstoqueId || !ferramentaMaquina || !ferramentaOperador) {
-                alert('Selecione a ferramenta do estoque, a máquina e o operador.');
+                notificarApp('Selecione a ferramenta do estoque, a máquina e o operador.', 'aviso');
                 return;
             }
             if (quebraRetroativo) {
                 if (!horaInicioQuebra || !horaFimQuebra) {
-                    alert('Informe o horário de início e término da parada por quebra.');
+                    notificarApp('Informe o horário de início e término da parada por quebra.', 'aviso');
                     return;
                 }
                 const [hIni, mIni] = horaInicioQuebra.split(':').map(Number);
@@ -142,7 +142,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
                 const inicioMin = hIni * 60 + mIni;
                 const fimMin = hFim * 60 + mFim;
                 if (isNaN(inicioMin) || isNaN(fimMin) || fimMin <= inicioMin) {
-                    alert('Horário de retorno deve ser maior que o horário de início.');
+                    notificarApp('Horário de retorno deve ser maior que o horário de início.', 'aviso');
                     return;
                 }
             }
@@ -167,7 +167,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
             return;
         } else if (!isAlreadyPaused && motivo === 'Falta de Energia') {
             if (!horaInicioEnergia || !horaFimEnergia) {
-                alert("Por favor, preencha o horário de início e término da falta de energia.");
+                notificarApp('Preencha o horário de início e término da falta de energia.', 'aviso');
                 return;
             }
 
@@ -176,7 +176,7 @@ export default function PauseModal({ isOpen, onClose, onConfirm, osData }) {
             const inicioMin = hIni * 60 + mIni;
             const fimMin = hFim * 60 + mFim;
             if (isNaN(inicioMin) || isNaN(fimMin) || fimMin <= inicioMin) {
-                alert("Horário de retorno deve ser maior que o horário de início.");
+                notificarApp('Horário de retorno deve ser maior que o horário de início.', 'aviso');
                 return;
             }
 

@@ -10,6 +10,17 @@ export function chaveSku(nome, setor) {
     return `${String(nome || '').trim().toLowerCase()}|${setor || 'TODOS'}`;
 }
 
+/** Setores cuja peça física tem vida útil / magazine (aba Ferramental). EDM fio fica só no Estoque. */
+export const SETORES_FERRAMENTAL = ['CNC', 'TORNO'];
+
+export function setorPermiteFerramental(setor) {
+    return SETORES_FERRAMENTAL.includes(setor || '');
+}
+
+export function estoqueParaFerramental(itens) {
+    return (itens || []).filter((i) => setorPermiteFerramental(i.setor));
+}
+
 export function qtdEstoque(item) {
     return Number(item?.quantidade ?? item?.qtd ?? 0);
 }

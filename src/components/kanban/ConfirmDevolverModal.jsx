@@ -6,7 +6,13 @@ import { RotateCcw } from 'lucide-react';
 export default function ConfirmDevolverModal({ isOpen, onClose, onConfirm, osData, sourceCol }) {
     if (!osData) return null;
 
-    const origemLabel = sourceCol === 'setup' ? 'Set-up' : sourceCol === 'emCorte' ? 'Em Corte' : '';
+    const origemLabel = sourceCol === 'setup'
+        ? 'Prep. ferramental'
+        : sourceCol === 'emCorte'
+            ? 'Em usinagem'
+            : sourceCol === 'afericao'
+                ? 'Inspeção'
+                : 'a etapa atual';
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Devolver para A fazer">

@@ -119,9 +119,9 @@ export default function Moldes({ onNavigate }) {
     const editOrdemServico = useAppStore((s) => s.editOrdemServico);
     const setActiveSector = useAppStore((s) => s.setActiveSector);
     const irParaKanban = useAppStore((s) => s.irParaKanban);
+    const notificarApp = useAppStore((s) => s.notificarApp);
 
     const [manualOpen, setManualOpen] = useState(false);
-    const [novaOsMolde, setNovaOsMolde] = useState(false);
     const [filtro, setFiltro] = useState('fila');
     const [selecionado, setSelecionado] = useState(null);
     const [idsMarcados, setIdsMarcados] = useState(() => new Set());
@@ -202,7 +202,7 @@ export default function Moldes({ onNavigate }) {
                 : `${pecas.length} peças`;
             showToast(`${nomes} enviada(s) para ${labelSetor(setor)}. Confira no Kanban do setor.`);
         } catch (e) {
-            alert(e?.message || 'Falha ao enviar.');
+            notificarApp(e?.message || 'Falha ao enviar.');
         } finally {
             setEnviando(false);
         }
@@ -218,18 +218,18 @@ export default function Moldes({ onNavigate }) {
                     <div>
                         <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-[#E7E9ED]">Moldes</h2>
                         <p className="text-[#565B68] mt-0.5 text-xs max-w-xl">
-                            Ordem de chegada (recentes no topo) · Nova O.S. → Molde para cadastrar peças manualmente.
+                            Conjunto de peças da mesma ferramenta / job. Cadastre aqui → peças ficam na fila → liberar envia cada uma ao Kanban do setor.
                         </p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <button
                         type="button"
-                        onClick={() => { setNovaOsMolde(true); setManualOpen(true); }}
+                        onClick={() => setManualOpen(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold"
                     >
                         <Plus className="w-4 h-4" />
-                        Nova O.S.
+                        Novo molde
                     </button>
                 </div>
             </div>
@@ -237,17 +237,18 @@ export default function Moldes({ onNavigate }) {
             {!grupos.length ? (
                 <div className="rounded-[10px] border border-dashed border-[#333844] bg-[#181B22] px-6 py-14 text-center">
                     <Package className="w-8 h-8 text-[#D97D3D] mx-auto mb-3" />
-                    <p className="text-sm text-[#E7E9ED] font-medium">Nenhum molde na carteira ainda</p>
-                    <p className="text-[12px] text-[#7B808F] mt-2 max-w-md mx-auto">
-                        Abra Nova O.S., escolha Molde e cadastre manualmente ou importe por CSV/PDF (beta).
+                    <p className="text-sm text-[#E7E9ED] font-medium">Nenhum molde ainda</p>
+                    <p className="text-[12px] text-[#7B808F] mt-2 max-w-md mx-auto leading-relaxed">
+                        Ex.: molde KINNER com cavidade, macho e placa — cada peça é um cartão, todas ligadas ao mesmo código.
+                        Depois libere para o CNC ou eletrofio quando for a vez delas no chão.
                     </p>
                     <button
                         type="button"
-                        onClick={() => { setNovaOsMolde(true); setManualOpen(true); }}
+                        onClick={() => setManualOpen(true)}
                         className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-[7px] bg-[#D97D3D] text-[#111318] text-xs font-semibold"
                     >
                         <Plus className="w-4 h-4" />
-                        Nova O.S. — Molde
+                        Novo molde
                     </button>
                 </div>
             ) : (
@@ -454,12 +455,11 @@ export default function Moldes({ onNavigate }) {
 
             <NovaOSForm
                 isOpen={manualOpen}
-                onClose={() => { setManualOpen(false); setNovaOsMolde(false); }}
-                initialModo={novaOsMolde ? 'molde' : undefined}
+                onClose={() => setManualOpen(false)}
+                variante="molde"
                 onCreated={(criados) => {
                     const gid = criados?.[0]?.os_grupo_id || criados?.[0]?.osGrupoId;
                     if (gid) setSelecionado(gid);
-                    setNovaOsMolde(false);
                 }}
             />
             {selectedOs ? (
