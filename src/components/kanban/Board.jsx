@@ -572,8 +572,9 @@ export default function Board({ onNavigate }) {
                                     if (destCol === 'setup' || destCol === 'emCorte') {
                                         const osToMove = kanban[sourceCol]?.find(item => item.id === osId);
                                         if (sourceCol === 'aFazer' && kanbanPrecisaProgramar(osToMove)) {
-                                            notificarApp('Este kanban ainda não foi programado. Programe no A fazer antes do set-up.', 'aviso');
-                                            setProgramarOs(osToMove);
+                                            // Abre programação — sem crash; aviso curto e acionável
+                                            notificarApp('Antes do set-up, complete a programação (tempos / programa).', 'aviso');
+                                            setProgramarOs(osToMove || null);
                                             return;
                                         }
                                         if (destCol === 'setup' && sourceCol === 'afericao') {

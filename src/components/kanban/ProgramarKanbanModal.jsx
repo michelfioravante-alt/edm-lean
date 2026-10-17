@@ -45,18 +45,21 @@ export default function ProgramarKanbanModal({ isOpen, onClose, osData }) {
             numeroPrograma: osData.numero_programa || '',
             linkPrograma: lerLinkPrograma(osData),
             totalSetups: osData.total_setups || 1,
-            nomesSetups: osData.nomes_setups || ['OP10'],
+            nomesSetups: Array.isArray(osData.nomes_setups) && osData.nomes_setups.length
+                ? osData.nomes_setups
+                : ['OP10'],
             checklistFerramentas: lerChecklistFerramentas(osData),
         });
     }, [isOpen, osData?.id, fetchEstoque]);
 
-    if (!osData) return null;
+    if (!isOpen || !osData) return null;
 
     const inputCls = 'w-full px-3 py-2 border border-[#262A33] bg-[#111318] rounded-[8px] text-[#E7E9ED] text-sm focus:outline-none focus:border-[#D97D3D] [color-scheme:dark]';
     const labelCls = 'block text-[10px] font-semibold text-[#565B68] uppercase tracking-wider mb-1.5';
     const isEdm = setor === 'EDM_FIO' || setor.includes('EDM') || setor.includes('FIO');
+    const isCnc = setor === 'CNC' || setor === 'TORNO' || (!isEdm && setor !== 'EXTERNO');
     const linkDesenho = osData.link_desenho || '';
-    const programadoresDoSetor = programadores.filter((p) => !p.setor || p.setor === 'TODOS' || p.setor === setor);
+    const programadoresDoSetor = (programadores || []).filter((p) => !p.setor || p.setor === 'TODOS' || p.setor === setor);
 
     const setLinha = (index, patch) => {
         setForm((p) => {
